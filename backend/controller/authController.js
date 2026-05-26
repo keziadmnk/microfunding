@@ -153,7 +153,7 @@ async function me(req, res) {
   const userId = req.user?.sub;
 
   const [rows] = await getPool().query(
-    "SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
+    "SELECT id, name, email, role, phone, address, bio, profile_photo, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
     [userId]
   );
 
