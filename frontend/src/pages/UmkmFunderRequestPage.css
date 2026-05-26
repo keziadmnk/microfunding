@@ -1,0 +1,240 @@
+.umkm-funder-request-page {
+  min-height: 100vh;
+  background: #f4f7f9;
+  color: #122937;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.umkm-funder-request-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+}
+
+.umkm-funder-request-brand {
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.umkm-funder-request-topbar nav {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.umkm-funder-request-topbar nav a {
+  color: #64748b;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.umkm-funder-request-main {
+  width: min(1180px, calc(100% - 2rem));
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: 2rem;
+  margin: 0 auto;
+  padding: 2.5rem 0;
+}
+
+.umkm-funder-profile-panel,
+.umkm-funder-form-panel {
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(18, 41, 55, 0.06);
+}
+
+.umkm-funder-hero {
+  min-height: 220px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    linear-gradient(135deg, rgba(18, 41, 55, 0.96), rgba(146, 94, 37, 0.82)),
+    radial-gradient(circle at 20% 20%, rgba(206, 167, 97, 0.3), transparent 32%);
+  padding: 2rem;
+}
+
+.umkm-funder-avatar {
+  width: 5rem;
+  height: 5rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid #cea761;
+  border-radius: 999px;
+  background: #fff;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.umkm-funder-hero > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(206, 167, 97, 0.45);
+  border-radius: 999px;
+  background: rgba(0, 20, 32, 0.82);
+  color: #fff;
+  padding: 0.45rem 0.75rem;
+  font-weight: 900;
+}
+
+.umkm-funder-hero .material-symbols-outlined {
+  color: #cea761;
+}
+
+.umkm-funder-profile-body,
+.umkm-funder-form-panel form,
+.umkm-funder-form-panel header {
+  padding: 1.5rem;
+}
+
+.umkm-funder-profile-body h1,
+.umkm-funder-form-panel h2 {
+  margin: 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+}
+
+.umkm-funder-role,
+.umkm-funder-form-panel header p {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.umkm-funder-insight {
+  margin-top: 1rem;
+  border-radius: 0.9rem;
+  background: #f8f9fa;
+  padding: 1rem;
+}
+
+.umkm-funder-insight strong {
+  color: #122937;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.umkm-funder-insight p {
+  margin: 0.45rem 0 0;
+  color: #43474b;
+  line-height: 1.6;
+}
+
+.umkm-funder-form-panel {
+  align-self: start;
+}
+
+.umkm-funder-form-panel header {
+  border-bottom: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.umkm-funder-form-panel form {
+  display: grid;
+  gap: 1rem;
+}
+
+.umkm-funder-form-panel label {
+  display: grid;
+  gap: 0.45rem;
+  color: #122937;
+  font-weight: 900;
+}
+
+.umkm-funder-form-panel input,
+.umkm-funder-form-panel textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.85rem;
+  color: #122937;
+  padding: 0.85rem 1rem;
+  font: inherit;
+  font-weight: 400;
+}
+
+.umkm-funder-form-panel textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.umkm-funder-form-panel form > button {
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.85rem;
+  background: #122937;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.umkm-funder-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 1rem 1.5rem 0;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.75rem;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 0.85rem;
+  font-weight: 800;
+}
+
+.umkm-funder-alert p {
+  margin: 0;
+}
+
+.umkm-funder-request-state {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.75rem;
+  background: #f4f7f9;
+  color: #122937;
+  text-align: center;
+  font-weight: 800;
+}
+
+.umkm-funder-request-state .material-symbols-outlined {
+  color: #925e25;
+  font-size: 3rem;
+}
+
+.umkm-funder-request-state a {
+  color: #925e25;
+}
+
+@media (max-width: 920px) {
+  .umkm-funder-request-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .umkm-funder-request-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

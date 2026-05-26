@@ -1,46 +1,97 @@
 import { Link } from 'react-router-dom'
+import './DashboardSidebar.css'
 
-const navItems = [
-  { label: 'Dashboard', icon: 'dashboard', active: true },
+const defaultNavItems = [
+  { label: 'Dashboard', icon: 'dashboard' },
   { label: 'AI Business Advisor', icon: 'smart_toy' },
   { label: 'Mentoring Sessions', icon: 'video_chat' },
   { label: 'Impact Reports', icon: 'monitoring' },
   { label: 'Financials', icon: 'payments' },
   { label: 'Network', icon: 'group' },
-  { label: 'Settings', icon: 'settings' },
+  { label: 'Profile', icon: 'storefront' },
 ]
 
-function DashboardSidebar({ onLogout }) {
+function DashboardSidebar({
+  onLogout,
+  activeTab,
+  onTabChange,
+  navItems = defaultNavItems,
+  brandSubtitle = 'Empowering Growth',
+  ctaLabel = 'Raise Request',
+  children,
+}) {
+  function handleNavClick(event, item) {
+    event.preventDefault()
+    onTabChange(item.children?.[0]?.label || item.label)
+  }
+
+  function isItemActive(item) {
+    return item.label === activeTab || item.children?.some((child) => child.label === activeTab)
+  }
+
   return (
     <aside className="dashboard-sidebar">
       <div>
         <div className="sidebar-brand">
           <h1>MicroFun</h1>
-          <p>Empowering Growth</p>
+          <p>{brandSubtitle}</p>
         </div>
 
         <nav className="sidebar-nav" aria-label="Dashboard navigation">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              className={item.active ? 'active' : ''}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </a>
-          ))}
+          {navItems.map((item) => {
+            const active = isItemActive(item)
+
+            return (
+              <div key={item.label} className={`sidebar-nav-group ${active ? 'open' : ''}`}>
+                <a
+                  href="#"
+                  className={active && !item.children ? 'active' : active ? 'parent-active' : ''}
+                  onClick={(event) => handleNavClick(event, item)}
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  <span>{item.label}</span>
+                  {item.children && (
+                    <span className="material-symbols-outlined sidebar-chevron" aria-hidden="true">
+                      expand_more
+                    </span>
+                  )}
+                </a>
+
+                {item.children && (
+                  <div className="sidebar-subnav">
+                    {item.children.map((child) => (
+                      <a
+                        key={child.label}
+                        href="#"
+                        className={child.label === activeTab ? 'active' : ''}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          onTabChange(child.label)
+                        }}
+                      >
+                        <span className="material-symbols-outlined" aria-hidden="true">
+                          {child.icon}
+                        </span>
+                        <span>{child.label}</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </nav>
 
+        {children}
+
         <button type="button" className="sidebar-raise-btn">
-          Raise Request
+          {ctaLabel}
         </button>
       </div>
 
       <div className="sidebar-footer-links">
-        <a href="#">Help Center</a>
         <button type="button" onClick={onLogout}>
           Logout
         </button>

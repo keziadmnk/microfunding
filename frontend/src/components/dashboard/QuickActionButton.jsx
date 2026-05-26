@@ -1,8 +1,9 @@
-function QuickActionButton({ label, icon, variant }) {
+function QuickActionButton({ label, icon, variant, onClick }) {
   return (
     <button
       type="button"
       className={`quick-action-btn ${variant === 'primary' ? 'primary' : 'secondary'}`}
+      onClick={onClick}
     >
       <span className="quick-action-main">
         <span className="material-symbols-outlined" aria-hidden="true">

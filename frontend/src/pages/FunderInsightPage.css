@@ -1,0 +1,192 @@
+.funder-insight-page {
+  min-height: 100vh;
+  background: #f8f9fa;
+  color: #122937;
+}
+
+.funder-insight-page.state {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.8rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.funder-insight-page.state .material-symbols-outlined {
+  color: #925e25;
+  font-size: 3rem;
+}
+
+.funder-insight-page.state h1,
+.funder-insight-page.state p {
+  margin: 0;
+}
+
+.funder-insight-page.state a {
+  color: #925e25;
+  font-weight: 800;
+}
+
+.funder-insight-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #e1e3e4;
+  background: #fff;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+}
+
+.funder-insight-brand {
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.funder-insight-topbar button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #122937;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.funder-insight-main {
+  width: min(1040px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.funder-insight-card {
+  border: 1px solid #e1e3e4;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 18px 46px rgba(18, 41, 55, 0.08);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.funder-insight-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.funder-insight-hero h1 {
+  margin: 0 0 0.55rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(1.65rem, 4vw, 2.5rem);
+}
+
+.funder-insight-hero p {
+  margin: 0 0 1.6rem;
+  color: #73787c;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.funder-insight-hero strong {
+  color: #925e25;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+}
+
+.funder-insight-match-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid rgba(206, 167, 97, 0.3);
+  border-radius: 999px;
+  background: #122937;
+  color: #fff;
+  padding: 0.5rem 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.funder-insight-match-badge span {
+  color: #cea761;
+}
+
+.funder-insight-box-page {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+  border: 1px solid #e1e3e4;
+  border-radius: 0.9rem;
+  background: #f8f9fa;
+  padding: 1.35rem;
+}
+
+.funder-insight-box-page strong,
+.funder-insight-two-col h2 {
+  margin: 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.funder-insight-box-page p,
+.funder-insight-two-col p {
+  margin: 0;
+  color: #43474b;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.funder-insight-two-col {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.funder-insight-two-col h2 {
+  margin-bottom: 0.8rem;
+}
+
+.funder-insight-card footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #e1e3e4;
+}
+
+.funder-insight-fund-btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 0.75rem;
+  background: #122937;
+  color: #fff;
+  padding: 0 1.1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .funder-insight-hero,
+  .funder-insight-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .funder-insight-box-page,
+  .funder-insight-two-col {
+    grid-template-columns: 1fr;
+  }
+}

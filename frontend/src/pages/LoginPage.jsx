@@ -33,13 +33,22 @@ function LoginPage() {
     setIsLoading(true)
 
     try {
-      await login({
+      const result = await login({
         email: form.email.trim(),
         password: form.password,
         rememberMe: form.rememberMe,
       })
 
-      navigate('/dashboard', { replace: true })
+      // Redirect to the correct dashboard based on role
+      const roleDashboardMap = {
+        umkm_owner: '/dashboard/umkm',
+        funder: '/dashboard/funder',
+        mentor: '/dashboard/mentor',
+        admin: '/dashboard/admin',
+      }
+      const role = result.user?.role
+      const target = roleDashboardMap[role] || '/dashboard'
+      navigate(target, { replace: true })
     } catch (submitError) {
       setError(submitError.message || 'Login gagal, coba lagi.')
     } finally {
