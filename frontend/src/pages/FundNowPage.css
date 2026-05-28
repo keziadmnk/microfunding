@@ -1,49 +1,18 @@
 .fund-now-page {
   min-height: 100vh;
-  background: #f4f7f9;
-  color: #122937;
+  background: #f8f9fa;
+  color: #191c1d;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
-.fund-now-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid #cbd5e1;
-  background: #fff;
-  padding: 1rem clamp(1rem, 4vw, 3rem);
-}
-
-.fund-now-brand {
-  color: #122937;
-  font-family: 'Manrope', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.fund-now-topbar nav {
-  display: flex;
-  gap: 1.2rem;
-}
-
-.fund-now-topbar nav a {
-  color: #64748b;
-  font-weight: 800;
-  text-decoration: none;
-}
-
 .fund-now-main {
-  width: min(1180px, calc(100% - 2rem));
+  width: min(1280px, calc(100% - 2.5rem));
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.85fr);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.48fr);
+  gap: 1.5rem;
+  align-items: start;
   margin: 0 auto;
-  padding: 2.5rem 0;
+  padding: 2rem 0;
 }
 
 .fund-now-content {
@@ -51,221 +20,253 @@
   gap: 1.5rem;
 }
 
+.fund-now-hero,
+.fund-now-progress-card,
+.fund-now-impact,
+.fund-now-checkout {
+  border: 1px solid #c3c7cc;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(18, 41, 55, 0.05);
+}
+
 .fund-now-hero {
   position: relative;
-  min-height: 300px;
+  min-height: 400px;
   overflow: hidden;
-  border-radius: 1rem;
-  box-shadow: 0 24px 48px rgba(18, 41, 55, 0.18);
 }
 
 .fund-now-hero > img {
-  width: 100%;
-  height: 100%;
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  transition: transform 0.7s ease;
 }
 
-.fund-now-hero > div {
+.fund-now-hero:hover > img {
+  transform: scale(1.04);
+}
+
+.fund-now-hero-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: flex-end;
-  background: linear-gradient(to top, rgba(18, 41, 55, 0.9), transparent);
+  padding: 2rem;
+  background: linear-gradient(to top, rgba(0, 20, 32, 0.82), transparent 62%);
+}
+
+.fund-now-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.fund-now-hero-meta > span {
+  border-radius: 999px;
+  background: #78591b;
+  color: #fff;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.fund-now-hero-meta p {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.fund-now-hero h1 {
+  margin: 0 0 0.5rem;
+  color: #fff;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.12;
+}
+
+.fund-now-hero h1 + p {
+  max-width: 42rem;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.6;
+}
+
+.fund-now-progress-card {
   padding: 2rem;
 }
 
-.fund-now-profile-row {
+.fund-now-progress-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.fund-now-avatar {
-  width: 4.4rem;
-  height: 4.4rem;
-  overflow: hidden;
-  border: 2px solid #cea761;
-  border-radius: 999px;
-  background: #fff;
-  padding: 0.2rem;
+.fund-now-progress-head p {
+  margin: 0 0 0.25rem;
+  color: #43474b;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
-.fund-now-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
-}
-
-.fund-now-profile-row h1 {
+.fund-now-progress-head h3 {
   margin: 0;
-  color: #fff;
-  font-family: 'Manrope', sans-serif;
-  font-size: clamp(1.8rem, 4vw, 3rem);
-}
-
-.fund-now-profile-row p {
-  margin: 0.3rem 0 0;
-  color: #cea761;
-  font-weight: 800;
-}
-
-.fund-now-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.fund-now-stat,
-.fund-now-impact,
-.fund-now-checkout {
-  border: 1px solid #cbd5e1;
-  border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 14px 32px rgba(18, 41, 55, 0.06);
-}
-
-.fund-now-stat {
-  padding: 1.3rem;
-}
-
-.fund-now-stat span {
-  color: #64748b;
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.fund-now-stat strong {
-  display: block;
-  margin-top: 0.45rem;
   color: #122937;
-  font-size: 1.35rem;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(1.45rem, 2vw, 1.8rem);
 }
 
-.fund-now-stat.accent strong {
-  color: #925e25;
+.fund-now-progress-head h3 span {
+  color: #43474b;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.fund-now-progress-head > strong {
+  color: #78591b;
+  font-size: 1.6rem;
 }
 
 .fund-now-progress {
-  height: 8px;
+  width: 100%;
+  height: 0.75rem;
   overflow: hidden;
   border-radius: 999px;
-  background: #e2e8f0;
-  margin-top: 0.8rem;
+  background: #e1e3e4;
 }
 
 .fund-now-progress span {
   display: block;
   height: 100%;
-  background: #cea761;
+  border-radius: inherit;
+  background: #78591b;
+}
+
+.fund-now-progress-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #c3c7cc;
+}
+
+.fund-now-progress-stats span {
+  display: block;
+  color: #43474b;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.fund-now-progress-stats strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: #122937;
+  font-size: 1.05rem;
 }
 
 .fund-now-impact {
-  background: #122937;
-  color: #fff;
+  display: grid;
+  gap: 1rem;
   padding: 1.6rem;
 }
 
 .fund-now-impact h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1.2rem;
+  margin: 0;
+  color: #122937;
   font-family: 'Manrope', sans-serif;
-}
-
-.fund-now-impact h2 span,
-.fund-now-impact article > span {
-  color: #cea761;
-}
-
-.fund-now-impact > div {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  font-size: 1.35rem;
 }
 
 .fund-now-impact article {
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #e1e3e4;
+  border-radius: 0.75rem;
+  background: #f8f9fa;
   padding: 1rem;
+}
+
+.fund-now-impact article > .material-symbols-outlined {
+  color: #78591b;
+}
+
+.fund-now-impact strong {
+  color: #122937;
 }
 
 .fund-now-impact p {
   margin: 0.35rem 0 0;
-  color: rgba(255, 255, 255, 0.75);
-  line-height: 1.55;
+  color: #43474b;
+  line-height: 1.6;
 }
 
 .fund-now-checkout {
   position: sticky;
-  top: 6rem;
+  top: 1.5rem;
   align-self: start;
-  overflow: hidden;
-}
-
-.fund-now-checkout > header {
-  border-bottom: 1px solid #cbd5e1;
-  background: #f8fafc;
-  padding: 1.3rem;
+  padding: 2rem;
 }
 
 .fund-now-checkout h2 {
-  margin: 0;
+  margin: 0 0 1.5rem;
+  color: #122937;
   font-family: 'Manrope', sans-serif;
+  font-size: 1.5rem;
 }
 
-.fund-now-checkout header p {
-  margin: 0.25rem 0 0;
-  color: #64748b;
-}
-
-.fund-now-field,
-.fund-now-summary {
+.fund-now-field {
   display: grid;
   gap: 0.85rem;
-  padding: 1.3rem;
+  margin-bottom: 1.5rem;
 }
 
-.fund-now-field label {
-  color: #122937;
-  font-size: 0.82rem;
+.fund-now-field > label {
+  color: #43474b;
+  font-size: 0.9rem;
   font-weight: 800;
-  text-transform: uppercase;
 }
 
 .fund-now-amount-input {
-  display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  align-items: center;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.9rem;
-  overflow: hidden;
+  position: relative;
 }
 
 .fund-now-amount-input span {
-  display: grid;
-  place-items: center;
-  height: 100%;
-  border-right: 1px solid #cbd5e1;
+  position: absolute;
+  left: 1rem;
+  top: 50%;
   color: #122937;
-  font-weight: 800;
+  font-weight: 900;
+  transform: translateY(-50%);
 }
 
 .fund-now-amount-input input {
-  min-height: 56px;
-  border: 0;
-  padding: 0 1rem;
+  width: 100%;
+  min-height: 3.75rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.5rem;
+  padding: 0 1rem 0 3rem;
   color: #122937;
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.fund-now-amount-input input:focus {
+  outline: none;
+  border-color: #122937;
+  box-shadow: 0 0 0 3px rgba(120, 89, 27, 0.16);
 }
 
 .fund-now-presets {
@@ -275,77 +276,114 @@
 }
 
 .fund-now-presets button,
-.fund-now-payment {
-  border: 1px solid #cbd5e1;
-  border-radius: 0.75rem;
-  background: #fff;
-}
-
-.fund-now-presets button {
-  min-height: 38px;
+.fund-now-payment-chip {
+  border: 1px solid #c3c7cc;
+  border-radius: 0.5rem;
+  background: #f3f4f5;
   color: #122937;
   font-weight: 800;
   cursor: pointer;
+  transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+}
+
+.fund-now-presets button {
+  min-height: 2.35rem;
+  font-size: 0.82rem;
+}
+
+.fund-now-presets button:hover,
+.fund-now-payment-chip:hover {
+  border-color: #cea761;
+  color: #78591b;
 }
 
 .fund-now-presets button.active,
-.fund-now-payment.active {
+.fund-now-payment-chip.active {
   border-color: #cea761;
-  background: rgba(206, 167, 97, 0.1);
+  background: #122937;
+  color: #cea761;
 }
 
-.fund-now-payment {
+.fund-now-payment-group {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.fund-now-payment-group p {
+  margin: 0;
+  color: #43474b;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.fund-now-payment-group > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.fund-now-payment-chip {
+  display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  cursor: pointer;
+  min-height: 3rem;
+  padding: 0 0.85rem;
 }
 
-.fund-now-payment > .material-symbols-outlined {
-  color: #122937;
-  font-size: 2rem;
+.fund-now-payment-chip.wide {
+  grid-column: 1 / -1;
 }
 
-.fund-now-payment strong,
-.fund-now-payment small {
-  display: block;
-}
-
-.fund-now-payment small {
-  color: #64748b;
+.fund-now-payment-chip input {
+  display: none;
 }
 
 .fund-now-summary {
-  border-top: 1px solid #cbd5e1;
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.5rem;
+  background: #f3f4f5;
+  padding: 1rem;
 }
 
 .fund-now-summary > div {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  color: #43474b;
+  font-size: 0.9rem;
+}
+
+.fund-now-summary strong {
+  color: #122937;
 }
 
 .fund-now-summary .total {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #c3c7cc;
   color: #122937;
+  font-weight: 900;
+}
+
+.fund-now-summary .total strong {
+  color: #78591b;
   font-size: 1.15rem;
-  font-weight: 800;
 }
 
 .fund-now-summary button {
-  min-height: 56px;
+  min-height: 3.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   border: 0;
-  border-radius: 0.9rem;
+  border-radius: 0.5rem;
   background: #122937;
   color: #fff;
-  font-size: 1rem;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
+  box-shadow: 0 16px 26px rgba(18, 41, 55, 0.16);
 }
 
 .fund-now-summary button:disabled {
@@ -354,15 +392,45 @@
 }
 
 .fund-now-summary p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
   margin: 0;
-  color: #64748b;
-  font-size: 0.8rem;
-  line-height: 1.5;
+  color: #43474b;
+  font-size: 0.78rem;
+  line-height: 1.45;
   text-align: center;
 }
 
+.fund-now-summary p .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.fund-now-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  color: #73787c;
+  opacity: 0.72;
+  filter: grayscale(1);
+}
+
+.fund-now-trust > span {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.fund-now-trust div {
+  display: flex;
+  gap: 0.8rem;
+}
+
 .fund-now-alert {
-  margin: 1rem 1.3rem 0;
+  margin: 0 0 1rem;
   border-radius: 0.75rem;
   padding: 0.9rem 1rem;
   font-weight: 800;
@@ -386,19 +454,423 @@
   place-items: center;
   align-content: center;
   gap: 0.8rem;
-  background: #f4f7f9;
+  background: #f8f9fa;
   color: #122937;
   font-weight: 800;
 }
 
 .fund-now-state a {
-  color: #925e25;
+  color: #78591b;
+}
+
+.payment-step {
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.payment-confirmation-card {
+  width: min(760px, 100%);
+  overflow: hidden;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(18, 41, 55, 0.08);
+}
+
+.payment-confirmation-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 2rem;
+  border-bottom: 1px solid #c3c7cc;
+  background: #f8f9fa;
+}
+
+.payment-confirmation-card h1 {
+  margin: 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.6rem;
+}
+
+.payment-confirmation-card header p {
+  margin: 0.5rem 0 0;
+  color: #43474b;
+  line-height: 1.6;
+}
+
+.payment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: #ffd489;
+  color: #795a1b;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.payment-status-badge i {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #78591b;
+  animation: payment-pulse 1s ease-in-out infinite;
+}
+
+.payment-confirmation-body {
+  padding: 2rem;
+}
+
+.payment-countdown-box {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  border: 1px solid #001420;
+  border-radius: 0.5rem;
+  background: #122937;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.payment-countdown-box > p {
+  margin: 0;
+  color: #7a91a2;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.payment-countdown-box > div {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.payment-countdown-box b {
+  color: rgba(122, 145, 162, 0.65);
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.payment-time-unit {
+  display: grid;
+  justify-items: center;
+}
+
+.payment-time-unit strong {
+  color: #7a91a2;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  line-height: 1;
+}
+
+.payment-time-unit small {
+  color: rgba(122, 145, 162, 0.75);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.payment-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.payment-detail-item label {
+  color: #73787c;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.payment-detail-item p {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.45rem 0 0;
+  color: #122937;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.payment-detail-item p.accent {
+  color: #78591b;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.45rem;
+}
+
+.payment-detail-item .material-symbols-outlined {
+  color: #73787c;
+  font-size: 1.1rem;
+}
+
+.payment-bank-card {
+  border: 1px solid #c3c7cc;
+  border-radius: 0.5rem;
+  background: #f3f4f5;
+  padding: 1.5rem;
+}
+
+.payment-bank-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.payment-bank-head > div {
+  display: grid;
+  place-items: center;
+  min-width: 4.2rem;
+  height: 2.8rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #122937;
+  font-weight: 900;
+}
+
+.payment-bank-head p {
+  margin: 0 0 0.25rem;
+  color: #43474b;
+  font-size: 0.88rem;
+}
+
+.payment-bank-head strong {
+  color: #122937;
+  font-size: 1.1rem;
+}
+
+.payment-bank-rows {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #c3c7cc;
+}
+
+.payment-bank-rows > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.payment-bank-rows span {
+  color: #43474b;
+}
+
+.payment-bank-rows strong {
+  color: #122937;
+}
+
+.payment-confirmation-card > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #c3c7cc;
+  background: #f8f9fa;
+}
+
+.payment-confirmation-card > footer button {
+  min-height: 2.8rem;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0 1.4rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.payment-confirmation-card > footer button:first-child {
+  background: transparent;
+  color: #43474b;
+}
+
+.payment-confirmation-card > footer button:last-child {
+  background: #122937;
+  color: #fff;
+}
+
+.payment-success-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 20, 32, 0.4);
+  backdrop-filter: blur(8px);
+  padding: 1rem;
+}
+
+.payment-success-modal {
+  width: min(520px, 100%);
+  border: 1px solid #c3c7cc;
+  border-radius: 0.75rem;
+  background: #fff;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(18, 41, 55, 0.08);
+  animation: payment-modal-in 0.24s ease-out;
+}
+
+.payment-success-modal > header {
+  padding: 2rem 2rem 1rem;
+}
+
+.payment-success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  background: #ffd489;
+  color: #795a1b;
+  margin-bottom: 1rem;
+}
+
+.payment-success-icon .material-symbols-outlined {
+  font-size: 2.5rem;
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 40;
+}
+
+.payment-success-icon.error {
+  background: #ffdad6;
+  color: #ba1a1a;
+}
+
+.payment-success-modal h2 {
+  margin: 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.5rem;
+}
+
+.payment-success-modal p {
+  margin: 0.5rem auto 0;
+  max-width: 24rem;
+  color: #43474b;
+  line-height: 1.6;
+}
+
+.payment-success-summary {
+  margin: 0 2rem 1.5rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.5rem;
+  background: #f3f4f5;
+  padding: 1.5rem;
+}
+
+.payment-success-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #43474b;
+  font-size: 0.9rem;
+}
+
+.payment-success-summary > div + div {
+  margin-top: 1rem;
+}
+
+.payment-success-summary strong {
+  color: #191c1d;
+  text-align: right;
+}
+
+.payment-success-summary .total {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #c3c7cc;
+  color: #191c1d;
+  font-weight: 900;
+}
+
+.payment-success-summary .total strong {
+  color: #78591b;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.25rem;
+}
+
+.payment-success-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0 2rem 2rem;
+}
+
+.payment-success-actions.single {
+  grid-template-columns: 1fr;
+}
+
+.payment-success-actions button {
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+}
+
+.payment-success-actions button:active {
+  transform: scale(0.96);
+}
+
+.payment-success-actions button:first-child {
+  background: #001420;
+  color: #fff;
+}
+
+.payment-success-actions button:last-child {
+  border: 1px solid #73787c;
+  background: #fff;
+  color: #001420;
+}
+
+.payment-success-actions button:last-child:hover {
+  background: #e1e3e4;
+}
+
+.payment-success-modal.error-state .payment-success-actions button {
+  border: 0;
+  background: #001420;
+  color: #fff;
+}
+
+@keyframes payment-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes payment-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @media (max-width: 980px) {
   .fund-now-main,
-  .fund-now-stats,
-  .fund-now-impact > div {
+  .fund-now-progress-stats {
     grid-template-columns: 1fr;
   }
 
@@ -408,13 +880,58 @@
 }
 
 @media (max-width: 720px) {
-  .fund-now-topbar,
-  .fund-now-topbar nav {
+  .fund-now-main {
+    width: min(100% - 1rem, 1280px);
+    padding: 1rem 0;
+  }
+
+  .fund-now-hero {
+    min-height: 320px;
+  }
+
+  .fund-now-hero-overlay,
+  .fund-now-progress-card,
+  .fund-now-impact,
+  .fund-now-checkout {
+    padding: 1rem;
+  }
+
+  .fund-now-presets,
+  .fund-now-payment-group > div,
+  .payment-detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .payment-confirmation-card > header,
+  .payment-confirmation-card > footer,
+  .payment-bank-rows > div {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .fund-now-presets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .payment-success-modal > header,
+  .payment-success-summary,
+  .payment-success-actions {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .payment-success-modal > header {
+    padding: 1.5rem 0 1rem;
+  }
+
+  .payment-success-actions {
+    grid-template-columns: 1fr;
+    padding: 0 0 1.5rem;
+  }
+
+  .payment-success-summary > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .payment-success-summary strong {
+    text-align: left;
   }
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { WORLD_CITY_OPTIONS, findCityByLabel } from './locationOptions'
 
 const INVESTMENT_INTERESTS = [
   'Kuliner & F&B',
@@ -31,7 +32,10 @@ const initialFormData = {
   email: '',
   email_verified_at: '',
   phone: '',
+  location: '',
   address: '',
+  latitude: '',
+  longitude: '',
   bio: '',
   profile_photo: '',
   funding_min: '',
@@ -44,6 +48,7 @@ function isProfileComplete(profile) {
   return Boolean(
     profile.name?.trim() &&
       profile.phone?.trim() &&
+      profile.location?.trim() &&
       profile.address?.trim() &&
       profile.bio?.trim() &&
       profile.funding_min &&
@@ -95,7 +100,10 @@ function FunderProfileForm({ onCancel }) {
           email: p.email || '',
           email_verified_at: p.email_verified_at || '',
           phone: p.phone || '',
+          location: p.location || '',
           address: p.address || '',
+          latitude: p.latitude || '',
+          longitude: p.longitude || '',
           bio: p.bio || '',
           profile_photo: p.profile_photo || '',
           funding_min: p.funding_min || '',
@@ -124,6 +132,18 @@ function FunderProfileForm({ onCancel }) {
 
     const { name, value } = event.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  function handleLocationChange(event) {
+    if (!isEditing) return
+
+    const city = findCityByLabel(event.target.value)
+    setFormData((prev) => ({
+      ...prev,
+      location: city?.label || '',
+      latitude: city?.latitude || '',
+      longitude: city?.longitude || '',
+    }))
   }
 
   function handleOptionToggle(field, value) {
@@ -169,6 +189,11 @@ function FunderProfileForm({ onCancel }) {
 
     if (!formData.name.trim()) {
       setMessage({ text: 'Nama lengkap wajib diisi.', type: 'error' })
+      return
+    }
+
+    if (!findCityByLabel(formData.location)) {
+      setMessage({ text: 'Lokasi wajib dipilih dari daftar kota.', type: 'error' })
       return
     }
 
@@ -322,14 +347,37 @@ function FunderProfileForm({ onCancel }) {
             placeholder="+6281234567892"
           />
 
-          <TextInput
-            label="Alamat"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-            disabled={fieldsDisabled}
-            placeholder="Jakarta, Indonesia"
-          />
+          <div className="funder-profile-field">
+            <label htmlFor="funder-location">Lokasi <span>*</span></label>
+            <select
+              id="funder-location"
+              name="location"
+              value={formData.location}
+              onChange={handleLocationChange}
+              disabled={fieldsDisabled}
+              required
+            >
+              <option value="">Pilih kota lokasi funder</option>
+              {WORLD_CITY_OPTIONS.map((city) => (
+                <option key={city.label} value={city.label}>
+                  {city.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="funder-profile-field">
+            <label htmlFor="funder-address">Alamat Detail</label>
+            <textarea
+              id="funder-address"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              disabled={fieldsDisabled}
+              rows="3"
+              placeholder="Contoh: 18 Raffles Place, lantai 12"
+            />
+          </div>
 
           <div className="funder-profile-field">
             <label htmlFor="funder-bio">Bio / Tentang Saya</label>

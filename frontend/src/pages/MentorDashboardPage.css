@@ -100,6 +100,7 @@
 }
 
 .mentor-card input,
+.mentor-card select,
 .mentor-card textarea {
   width: 100%;
   border: 1px solid #c3c7cc;
@@ -116,7 +117,9 @@
   resize: vertical;
 }
 
-.mentor-card input:disabled {
+.mentor-card input:disabled,
+.mentor-card select:disabled,
+.mentor-card textarea:disabled {
   background: #f4f5f6;
   color: #50565a;
 }
@@ -4273,4 +4276,112 @@
   .mentor-message-thread-list {
     max-height: 22rem;
   }
+}
+.mentor-profile-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.mentor-profile-photo {
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fdf3e1;
+  color: #795a1b;
+  font-weight: 900;
+}
+
+.mentor-profile-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mentor-profile-container {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.mentor-profile-card-main {
+  padding: 1.25rem;
+}
+
+.mentor-profile-card-main .mentor-card-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+}
+
+.mentor-profile-card-main .mentor-card-header > .material-symbols-outlined {
+  font-size: 1.6rem;
+}
+
+.mentor-profile-card-main .mentor-card-header h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.mentor-profile-card-main .mentor-card-header p {
+  margin: 0.25rem 0 0;
+  color: #74787c;
+}
+
+.mentor-profile-photo-row {
+  gap: 1rem;
+  margin: 0 0 1.25rem;
+}
+
+.mentor-profile-photo {
+  width: 4.6rem;
+  height: 4.6rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.8rem;
+  background: #f8f9fa;
+  color: #795a1b;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.35rem;
+}
+
+.mentor-profile-photo-row .mentor-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #122937;
+  padding: 0.6rem 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mentor-profile-card-main label {
+  color: #122937;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.mentor-profile-card-main input,
+.mentor-profile-card-main select,
+.mentor-profile-card-main textarea {
+  min-height: 44px;
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.85rem;
+}
+
+.mentor-profile-card-main textarea {
+  min-height: 116px;
+}
+
+.mentor-profile-card-main input:focus,
+.mentor-profile-card-main select:focus,
+.mentor-profile-card-main textarea:focus {
+  outline: none;
+  border-color: #925e25;
+  box-shadow: 0 0 0 3px rgba(146, 94, 37, 0.15);
 }

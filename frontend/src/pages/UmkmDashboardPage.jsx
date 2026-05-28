@@ -31,6 +31,7 @@ import DashboardSection from '../components/dashboard/DashboardSection'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import DashboardTopBar from '../components/dashboard/DashboardTopBar'
 import ForumPostCard from '../components/dashboard/ForumPostCard'
+import ForumPage from '../components/dashboard/ForumPage'
 import ProgressOverviewCard from '../components/dashboard/ProgressOverviewCard'
 import QuickActionButton from '../components/dashboard/QuickActionButton'
 import SessionCard from '../components/dashboard/SessionCard'
@@ -107,9 +108,8 @@ const umkmNavItems = [
       { label: 'Task Saya', icon: 'task_alt' },
     ],
   },
-  { label: 'Impact Reports', icon: 'monitoring' },
-  { label: 'Financials', icon: 'payments' },
-  { label: 'Network', icon: 'group' },
+  { label: 'Funding History', icon: 'history' },
+  { label: 'Forum', icon: 'forum' },
   { label: 'Profile', icon: 'storefront' },
 ]
 
@@ -120,6 +120,8 @@ const umkmTabRoutes = {
   'Cari Mentor': '/dashboard/umkm/mentoring/find',
   'Mentoring Saya': '/dashboard/umkm/mentoring/my',
   'Task Saya': '/dashboard/umkm/mentoring/tasks',
+  'Funding History': '/dashboard/umkm',
+  Forum: '/dashboard/umkm',
   Profile: '/dashboard/umkm',
 }
 
@@ -154,6 +156,9 @@ function UmkmDashboardPage() {
   const [selectedMentor, setSelectedMentor] = useState(null)
   const [requestMessage, setRequestMessage] = useState('')
   const [requestSubmitting, setRequestSubmitting] = useState(false)
+  const [fundingHistory, setFundingHistory] = useState({ summary: null, funders: [] })
+  const [fundingHistoryLoading, setFundingHistoryLoading] = useState(false)
+  const [fundingHistoryError, setFundingHistoryError] = useState('')
 
   const fetchMentors = useCallback(async () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
@@ -168,6 +173,34 @@ function UmkmDashboardPage() {
       setMentorsError(err.message)
     } finally {
       setMentorsLoading(false)
+    }
+  }, [])
+
+  const fetchFundingHistory = useCallback(async () => {
+    const token = localStorage.getItem('microfun_auth_token')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
+    setFundingHistoryLoading(true)
+    setFundingHistoryError('')
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/funding/umkm/history`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.message || 'Gagal memuat funding history.')
+
+      setFundingHistory({
+        summary: payload.summary || null,
+        funders: payload.funders || [],
+      })
+    } catch (err) {
+      setFundingHistoryError(err.message)
+      setFundingHistory({ summary: null, funders: [] })
+    } finally {
+      setFundingHistoryLoading(false)
     }
   }, [])
 
@@ -192,6 +225,7 @@ function UmkmDashboardPage() {
         setUser(profile)
         setError('')
         fetchMentors()
+        fetchFundingHistory()
       })
       .catch((err) => {
         setError(err.message || 'Session expired, please login again.')
@@ -201,7 +235,7 @@ function UmkmDashboardPage() {
       .finally(() => {
         setLoading(false)
       })
-  }, [fetchMentors, navigate])
+  }, [fetchFundingHistory, fetchMentors, navigate])
 
   function handleTabChange(tab) {
     setActiveTabState(tab)
@@ -252,6 +286,20 @@ function UmkmDashboardPage() {
       return {
         title: 'Task Saya',
         subtitle: 'Lihat semua task dari mentor dalam satu tempat.',
+      }
+    }
+
+    if (activeTab === 'Funding History') {
+      return {
+        title: 'Funding History',
+        subtitle: 'Pantau total dana terkumpul dan daftar funder yang sudah mendukung UMKM Anda.',
+      }
+    }
+
+    if (activeTab === 'Forum') {
+      return {
+        title: 'Forum',
+        subtitle: 'Share knowledge, discuss challenges, and build networks across MicroFun.',
       }
     }
 
@@ -378,6 +426,16 @@ function UmkmDashboardPage() {
           <MyMentoringView userId={user?.id} />
         ) : activeTab === 'Task Saya' ? (
           <UmkmTaskView userId={user?.id} />
+        ) : activeTab === 'Funding History' ? (
+          <FundingHistoryView
+            error={fundingHistoryError}
+            funders={fundingHistory.funders}
+            loading={fundingHistoryLoading}
+            onRefresh={fetchFundingHistory}
+            summary={fundingHistory.summary}
+          />
+        ) : activeTab === 'Forum' ? (
+          <ForumPage currentUser={user} userLocation={user?.address} />
         ) : activeTab === 'Workspace Mentoring' ? (
           <MentoringWorkspacePlaceholder mentoringId={getMentoringIdFromPath(location.pathname)} onBack={() => navigate('/dashboard/umkm/mentoring/my')} />
         ) : activeTab === 'Dashboard' ? (
@@ -506,7 +564,7 @@ function UmkmDashboardPage() {
         <footer className="dashboard-footer">
           <p>© 2024 MicroFun. Impacting Indonesian MSMEs through Global Connection.</p>
           <div>
-            <a href="#">Impact Reports</a>
+            <a href="#">Forum</a>
             <a href="#">Legal Information</a>
             <a href="#">Privacy Policy</a>
           </div>
@@ -587,6 +645,92 @@ function AiMatchingView({ error, loading, onAnalyze, onRequestFunder, onRequestM
           )}
         </div>
     </div>
+  )
+}
+
+function FundingHistoryView({ error, funders, loading, onRefresh, summary }) {
+  const fundedAmount = Number(summary?.fundedAmount || 0)
+  const fundingTarget = Number(summary?.fundingTarget || 0)
+  const progress = Number(summary?.progress || 0)
+  const remainingAmount = Math.max(fundingTarget - fundedAmount, 0)
+  const funderCount = Number(summary?.funderCount || funders.length || 0)
+
+  if (loading) {
+    return (
+      <div className="umkm-funding-state">
+        <span className="material-symbols-outlined">hourglass_empty</span>
+        <p>Memuat funding history...</p>
+      </div>
+    )
+  }
+
+  return (
+    <section className="umkm-funding-history">
+      {error && <p className="dashboard-error">{error}</p>}
+
+      <section className="umkm-funding-summary">
+        <div className="umkm-funding-total">
+          <span>Terkumpul</span>
+          <strong>{formatRupiah(fundedAmount)}</strong>
+          <p>
+            dari <b>{formatRupiah(fundingTarget)}</b>
+          </p>
+        </div>
+        <div className="umkm-funding-meta">
+          <span>Sisa kebutuhan dana</span>
+          <strong>{formatRupiah(remainingAmount)}</strong>
+        </div>
+        <div className="umkm-funding-progress-track" aria-label={`Progress pendanaan ${progress}%`}>
+          <span style={{ width: `${progress}%` }} />
+        </div>
+        <div className="umkm-funding-participants">
+          <div>
+            <span>Total Funder</span>
+            <strong>{formatNumber(funderCount)} Entitas Partisipan</strong>
+          </div>
+          <div className="umkm-funder-avatar-stack" aria-hidden="true">
+            {funders.slice(0, 3).map((funder) => (
+              <span key={`${funder.funderId || funder.name}-${funder.lastFundedAt}`}>
+                {getInitials(funder.name)}
+              </span>
+            ))}
+            {funderCount > 3 && <span>+{formatCompactNumber(funderCount - 3)}</span>}
+          </div>
+        </div>
+      </section>
+
+      <section className="umkm-funder-list-card">
+        <div className="umkm-funder-list-head">
+          <h3>
+            <span className="material-symbols-outlined">groups</span>
+            Funder Terbaru
+          </h3>
+        </div>
+
+        {funders.length > 0 ? (
+          <div className="umkm-funder-list">
+            {funders.map((funder) => (
+              <article key={`${funder.funderId || funder.name}-${funder.lastFundedAt}`} className="umkm-funder-row">
+                <div className="umkm-funder-avatar">{getInitials(funder.name)}</div>
+                <div className="umkm-funder-copy">
+                  <h4>{funder.name || 'Funder MicroFun'}</h4>
+                  <p>
+                    Total didanai <strong>{formatRupiah(funder.totalFunded)}</strong>
+                  </p>
+                </div>
+                <time>{formatDisplayDate(funder.lastFundedAt)}</time>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="umkm-funding-state empty">
+            <span className="material-symbols-outlined">account_balance_wallet</span>
+            <h3>Belum Ada Funder</h3>
+            <p>Funder yang sudah melakukan pendanaan berhasil akan muncul di sini.</p>
+          </div>
+        )}
+      </section>
+    </section>
   )
 }
 
@@ -2519,6 +2663,25 @@ function formatDisplayDate(value) {
     month: 'short',
     year: 'numeric',
   }).format(date)
+}
+
+function formatRupiah(value) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0))
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('id-ID').format(Number(value || 0))
+}
+
+function formatCompactNumber(value) {
+  return new Intl.NumberFormat('id-ID', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(Number(value || 0))
 }
 
 function getMentoringIdFromPath(pathname) {

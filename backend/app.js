@@ -10,6 +10,8 @@ const mentorRoutes = require("./routes/mentorRoutes");
 const mentorsRoutes = require("./routes/mentorsRoutes");
 const mentoringRoutes = require("./routes/mentoringRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const forumRoutes = require("./routes/forumRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const { testConnection } = require("./src/config/db");
 
 const app = express();
@@ -29,6 +31,8 @@ app.use("/api/mentor", mentorRoutes);
 app.use("/api/mentors", mentorsRoutes);
 app.use("/api/mentoring", mentoringRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/forum", forumRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", async (_req, res) => {
 	const dbStatus = await testConnection();

@@ -152,8 +152,10 @@ async function register(req, res) {
 async function me(req, res) {
   const userId = req.user?.sub;
 
+  await ensureUserProfileColumns();
+
   const [rows] = await getPool().query(
-    "SELECT id, name, email, role, phone, address, bio, profile_photo, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
+    "SELECT id, name, email, role, phone, location, address, latitude, longitude, bio, profile_photo, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
     [userId]
   );
 
@@ -164,6 +166,23 @@ async function me(req, res) {
   }
 
   return res.json({ user });
+}
+
+async function ensureUserProfileColumns() {
+  const [columns] = await getPool().query("SHOW COLUMNS FROM users");
+  const existing = new Set(columns.map((column) => column.Field));
+
+  if (!existing.has("location")) {
+    await getPool().query("ALTER TABLE users ADD COLUMN location VARCHAR(255) NULL AFTER role");
+  }
+
+  if (!existing.has("latitude")) {
+    await getPool().query("ALTER TABLE users ADD COLUMN latitude DECIMAL(10, 7) NULL AFTER address");
+  }
+
+  if (!existing.has("longitude")) {
+    await getPool().query("ALTER TABLE users ADD COLUMN longitude DECIMAL(10, 7) NULL AFTER latitude");
+  }
 }
 
 module.exports = {

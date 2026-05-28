@@ -23,7 +23,7 @@ async function listRecommendedUmkms(req, res) {
         b.business_goals,
         b.verified,
         u.name AS owner_name,
-        COALESCE(SUM(CASE WHEN f.status IN ('approved', 'completed') THEN f.amount ELSE 0 END), 0) AS funded_amount
+        COALESCE(SUM(CASE WHEN f.status IN ('pending', 'approved', 'completed') THEN f.amount ELSE 0 END), 0) AS funded_amount
       FROM umkm_business b
       JOIN umkm_owners o ON o.id = b.owner_id
       JOIN users u ON u.id = o.user_id
@@ -183,7 +183,7 @@ async function listFundingHistory(req, res) {
         b.logo,
         b.funding_target,
         u.name AS owner_name,
-        COALESCE(SUM(CASE WHEN all_f.status IN ('approved', 'completed') THEN all_f.amount ELSE 0 END), 0) AS funded_amount
+        COALESCE(SUM(CASE WHEN all_f.status IN ('pending', 'approved', 'completed') THEN all_f.amount ELSE 0 END), 0) AS funded_amount
       FROM fundings f
       JOIN umkm_business b ON b.id = f.business_id
       JOIN umkm_owners o ON o.id = b.owner_id
@@ -245,6 +245,76 @@ async function listFundingHistory(req, res) {
   }
 }
 
+async function listUmkmFundingHistory(req, res) {
+  if (req.user?.role !== "umkm_owner") {
+    return res.status(403).json({ message: "Hanya UMKM Owner yang dapat melihat funding history UMKM." });
+  }
+
+  try {
+    const [businessRows] = await getPool().query(
+      `SELECT
+        b.id,
+        b.name,
+        b.funding_target,
+        COALESCE(SUM(CASE WHEN f.status IN ('pending', 'approved', 'completed') THEN f.amount ELSE 0 END), 0) AS funded_amount,
+        COUNT(DISTINCT CASE WHEN f.status IN ('pending', 'approved', 'completed') THEN f.funder_id END) AS funder_count
+      FROM umkm_business b
+      JOIN umkm_owners o ON o.id = b.owner_id
+      LEFT JOIN fundings f ON f.business_id = b.id
+      WHERE o.user_id = ?
+      GROUP BY b.id, b.name, b.funding_target
+      LIMIT 1`,
+      [req.user.sub]
+    );
+
+    const business = businessRows[0];
+    if (!business) {
+      return res.status(404).json({ message: "Profil bisnis UMKM tidak ditemukan." });
+    }
+
+    const [funderRows] = await getPool().query(
+      `SELECT
+        f.funder_id,
+        COALESCE(NULLIF(fd.organization_name, ''), u.name, 'Funder MicroFun') AS funder_name,
+        SUM(f.amount) AS total_funded,
+        MAX(f.updated_at) AS last_funded_at
+      FROM fundings f
+      LEFT JOIN funders fd ON fd.id = f.funder_id
+      LEFT JOIN users u ON u.id = fd.user_id
+      WHERE f.business_id = ?
+        AND f.status IN ('pending', 'approved', 'completed')
+      GROUP BY f.funder_id, fd.organization_name, u.name
+      ORDER BY last_funded_at DESC, total_funded DESC
+      LIMIT 20`,
+      [business.id]
+    );
+
+    const target = Number(business.funding_target || 0);
+    const funded = Number(business.funded_amount || 0);
+    const progress = target > 0 ? Math.min(100, Math.round((funded / target) * 100)) : 0;
+
+    return res.json({
+      summary: {
+        businessId: business.id,
+        businessName: business.name,
+        fundingTarget: target,
+        fundedAmount: funded,
+        progress,
+        funderCount: Number(business.funder_count || 0),
+      },
+      funders: funderRows.map((row) => ({
+        funderId: row.funder_id,
+        name: row.funder_name,
+        totalFunded: Number(row.total_funded || 0),
+        lastFundedAt: row.last_funded_at,
+      })),
+    });
+  } catch (error) {
+    console.error("Error in listUmkmFundingHistory:", error);
+    return res.status(500).json({ message: "Gagal mengambil funding history UMKM." });
+  }
+}
+
 async function findFundingUmkm(id) {
   const [rows] = await getPool().query(
     `SELECT
@@ -263,7 +333,7 @@ async function findFundingUmkm(id) {
       b.business_goals,
       b.verified,
       u.name AS owner_name,
-      COALESCE(SUM(CASE WHEN f.status IN ('approved', 'completed') THEN f.amount ELSE 0 END), 0) AS funded_amount
+      COALESCE(SUM(CASE WHEN f.status IN ('pending', 'approved', 'completed') THEN f.amount ELSE 0 END), 0) AS funded_amount
     FROM umkm_business b
     JOIN umkm_owners o ON o.id = b.owner_id
     JOIN users u ON u.id = o.user_id
@@ -321,4 +391,5 @@ module.exports = {
   getFundingUmkm,
   createFunding,
   listFundingHistory,
+  listUmkmFundingHistory,
 };

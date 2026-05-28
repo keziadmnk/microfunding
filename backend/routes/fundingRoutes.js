@@ -4,6 +4,7 @@ const {
   createFunding,
   getFundingUmkm,
   listFundingHistory,
+  listUmkmFundingHistory,
   listRecommendedUmkms,
 } = require("../controller/fundingController");
 const authMiddleware = require("../middleware/authMiddleware");
@@ -12,6 +13,7 @@ const router = express.Router();
 
 router.get("/umkms", authMiddleware, listRecommendedUmkms);
 router.get("/history", authMiddleware, listFundingHistory);
+router.get("/umkm/history", authMiddleware, listUmkmFundingHistory);
 router.get("/umkms/:id", authMiddleware, getFundingUmkm);
 router.post("/umkms/:id/fund", authMiddleware, createFunding);
 

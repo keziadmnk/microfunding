@@ -1001,6 +1001,7 @@
 }
 
 .funder-profile-field input,
+.funder-profile-field select,
 .funder-profile-field textarea {
   width: 100%;
   min-height: 44px;
@@ -1018,6 +1019,7 @@
 }
 
 .funder-profile-field input:focus,
+.funder-profile-field select:focus,
 .funder-profile-field textarea:focus {
   outline: none;
   border-color: #925e25;
@@ -1025,6 +1027,7 @@
 }
 
 .funder-profile-field input:disabled,
+.funder-profile-field select:disabled,
 .funder-profile-field textarea:disabled {
   background: #f4f5f6;
   color: #50565a;

@@ -1,5 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
   getCurrentUser,
@@ -9,6 +9,7 @@ import {
 } from '../services/authService'
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
 import FunderProfileForm from '../components/dashboard/FunderProfileForm'
+import ForumPage from '../components/dashboard/ForumPage'
 import './FunderDashboardPage.css'
 
 const roleDashboardMap = {
@@ -36,6 +37,7 @@ const funderNavItems = [
   { label: 'Funding', icon: 'dashboard' },
   { label: 'AI Recommendation', icon: 'psychology' },
   { label: 'Funding History', icon: 'history' },
+  { label: 'Forum', icon: 'forum' },
   { label: 'Profile', icon: 'account_circle' },
 ]
 
@@ -48,6 +50,7 @@ const fallbackImages = [
 
 function FunderDashboardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(getStoredUser())
   const [error, setError] = useState('')
@@ -56,7 +59,7 @@ function FunderDashboardPage() {
   const [riskLevels, setRiskLevels] = useState([])
   const [fundingTarget, setFundingTarget] = useState('')
   const [supportType, setSupportType] = useState('')
-  const [activeTab, setActiveTab] = useState('Funding')
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Funding')
   const [msmeProfiles, setMsmeProfiles] = useState([])
   const [msmeLoading, setMsmeLoading] = useState(false)
   const [msmeError, setMsmeError] = useState('')
@@ -312,11 +315,9 @@ function FunderDashboardPage() {
       <main className="funder-main" id="funding">
         <header className="funder-dashboard-topbar">
           <div>
-            <h2>{activeTab === 'Profile' ? 'Pengaturan Profil Funder' : `Welcome back, ${displayName} (Funder)`}</h2>
+            <h2>{getFunderPageTitle(activeTab, displayName)}</h2>
             <p>
-              {activeTab === 'Profile'
-                ? 'Kelola informasi profil, budget pendanaan, minat investasi, dan keahlian Anda.'
-                : 'Temukan UMKM potensial, jalankan rekomendasi AI, dan pantau peluang pendanaan.'}
+              {getFunderPageSubtitle(activeTab)}
             </p>
           </div>
 
@@ -349,6 +350,8 @@ function FunderDashboardPage() {
             onRefresh={fetchFundingHistory}
             pending={fundingHistory.pending}
           />
+        ) : activeTab === 'Forum' ? (
+          <ForumPage currentUser={user} userLocation={user?.location || user?.address} />
         ) : activeTab === 'Funding' || activeTab === 'AI Recommendation' ? (
           <>
         <section className="funder-ai-card" id="ai-recommendation">
@@ -481,7 +484,7 @@ function FunderDashboardPage() {
           <div>
             <p>© 2024 MicroFun. Impacting Indonesian MSMEs through Global Connection.</p>
             <nav aria-label="Footer links">
-              <a href="#reports">Impact Reports</a>
+              <a href="#forum">Forum</a>
               <a href="#legal">Legal Information</a>
               <a href="#privacy">Privacy Policy</a>
             </nav>
@@ -848,6 +851,22 @@ function formatDate(value) {
     month: 'short',
     year: 'numeric',
   }).format(new Date(value))
+}
+
+function getFunderPageTitle(activeTab, displayName) {
+  if (activeTab === 'Profile') return 'Pengaturan Profil Funder'
+  if (activeTab === 'Forum') return 'Forum'
+  if (activeTab === 'Funding History') return 'Funding History'
+  if (activeTab === 'AI Recommendation') return 'AI Recommendation'
+  return `Welcome back, ${displayName} (Funder)`
+}
+
+function getFunderPageSubtitle(activeTab) {
+  if (activeTab === 'Profile') return 'Kelola informasi profil, budget pendanaan, minat investasi, dan keahlian Anda.'
+  if (activeTab === 'Forum') return 'Share knowledge, discuss challenges, and build networks across MicroFun.'
+  if (activeTab === 'Funding History') return 'Kelola pengajuan pendanaan dan pantau riwayat investasi Anda.'
+  if (activeTab === 'AI Recommendation') return 'Gunakan AI untuk menemukan UMKM yang paling selaras dengan fokus pendanaan Anda.'
+  return 'Temukan UMKM potensial, jalankan rekomendasi AI, dan pantau peluang pendanaan.'
 }
 
 function getInitials(name = '') {

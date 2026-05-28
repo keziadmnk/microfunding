@@ -2,6 +2,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import DashboardSidebar from '../components/dashboard/DashboardSidebar'
+import ForumPage from '../components/dashboard/ForumPage'
+import { WORLD_CITY_OPTIONS, findCityByLabel } from '../components/dashboard/locationOptions'
 import {
   getCurrentUser,
   getStoredUser,
@@ -52,7 +54,8 @@ const mentorNavItems = [
     ],
   },
   { label: 'Messages', icon: 'chat' },
-  { label: 'Profile Mentor', icon: 'account_circle' },
+  { label: 'Forum', icon: 'forum' },
+  { label: 'Profile', icon: 'account_circle' },
 ]
 
 const defaultProfile = {
@@ -62,6 +65,11 @@ const defaultProfile = {
   experience: '',
   achievements: '',
   about: '',
+  location: '',
+  address: '',
+  latitude: '',
+  longitude: '',
+  profile_photo: '',
   skills: [],
 }
 
@@ -72,7 +80,8 @@ const mentorTabRoutes = {
   'Jadwal Sesi': '/dashboard/mentor',
   'Task & Action Plan': '/dashboard/mentor/mentoring/tasks',
   Messages: '/dashboard/mentor/messages',
-  'Profile Mentor': '/dashboard/mentor',
+  Forum: '/dashboard/mentor',
+  Profile: '/dashboard/mentor',
 }
 
 const mentorRouteTabs = {
@@ -278,8 +287,6 @@ function MentorDashboardPage() {
 
         {activeTab === 'Profile' ? (
           <MentorProfileForm key={`${profile.id || 'mentor'}-${profile.email}`} profile={profile} onSave={handleSaveProfile} />
-        ) : activeTab === 'Profile Mentor' ? (
-          <MentorProfileForm key={`${profile.id || 'mentor'}-${profile.email}`} profile={profile} onSave={handleSaveProfile} />
         ) : activeTab === 'Dashboard' ? (
           <MentorDashboardHome
             displayName={displayName}
@@ -292,6 +299,8 @@ function MentorDashboardPage() {
           <MentorRequestsView requests={requests} onOpenAccept={(request) => openRequestModal(request, 'accept')} onOpenReject={(request) => openRequestModal(request, 'reject')} />
         ) : activeTab === 'Messages' ? (
           <MentorMessagesView workspaces={workspaces} />
+        ) : activeTab === 'Forum' ? (
+          <ForumPage currentUser={user} userLocation={user?.location || user?.address} />
         ) : activeTab === 'Mentee Saya' ? (
           <MentorMenteesView requests={requests} workspaces={workspaces} />
         ) : activeTab === 'Workspace Mentor' ? (
@@ -326,9 +335,33 @@ function MentorProfileForm({ onSave, profile }) {
   const [form, setForm] = useState(profile)
   const [skillInput, setSkillInput] = useState('')
   const [isEditing, setIsEditing] = useState(false)
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+  const photoPreview = getProfilePhotoUrl(form.profile_photo, apiBaseUrl)
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function updateLocation(value) {
+    const city = findCityByLabel(value)
+    setForm((current) => ({
+      ...current,
+      location: city?.label || '',
+      latitude: city?.latitude || '',
+      longitude: city?.longitude || '',
+    }))
+  }
+
+  function handlePhotoChange(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) return
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      updateField('profile_photo', reader.result)
+    }
+    reader.readAsDataURL(file)
   }
 
   function addSkill() {
@@ -369,6 +402,16 @@ function MentorProfileForm({ onSave, profile }) {
             <p>Data identitas mentor yang terlihat oleh UMKM.</p>
           </div>
         </div>
+        <div className="mentor-profile-photo-row">
+          <div className="mentor-profile-photo">
+            {photoPreview ? <img src={photoPreview} alt="Foto profil mentor" /> : <span>{getInitials(form.name)}</span>}
+          </div>
+          <label className="mentor-edit-btn">
+            <span className="material-symbols-outlined">upload_file</span>
+            Upload Foto Profil
+            <input type="file" accept="image/png,image/jpeg,image/gif" hidden disabled={!isEditing} onChange={handlePhotoChange} />
+          </label>
+        </div>
         <label>
           Nama
           <input disabled={!isEditing} value={form.name || ''} onChange={(event) => updateField('name', event.target.value)} />
@@ -380,6 +423,19 @@ function MentorProfileForm({ onSave, profile }) {
         <label>
           Bidang Keahlian / Pekerjaan Saat Ini
           <input disabled={!isEditing} value={form.current_job || ''} onChange={(event) => updateField('current_job', event.target.value)} placeholder="Contoh: Marketing strategist, Finance mentor" />
+        </label>
+        <label>
+          Lokasi
+          <select disabled={!isEditing} value={form.location || ''} onChange={(event) => updateLocation(event.target.value)}>
+            <option value="">Pilih kota lokasi mentor</option>
+            {WORLD_CITY_OPTIONS.map((city) => (
+              <option key={city.label} value={city.label}>{city.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          Alamat Detail
+          <textarea disabled={!isEditing} value={form.address || ''} onChange={(event) => updateField('address', event.target.value)} placeholder="Contoh: Jl. Merdeka No. 12, lantai 2" />
         </label>
         <label>
           Bio Singkat
@@ -3105,6 +3161,11 @@ function getInitials(name = '') {
   return name.split(' ').filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase() || 'MT'
 }
 
+function getProfilePhotoUrl(photo, apiBaseUrl) {
+  if (!photo) return ''
+  return String(photo).startsWith('/') ? `${apiBaseUrl}${photo}` : photo
+}
+
 function getRequestStatusMeta(status = 'pending') {
   const normalized = status.toLowerCase()
   if (normalized === 'accepted') return { className: 'accepted', label: 'Accepted' }
@@ -3132,7 +3193,8 @@ function getMentorDashboardStats(requests, profile) {
 }
 
 function getMentorPageTitle(activeTab, displayName) {
-  if (activeTab === 'Profile' || activeTab === 'Profile Mentor') return 'Profil Mentor'
+  if (activeTab === 'Profile') return 'Profile'
+  if (activeTab === 'Forum') return 'Forum'
   if (activeTab === 'Request Masuk' || activeTab === 'Mentee Saya' || activeTab === 'Jadwal Sesi' || activeTab === 'Task & Action Plan' || activeTab === 'Messages') return 'Mentoring'
   if (activeTab === 'Workspace Mentor') return 'Workspace Mentor'
   if (isMentorSessionTab(activeTab)) return activeTab
@@ -3140,7 +3202,8 @@ function getMentorPageTitle(activeTab, displayName) {
 }
 
 function getMentorPageSubtitle(activeTab) {
-  if (activeTab === 'Profile' || activeTab === 'Profile Mentor') return 'Lengkapi keahlian, prestasi, dan pengalaman Anda.'
+  if (activeTab === 'Profile') return 'Lengkapi lokasi, alamat, foto profil, keahlian, prestasi, dan pengalaman Anda.'
+  if (activeTab === 'Forum') return 'Share knowledge, discuss challenges, and build networks across MicroFun.'
   if (activeTab === 'Request Masuk') return 'Review dan kelola request bimbingan dari UMKM. Pilih request yang paling sesuai dengan keahlian Anda.'
   if (activeTab === 'Mentee Saya') return 'Daftar UMKM yang request mentoringnya sudah diterima, aktif, selesai, atau dibatalkan.'
   if (activeTab === 'Workspace Mentor') return 'Workspace detail akan dibuat pada tahap berikutnya.'

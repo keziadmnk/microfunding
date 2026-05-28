@@ -1,4 +1,29 @@
+const fs = require("fs");
+const path = require("path");
 const { getPool } = require("../src/config/db");
+
+function saveBase64Image(base64Str, userId) {
+  const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error("Format file gambar tidak valid.");
+  }
+
+  const mimeType = matches[1];
+  const buffer = Buffer.from(matches[2], "base64");
+  if (buffer.length / (1024 * 1024) > 2) {
+    throw new Error("Ukuran file gambar maksimal 2MB.");
+  }
+
+  let ext = "png";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) ext = "jpg";
+  if (mimeType.includes("gif")) ext = "gif";
+
+  const filename = `profile_${userId}_${Date.now()}.${ext}`;
+  const uploadsDir = path.join(__dirname, "..", "uploads");
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+  return `/uploads/${filename}`;
+}
 
 const mentorRequestSelect = `
   SELECT
@@ -42,6 +67,7 @@ async function getMentorProfile(req, res) {
   }
 
   try {
+    await ensureUserProfileColumns();
     const profile = await findMentorProfileByUserId(req.user.sub);
     if (!profile) return res.status(404).json({ message: "Profil mentor tidak ditemukan." });
 
@@ -59,6 +85,11 @@ async function updateMentorProfile(req, res) {
 
   const {
     name,
+    location = null,
+    address = null,
+    latitude = null,
+    longitude = null,
+    profile_photo = null,
     current_job = "",
     experience = "",
     about = "",
@@ -70,6 +101,7 @@ async function updateMentorProfile(req, res) {
 
   try {
     await connection.beginTransaction();
+    await ensureUserProfileColumns(connection);
 
     const [mentors] = await connection.query("SELECT id FROM mentors WHERE user_id = ? LIMIT 1", [req.user.sub]);
     const mentor = mentors[0];
@@ -80,13 +112,40 @@ async function updateMentorProfile(req, res) {
 
     const now = new Date();
 
-    if (name) {
-      await connection.query("UPDATE users SET name = ?, updated_at = ? WHERE id = ?", [
-        String(name).trim(),
+    const [[dbUser]] = await connection.query("SELECT profile_photo FROM users WHERE id = ? LIMIT 1", [req.user.sub]);
+    let savedPhotoPath = dbUser?.profile_photo || null;
+    if (profile_photo && String(profile_photo).startsWith("data:image/")) {
+      try {
+        savedPhotoPath = saveBase64Image(profile_photo, req.user.sub);
+      } catch (uploadError) {
+        await connection.rollback();
+        return res.status(400).json({ message: uploadError.message });
+      }
+    } else if (profile_photo === null || profile_photo === "") {
+      savedPhotoPath = null;
+    }
+
+    await connection.query(
+      `UPDATE users SET
+        name = COALESCE(NULLIF(?, ''), name),
+        location = ?,
+        address = ?,
+        latitude = ?,
+        longitude = ?,
+        profile_photo = ?,
+        updated_at = ?
+      WHERE id = ?`,
+      [
+        name ? String(name).trim() : "",
+        location || null,
+        address || null,
+        parseCoordinate(latitude),
+        parseCoordinate(longitude),
+        savedPhotoPath,
         now,
         req.user.sub,
-      ]);
-    }
+      ]
+    );
 
     await connection.query(
       `UPDATE mentors
@@ -295,6 +354,10 @@ async function findMentorProfileByUserId(userId) {
       u.name,
       u.email,
       u.profile_photo,
+      u.location,
+      u.address,
+      u.latitude,
+      u.longitude,
       m.current_job,
       m.experience,
       m.about,
@@ -306,7 +369,7 @@ async function findMentorProfileByUserId(userId) {
     JOIN users u ON u.id = m.user_id
     LEFT JOIN mentor_skills ms ON ms.mentor_id = m.id
     WHERE u.id = ?
-    GROUP BY m.id, u.name, u.email, u.profile_photo, m.current_job, m.experience, m.about, m.achievements, m.reputation_score, m.verified
+    GROUP BY m.id, u.name, u.email, u.profile_photo, u.location, u.address, u.latitude, u.longitude, m.current_job, m.experience, m.about, m.achievements, m.reputation_score, m.verified
     LIMIT 1`,
     [userId]
   );
@@ -320,6 +383,10 @@ function normalizeMentorRow(row) {
     name: row.name,
     email: row.email,
     profile_photo: row.profile_photo,
+    location: row.location || "",
+    address: row.address || "",
+    latitude: row.latitude === null || row.latitude === undefined ? "" : row.latitude,
+    longitude: row.longitude === null || row.longitude === undefined ? "" : row.longitude,
     current_job: row.current_job || "",
     experience: row.experience || "",
     about: row.about || "",
@@ -365,6 +432,33 @@ function normalizeMentorRequestRow(row) {
       verified: Boolean(row.business_verified),
     },
   };
+}
+
+async function ensureUserProfileColumns(connection = getPool()) {
+  const [columns] = await connection.query("SHOW COLUMNS FROM users");
+  const existing = new Set(columns.map((column) => column.Field));
+
+  if (!existing.has("location")) {
+    await connection.query("ALTER TABLE users ADD COLUMN location VARCHAR(255) NULL AFTER role");
+  }
+
+  if (!existing.has("address")) {
+    await connection.query("ALTER TABLE users ADD COLUMN address VARCHAR(255) NULL AFTER location");
+  }
+
+  if (!existing.has("latitude")) {
+    await connection.query("ALTER TABLE users ADD COLUMN latitude DECIMAL(10, 7) NULL AFTER address");
+  }
+
+  if (!existing.has("longitude")) {
+    await connection.query("ALTER TABLE users ADD COLUMN longitude DECIMAL(10, 7) NULL AFTER latitude");
+  }
+}
+
+function parseCoordinate(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 module.exports = {

@@ -48,9 +48,10 @@ async function getProfile(req, res) {
   }
 
   try {
+    await ensureBusinessCoordinateColumns();
     // 0. Fetch user record from users table
     const [userRows] = await getPool().query(
-      "SELECT id, name, email FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, name, email, address FROM users WHERE id = ? LIMIT 1",
       [userId]
     );
     const dbUser = userRows[0];
@@ -97,6 +98,7 @@ async function getProfile(req, res) {
       profile: {
         userId,
         email: dbUser.email,
+        address: dbUser.address,
         ownerId: owner.id,
         nik: owner.nik,
         npwp: owner.npwp,
@@ -107,6 +109,8 @@ async function getProfile(req, res) {
         other_category: business.other_category,
         description: business.description,
         location: business.location,
+        latitude: business.latitude,
+        longitude: business.longitude,
         logo: business.logo,
         businessVerified: business.verified, // Business status
         year_established: business.year_established,
@@ -137,6 +141,9 @@ async function updateProfile(req, res) {
     category,
     other_category = null,
     location,
+    address = null,
+    latitude = null,
+    longitude = null,
     year_established = null,
     employee_count = null,
     monthly_revenue = null,
@@ -162,6 +169,8 @@ async function updateProfile(req, res) {
 
   try {
     await connection.beginTransaction();
+    await ensureBusinessCoordinateColumns(connection);
+    await ensureUserAddressColumn(connection);
 
     // 1. Get owner ID
     const [owners] = await connection.query(
@@ -207,11 +216,18 @@ async function updateProfile(req, res) {
     const legalDocsStr = JSON.stringify(legal_documents);
 
     await connection.query(
+      "UPDATE users SET address = ?, updated_at = ? WHERE id = ?",
+      [address || null, now, userId]
+    );
+
+    await connection.query(
       `UPDATE umkm_business SET 
         name = ?, 
         category = ?, 
         other_category = ?, 
         location = ?, 
+        latitude = ?,
+        longitude = ?,
         description = ?, 
         logo = ?, 
         year_established = ?, 
@@ -228,6 +244,8 @@ async function updateProfile(req, res) {
         category,
         other_category,
         location,
+        parseCoordinate(latitude),
+        parseCoordinate(longitude),
         description,
         savedLogoPath,
         year_established ? parseInt(year_established, 10) : null,
@@ -274,4 +292,32 @@ function parseLegalDocuments(value) {
   } catch (_) {
     return [];
   }
+}
+
+async function ensureBusinessCoordinateColumns(connection = getPool()) {
+  const [columns] = await connection.query("SHOW COLUMNS FROM umkm_business");
+  const existing = new Set(columns.map((column) => column.Field));
+
+  if (!existing.has("latitude")) {
+    await connection.query("ALTER TABLE umkm_business ADD COLUMN latitude DECIMAL(10, 7) NULL AFTER location");
+  }
+
+  if (!existing.has("longitude")) {
+    await connection.query("ALTER TABLE umkm_business ADD COLUMN longitude DECIMAL(10, 7) NULL AFTER latitude");
+  }
+}
+
+async function ensureUserAddressColumn(connection = getPool()) {
+  const [columns] = await connection.query("SHOW COLUMNS FROM users");
+  const existing = new Set(columns.map((column) => column.Field));
+
+  if (!existing.has("address")) {
+    await connection.query("ALTER TABLE users ADD COLUMN address VARCHAR(255) NULL AFTER role");
+  }
+}
+
+function parseCoordinate(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }

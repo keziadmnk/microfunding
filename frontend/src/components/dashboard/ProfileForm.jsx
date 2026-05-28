@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { WORLD_CITY_OPTIONS, findCityByLabel } from './locationOptions'
 
 const CATEGORY_OPTIONS = [
   { value: 'kuliner', label: 'Kuliner' },
@@ -51,6 +52,9 @@ function ProfileForm({ onCancel }) {
     category: '',
     other_category: '',
     location: '',
+    address: '',
+    latitude: '',
+    longitude: '',
     year_established: '',
     employee_count: '',
     monthly_revenue: '',
@@ -67,6 +71,8 @@ function ProfileForm({ onCancel }) {
   const token = localStorage.getItem('microfun_auth_token')
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
   const fieldsDisabled = saving || !isEditing
+  // Funding target is locked until UMKM is verified (verified === 1)
+  const fundingLocked = formData.verified !== 1
 
   const getLogoPreviewUrl = useCallback((logo) => {
     if (!logo) return null
@@ -92,6 +98,9 @@ function ProfileForm({ onCancel }) {
           category: p.category || '',
           other_category: p.other_category || '',
           location: p.location || '',
+          address: p.address || '',
+          latitude: p.latitude || '',
+          longitude: p.longitude || '',
           year_established: p.year_established || '',
           employee_count: p.employee_count || '',
           monthly_revenue: p.monthly_revenue || '',
@@ -124,6 +133,18 @@ function ProfileForm({ onCancel }) {
 
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleLocationChange = (e) => {
+    if (!isEditing) return
+
+    const city = findCityByLabel(e.target.value)
+    setFormData((prev) => ({
+      ...prev,
+      location: city?.label || '',
+      latitude: city?.latitude || '',
+      longitude: city?.longitude || '',
+    }))
   }
 
   const handleCheckboxChange = (id) => {
@@ -174,8 +195,8 @@ function ProfileForm({ onCancel }) {
       setMessage({ text: 'Sektor/Kategori wajib dipilih.', type: 'error' })
       return
     }
-    if (!formData.location.trim()) {
-      setMessage({ text: 'Lokasi UMKM wajib diisi.', type: 'error' })
+    if (!findCityByLabel(formData.location)) {
+      setMessage({ text: 'Lokasi UMKM wajib dipilih dari daftar kota.', type: 'error' })
       return
     }
     if (!formData.description.trim()) {
@@ -405,16 +426,37 @@ function ProfileForm({ onCancel }) {
               <label htmlFor="location-input" className="form-label">
                 Lokasi UMKM <span className="required-star">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 id="location-input"
                 name="location"
                 value={formData.location}
-                onChange={handleInputChange}
+                onChange={handleLocationChange}
                 className="form-control"
-                placeholder="Contoh: Padang, Sumatera Barat"
                 disabled={fieldsDisabled}
                 required
+              >
+                <option value="">Pilih kota lokasi UMKM</option>
+                {WORLD_CITY_OPTIONS.map((city) => (
+                  <option key={city.label} value={city.label}>
+                    {city.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="address-input" className="form-label">
+                Alamat Detail
+              </label>
+              <textarea
+                id="address-input"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="form-control text-area-control"
+                rows="3"
+                placeholder="Contoh: Jl. Sudirman No. 10, Kecamatan Tanah Abang"
+                disabled={fieldsDisabled}
               />
             </div>
 
@@ -561,21 +603,35 @@ function ProfileForm({ onCancel }) {
           </div>
 
           {/* Target Pendanaan Card (AI matching) */}
-          <div className="profile-card profile-funding-card">
+          <div className={`profile-card profile-funding-card${fundingLocked ? ' profile-funding-locked' : ''}`}>
             <div className="profile-card-header">
               <span className="material-symbols-outlined card-header-icon">finance_mode</span>
               <h3>Target Pendanaan (Rekomendasi AI)</h3>
             </div>
-            <div className="ai-matching-banner">
-              <span className="material-symbols-outlined banner-icon">psychology</span>
-              <div className="banner-copy">
-                <h5>Digunakan oleh AI Discovery Engine</h5>
-                <p>
-                  Isi bagian ini secara detail agar AI kami dapat mencocokkan UMKM Anda dengan funder
-                  internasional & investor diaspora yang paling sesuai!
-                </p>
+
+            {fundingLocked ? (
+              <div className="profile-funding-lock-banner">
+                <span className="material-symbols-outlined">lock</span>
+                <div>
+                  <h5>Fitur Terkunci</h5>
+                  <p>
+                    Lengkapi profil UMKM Anda dan tunggu verifikasi dari admin sebelum mengisi target pendanaan.
+                    Setelah diverifikasi, Anda dapat mengatur target pendanaan dan terdaftar dalam rekomendasi AI Funder.
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="ai-matching-banner">
+                  <span className="material-symbols-outlined banner-icon">psychology</span>
+                  <div className="banner-copy">
+                    <h5>Digunakan oleh AI Discovery Engine</h5>
+                    <p>
+                      Isi bagian ini secara detail agar AI kami dapat mencocokkan UMKM Anda dengan funder
+                      internasional &amp; investor diaspora yang paling sesuai!
+                    </p>
+                  </div>
+                </div>
 
             {/* Target Dana */}
             <div className="form-group">
@@ -632,15 +688,17 @@ function ProfileForm({ onCancel }) {
               />
             </div>
 
-            {/* AI Note */}
-            <div className="ai-matching-info-banner">
-              <span className="material-symbols-outlined info-icon">info</span>
-              <p>
-                <strong>Catatan:</strong> UMKM yang melengkapi bagian Target Pendanaan akan secara
-                otomatis terdaftar dalam <strong>Halaman Rekomendasi AI Funder</strong>, daftar
-                permintaan pendanaan terbuka, serta <strong>Discovery Engine Platform RantauHub</strong>.
-              </p>
-            </div>
+                {/* AI Note */}
+                <div className="ai-matching-info-banner">
+                  <span className="material-symbols-outlined info-icon">info</span>
+                  <p>
+                    <strong>Catatan:</strong> UMKM yang melengkapi bagian Target Pendanaan akan secara
+                    otomatis terdaftar dalam <strong>Halaman Rekomendasi AI Funder</strong>, daftar
+                    permintaan pendanaan terbuka, serta <strong>Discovery Engine Platform RantauHub</strong>.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

@@ -5,9 +5,8 @@ const defaultNavItems = [
   { label: 'Dashboard', icon: 'dashboard' },
   { label: 'AI Business Advisor', icon: 'smart_toy' },
   { label: 'Mentoring', icon: 'video_chat' },
-  { label: 'Impact Reports', icon: 'monitoring' },
   { label: 'Financials', icon: 'payments' },
-  { label: 'Network', icon: 'group' },
+  { label: 'Forum', icon: 'forum' },
   { label: 'Profile', icon: 'storefront' },
 ]
 

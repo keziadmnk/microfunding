@@ -12,6 +12,7 @@ import FunderInsightPage from './pages/FunderInsightPage'
 import MentorDashboardPage from './pages/MentorDashboardPage'
 import MentorRequestDetailPage from './pages/MentorRequestDetailPage'
 import RoleDashboardPage from './pages/RoleDashboardPage'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 import RoleGuard from './components/RoleGuard'
 import { getStoredUser, isAuthenticated } from './services/authService'
 
@@ -168,7 +169,7 @@ function App() {
           path="/dashboard/admin"
           element={
             <RoleGuard allowedRoles={['admin']}>
-              <RoleDashboardPage role="admin" />
+              <AdminDashboardPage />
             </RoleGuard>
           }
         />

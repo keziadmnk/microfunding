@@ -46,8 +46,9 @@ async function getFunderProfile(req, res) {
   }
 
   try {
+    await ensureUserCoordinateColumns();
     const [userRows] = await getPool().query(
-      `SELECT id, name, email, email_verified_at, phone, address, bio, profile_photo
+      `SELECT id, name, email, email_verified_at, phone, location, address, latitude, longitude, bio, profile_photo
        FROM users WHERE id = ? LIMIT 1`,
       [userId]
     );
@@ -86,7 +87,10 @@ async function getFunderProfile(req, res) {
         email: dbUser.email,
         email_verified_at: dbUser.email_verified_at,
         phone: dbUser.phone,
+        location: dbUser.location,
         address: dbUser.address,
+        latitude: dbUser.latitude,
+        longitude: dbUser.longitude,
         bio: dbUser.bio,
         profile_photo: dbUser.profile_photo,
         organization_name: funder.organization_name,
@@ -114,7 +118,10 @@ async function updateFunderProfile(req, res) {
   const {
     name,
     phone = null,
+    location = null,
     address = null,
+    latitude = null,
+    longitude = null,
     bio = null,
     profile_photo = null,
     funding_min = null,
@@ -136,6 +143,7 @@ async function updateFunderProfile(req, res) {
 
   try {
     await connection.beginTransaction();
+    await ensureUserCoordinateColumns(connection);
 
     const [userRows] = await connection.query(
       "SELECT profile_photo FROM users WHERE id = ? LIMIT 1",
@@ -180,7 +188,10 @@ async function updateFunderProfile(req, res) {
       `UPDATE users SET
         name = ?,
         phone = ?,
+        location = ?,
         address = ?,
+        latitude = ?,
+        longitude = ?,
         bio = ?,
         profile_photo = ?,
         updated_at = ?
@@ -188,7 +199,10 @@ async function updateFunderProfile(req, res) {
       [
         String(name).trim(),
         phone || null,
+        location || null,
         address || null,
+        parseCoordinate(latitude),
+        parseCoordinate(longitude),
         bio || null,
         savedPhotoPath,
         now,
@@ -241,6 +255,29 @@ function parseJsonArray(value) {
   } catch (_) {
     return [];
   }
+}
+
+async function ensureUserCoordinateColumns(connection = getPool()) {
+  const [columns] = await connection.query("SHOW COLUMNS FROM users");
+  const existing = new Set(columns.map((column) => column.Field));
+
+  if (!existing.has("location")) {
+    await connection.query("ALTER TABLE users ADD COLUMN location VARCHAR(255) NULL AFTER role");
+  }
+
+  if (!existing.has("latitude")) {
+    await connection.query("ALTER TABLE users ADD COLUMN latitude DECIMAL(10, 7) NULL AFTER address");
+  }
+
+  if (!existing.has("longitude")) {
+    await connection.query("ALTER TABLE users ADD COLUMN longitude DECIMAL(10, 7) NULL AFTER latitude");
+  }
+}
+
+function parseCoordinate(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 module.exports = {
