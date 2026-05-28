@@ -156,9 +156,15 @@ function UmkmDashboardPage() {
   const [selectedMentor, setSelectedMentor] = useState(null)
   const [requestMessage, setRequestMessage] = useState('')
   const [requestSubmitting, setRequestSubmitting] = useState(false)
-  const [fundingHistory, setFundingHistory] = useState({ summary: null, funders: [] })
+  const [fundingHistory, setFundingHistory] = useState({ summary: null, funders: [], pendingRequests: [] })
   const [fundingHistoryLoading, setFundingHistoryLoading] = useState(false)
   const [fundingHistoryError, setFundingHistoryError] = useState('')
+  const [availableFunders, setAvailableFunders] = useState([])
+  const [fundersLoading, setFundersLoading] = useState(false)
+  const [fundersError, setFundersError] = useState('')
+  const [selectedFunder, setSelectedFunder] = useState(null)
+  const [funderRequestMessage, setFunderRequestMessage] = useState('')
+  const [funderRequestSubmitting, setFunderRequestSubmitting] = useState(false)
 
   const fetchMentors = useCallback(async () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
@@ -195,12 +201,37 @@ function UmkmDashboardPage() {
       setFundingHistory({
         summary: payload.summary || null,
         funders: payload.funders || [],
+        pendingRequests: payload.pendingRequests || [],
       })
     } catch (err) {
       setFundingHistoryError(err.message)
-      setFundingHistory({ summary: null, funders: [] })
+      setFundingHistory({ summary: null, funders: [], pendingRequests: [] })
     } finally {
       setFundingHistoryLoading(false)
+    }
+  }, [])
+
+  const fetchAvailableFunders = useCallback(async () => {
+    const token = localStorage.getItem('microfun_auth_token')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
+    setFundersLoading(true)
+    setFundersError('')
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/funding/funders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.message || 'Gagal memuat daftar funder.')
+      setAvailableFunders((payload.data || []).map(normalizeFunderForUmkm))
+    } catch (err) {
+      setFundersError(err.message)
+      setAvailableFunders([])
+    } finally {
+      setFundersLoading(false)
     }
   }, [])
 
@@ -223,9 +254,13 @@ function UmkmDashboardPage() {
           return
         }
         setUser(profile)
+        if (Number(profile.businessVerified ?? profile.ownerVerified ?? 0) !== 1) {
+          setActiveTabState('Profile')
+        }
         setError('')
         fetchMentors()
         fetchFundingHistory()
+        fetchAvailableFunders()
       })
       .catch((err) => {
         setError(err.message || 'Session expired, please login again.')
@@ -235,7 +270,7 @@ function UmkmDashboardPage() {
       .finally(() => {
         setLoading(false)
       })
-  }, [fetchFundingHistory, fetchMentors, navigate])
+  }, [fetchAvailableFunders, fetchFundingHistory, fetchMentors, navigate])
 
   function handleTabChange(tab) {
     setActiveTabState(tab)
@@ -246,6 +281,8 @@ function UmkmDashboardPage() {
   }
 
   const displayName = useMemo(() => user?.name || 'UMKM', [user])
+  const isVerificationLocked = user?.role === 'umkm_owner' && Number(user?.businessVerified ?? user?.ownerVerified ?? 0) !== 1
+  const shouldShowLockedFeature = isVerificationLocked && activeTab !== 'Profile'
   const topbarCopy = useMemo(() => {
     if (activeTab === 'Profile') {
       return {
@@ -346,6 +383,36 @@ function UmkmDashboardPage() {
     }
   }
 
+  async function handleFunderRequest(formData) {
+    const token = localStorage.getItem('microfun_auth_token')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
+    setFunderRequestMessage('')
+    setFundersError('')
+    setFunderRequestSubmitting(true)
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/funding/funders/${selectedFunder.id}/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.message || 'Gagal mengirim request funding.')
+
+      setFunderRequestMessage(payload.message || 'Request funding berhasil dikirim.')
+      setSelectedFunder(null)
+      fetchFundingHistory()
+    } catch (err) {
+      setFundersError(err.message)
+    } finally {
+      setFunderRequestSubmitting(false)
+    }
+  }
+
   async function handleAiMatching() {
     const token = localStorage.getItem('microfun_auth_token')
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
@@ -381,6 +448,7 @@ function UmkmDashboardPage() {
       <DashboardSidebar
         onLogout={handleLogout}
         activeTab={activeTab}
+        ctaLabel=""
         navItems={umkmNavItems}
         onTabChange={handleTabChange}
       />
@@ -394,19 +462,22 @@ function UmkmDashboardPage() {
 
         {error && <p className="dashboard-error">{error}</p>}
 
-        {activeTab === 'Profile' ? (
+        {shouldShowLockedFeature ? (
+          <VerificationLockedView />
+        ) : activeTab === 'Profile' ? (
           <ProfileForm onCancel={() => handleTabChange('Dashboard')} />
         ) : activeTab === 'AI Business Advisor' ? (
           <AiBusinessAdvisor userName={displayName} />
         ) : activeTab === 'AI Matching' ? (
           <AiMatchingView
             error={aiMatchingError}
+            funders={availableFunders}
+            fundersError={fundersError}
+            fundersLoading={fundersLoading}
+            funderRequestMessage={funderRequestMessage}
             loading={aiMatchingLoading}
             onAnalyze={handleAiMatching}
-            onRequestFunder={(funder) => {
-              sessionStorage.setItem('microfun_selected_ai_funder', JSON.stringify(funder))
-              navigate('/dashboard/umkm/ai-matching/funder-request')
-            }}
+            onRequestFunder={setSelectedFunder}
             onRequestMentor={(mentor) => {
               setAiRequestMessage(`Silakan pilih ${mentor.name} di halaman Cari Mentor untuk mengirim request mentoring.`)
               handleTabChange('Cari Mentor')
@@ -432,6 +503,7 @@ function UmkmDashboardPage() {
             funders={fundingHistory.funders}
             loading={fundingHistoryLoading}
             onRefresh={fetchFundingHistory}
+            pendingRequests={fundingHistory.pendingRequests}
             summary={fundingHistory.summary}
           />
         ) : activeTab === 'Forum' ? (
@@ -442,12 +514,13 @@ function UmkmDashboardPage() {
           <div className="dashboard-grid">
             <AiMatchingView
               error={aiMatchingError}
+              funders={availableFunders}
+              fundersError={fundersError}
+              fundersLoading={fundersLoading}
+              funderRequestMessage={funderRequestMessage}
               loading={aiMatchingLoading}
               onAnalyze={handleAiMatching}
-              onRequestFunder={(funder) => {
-                sessionStorage.setItem('microfun_selected_ai_funder', JSON.stringify(funder))
-                navigate('/dashboard/umkm/ai-matching/funder-request')
-              }}
+              onRequestFunder={setSelectedFunder}
               onRequestMentor={(mentor) => {
                 setAiRequestMessage(`Silakan pilih ${mentor.name} di halaman Cari Mentor untuk mengirim request mentoring.`)
                 handleTabChange('Cari Mentor')
@@ -560,6 +633,15 @@ function UmkmDashboardPage() {
           />
         )}
 
+        {selectedFunder && (
+          <FunderRequestModal
+            funder={selectedFunder}
+            submitting={funderRequestSubmitting}
+            onClose={() => setSelectedFunder(null)}
+            onSubmit={handleFunderRequest}
+          />
+        )}
+
         {activeTab !== 'Workspace Mentoring' && (
         <footer className="dashboard-footer">
           <p>© 2024 MicroFun. Impacting Indonesian MSMEs through Global Connection.</p>
@@ -575,7 +657,35 @@ function UmkmDashboardPage() {
   )
 }
 
-function AiMatchingView({ error, loading, onAnalyze, onRequestFunder, onRequestMentor, requestMessage, result }) {
+function VerificationLockedView() {
+  return (
+    <section className="umkm-verification-lock">
+      <div className="umkm-verification-lock-icon">
+        <span className="material-symbols-outlined">lock</span>
+      </div>
+      <span>Menunggu Verifikasi Admin</span>
+      <h2>Fitur Anda masih dikunci</h2>
+      <p>
+        Setelah pendaftaran, akun UMKM hanya dapat membuka halaman Profile sampai admin menyetujui
+        data dan dokumen legalitas usaha Anda.
+      </p>
+    </section>
+  )
+}
+
+function AiMatchingView({
+  error,
+  funders,
+  fundersError,
+  fundersLoading,
+  funderRequestMessage,
+  loading,
+  onAnalyze,
+  onRequestFunder,
+  onRequestMentor,
+  requestMessage,
+  result,
+}) {
   return (
     <div className="ai-matching-page dashboard-section dashboard-hero-section span-full">
         <div className="dashboard-hero-card">
@@ -644,11 +754,178 @@ function AiMatchingView({ error, loading, onAnalyze, onRequestFunder, onRequestM
             />
           )}
         </div>
+        <FunderDirectoryPanel
+          error={fundersError}
+          funders={funders}
+          loading={fundersLoading}
+          onRequestFunder={onRequestFunder}
+          requestMessage={funderRequestMessage}
+        />
     </div>
   )
 }
 
-function FundingHistoryView({ error, funders, loading, onRefresh, summary }) {
+function FunderDirectoryPanel({ error, funders, loading, onRequestFunder, requestMessage }) {
+  return (
+    <section className="umkm-funder-directory" id="ai-funder-directory">
+      <header className="umkm-funder-directory-head">
+        <div>
+          <span>Database Funder</span>
+          <h2>Daftar Funder Terdaftar</h2>
+          <p>Pilih funder yang sesuai dengan kebutuhan pendanaan dan profil usaha Anda.</p>
+        </div>
+        <strong>{funders.length} funder aktif</strong>
+      </header>
+
+      {requestMessage && (
+        <div className="ai-match-request-alert">
+          <span className="material-symbols-outlined">check_circle</span>
+          <p>{requestMessage}</p>
+        </div>
+      )}
+
+      {error && <p className="dashboard-error">{error}</p>}
+
+      {loading ? (
+        <div className="umkm-funder-data-state">
+          <span className="material-symbols-outlined spinner-icon">hourglass_empty</span>
+          <p>Memuat daftar funder dari database...</p>
+        </div>
+      ) : funders.length > 0 ? (
+        <div className="umkm-funder-card-grid">
+          {funders.map((funder) => (
+            <FunderDirectoryCard key={funder.id} funder={funder} onRequest={onRequestFunder} />
+          ))}
+        </div>
+      ) : (
+        <div className="umkm-funder-data-state empty">
+          <span className="material-symbols-outlined">account_balance</span>
+          <h3>Belum Ada Funder</h3>
+          <p>Funder yang melengkapi profil akan muncul di daftar ini.</p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function FunderDirectoryCard({ funder, onRequest }) {
+  return (
+    <article className="umkm-funder-card">
+      <div className="umkm-funder-card-visual">
+        <div className="umkm-funder-card-avatar">
+          {funder.photoUrl ? <img src={funder.photoUrl} alt={`Foto profil ${funder.name}`} /> : <span>{funder.initials}</span>}
+        </div>
+        {funder.verified && (
+          <span className="umkm-funder-verified">
+            <span className="material-symbols-outlined">verified</span>
+            Verified
+          </span>
+        )}
+      </div>
+
+      <div className="umkm-funder-card-body">
+        <div className="umkm-funder-card-title">
+          <div>
+            <h3>{funder.name}</h3>
+            <span>{funder.primaryInterest}</span>
+          </div>
+          <button type="button" aria-label={`Simpan ${funder.name}`}>
+            <span className="material-symbols-outlined">bookmark</span>
+          </button>
+        </div>
+
+        <p className="umkm-funder-card-bio">{funder.bio}</p>
+
+        <div className="umkm-funder-investment-range">
+          <div>
+            <span>Minimum</span>
+            <strong>{formatRupiah(funder.fundingMin)}</strong>
+          </div>
+          <div>
+            <span>Maksimum</span>
+            <strong>{formatRupiah(funder.fundingMax)}</strong>
+          </div>
+        </div>
+
+        <div className="umkm-funder-interest-list">
+          {funder.interests.slice(0, 4).map((interest) => (
+            <span key={interest}>{interest}</span>
+          ))}
+        </div>
+
+        <button type="button" className="umkm-funder-request-btn" onClick={() => onRequest(funder)}>
+          <span className="material-symbols-outlined">send</span>
+          Request Funding
+        </button>
+      </div>
+    </article>
+  )
+}
+
+function FunderRequestModal({ funder, onClose, onSubmit, submitting }) {
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    onSubmit({
+      amount: Number(amount),
+      description: description.trim(),
+    })
+  }
+
+  return (
+    <div className="umkm-funder-modal-overlay" role="dialog" aria-modal="true">
+      <form className="umkm-funder-modal" onSubmit={handleSubmit}>
+        <header>
+          <div>
+            <span>Request Funding</span>
+            <h3>{funder.name}</h3>
+            <p>Kirim permohonan pendanaan ke funder pilihan Anda.</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Tutup modal">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </header>
+
+        <label>
+          Jumlah Pendanaan (Rupiah) *
+          <input
+            type="number"
+            min="1000000"
+            max="100000000"
+            step="100000"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            placeholder="Contoh: 50000000"
+            required
+          />
+          <small>Minimum: Rp 1.000.000 | Maksimum: Rp 100.000.000</small>
+        </label>
+
+        <label>
+          Deskripsi/Permohonan (Opsional)
+          <textarea
+            maxLength={1000}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Jelaskan alasan permohonan pendanaan, rencana penggunaan dana, dll..."
+          />
+          <small>{description.length}/1000 karakter</small>
+        </label>
+
+        <footer>
+          <button type="button" onClick={onClose} disabled={submitting}>Batal</button>
+          <button type="submit" disabled={submitting}>
+            {submitting ? 'Mengirim...' : 'Kirim Request'}
+          </button>
+        </footer>
+      </form>
+    </div>
+  )
+}
+
+function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequests = [], summary }) {
   const fundedAmount = Number(summary?.fundedAmount || 0)
   const fundingTarget = Number(summary?.fundingTarget || 0)
   const progress = Number(summary?.progress || 0)
@@ -677,50 +954,84 @@ function FundingHistoryView({ error, funders, loading, onRefresh, summary }) {
           </p>
         </div>
         <div className="umkm-funding-meta">
+          <span>Total Funder</span>
+          <strong>{formatNumber(funderCount)} {funderCount === 1 ? 'Funder' : 'Funders'}</strong>
+        </div>
+      </section>
+
+      <section className="umkm-funding-progress-card">
+        <div>
           <span>Sisa kebutuhan dana</span>
           <strong>{formatRupiah(remainingAmount)}</strong>
         </div>
         <div className="umkm-funding-progress-track" aria-label={`Progress pendanaan ${progress}%`}>
           <span style={{ width: `${progress}%` }} />
         </div>
-        <div className="umkm-funding-participants">
-          <div>
-            <span>Total Funder</span>
-            <strong>{formatNumber(funderCount)} Entitas Partisipan</strong>
-          </div>
-          <div className="umkm-funder-avatar-stack" aria-hidden="true">
-            {funders.slice(0, 3).map((funder) => (
-              <span key={`${funder.funderId || funder.name}-${funder.lastFundedAt}`}>
-                {getInitials(funder.name)}
-              </span>
-            ))}
-            {funderCount > 3 && <span>+{formatCompactNumber(funderCount - 3)}</span>}
-          </div>
-        </div>
       </section>
 
       <section className="umkm-funder-list-card">
         <div className="umkm-funder-list-head">
           <h3>
-            <span className="material-symbols-outlined">groups</span>
-            Funder Terbaru
+            <span className="material-symbols-outlined">pending_actions</span>
+            Request Sedang Diajukan
+          </h3>
+        </div>
+
+        {pendingRequests.length > 0 ? (
+          <div className="umkm-pending-funding-list">
+            {pendingRequests.map((request) => (
+              <article key={request.id} className="umkm-pending-funding-row">
+                <div>
+                  <h4>{request.name || 'Funder MicroFun'}</h4>
+                  <p>{request.description || 'Tidak ada deskripsi permohonan.'}</p>
+                </div>
+                <strong>{formatRupiah(request.amount)}</strong>
+                <time>{formatDisplayDate(request.requestedAt)}</time>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="umkm-funding-state empty compact">
+            <span className="material-symbols-outlined">task_alt</span>
+            <h3>Tidak Ada Request Pending</h3>
+            <p>Request yang masih menunggu approval funder akan muncul di sini.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="umkm-funder-list-card">
+        <div className="umkm-funder-list-head">
+          <h3>
+            <span className="material-symbols-outlined">history</span>
+            Funding History
           </h3>
         </div>
 
         {funders.length > 0 ? (
-          <div className="umkm-funder-list">
-            {funders.map((funder) => (
-              <article key={`${funder.funderId || funder.name}-${funder.lastFundedAt}`} className="umkm-funder-row">
-                <div className="umkm-funder-avatar">{getInitials(funder.name)}</div>
-                <div className="umkm-funder-copy">
-                  <h4>{funder.name || 'Funder MicroFun'}</h4>
-                  <p>
-                    Total didanai <strong>{formatRupiah(funder.totalFunded)}</strong>
-                  </p>
-                </div>
-                <time>{formatDisplayDate(funder.lastFundedAt)}</time>
-              </article>
-            ))}
+          <div className="umkm-funding-table-wrap">
+            <table className="umkm-funding-table">
+              <thead>
+                <tr>
+                  <th>Nama Funder</th>
+                  <th>Total yang Didanai</th>
+                  <th>Tanggal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {funders.map((funder) => (
+                  <tr key={funder.id || `${funder.funderId || funder.name}-${funder.lastFundedAt}`}>
+                    <td>
+                      <div className="umkm-funding-table-name">
+                        <span>{getInitials(funder.name)}</span>
+                        <strong>{funder.name || 'Funder MicroFun'}</strong>
+                      </div>
+                    </td>
+                    <td>{formatRupiah(funder.totalFunded)}</td>
+                    <td>{formatDisplayDate(funder.lastFundedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="umkm-funding-state empty">
@@ -2477,6 +2788,61 @@ function normalizeMentorProfile(mentor, apiBaseUrl) {
     rating: Number(mentor.rating || mentor.reputation_score || 0),
     availabilityStatus: getMentorAvailability(mentor),
   }
+}
+
+function normalizeFunderForUmkm(funder) {
+  const interests = splitFunderTags(funder.investmentInterests || funder.investment_interests)
+  const expertise = splitFunderTags(funder.expertiseAreas || funder.expertise_areas)
+  const allInterests = [...new Set([...interests, ...expertise])].filter(Boolean)
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+  const photo = funder.profilePhoto || funder.profile_photo || ''
+  const photoUrl = photo
+    ? String(photo).startsWith('http') || String(photo).startsWith('data:image/')
+      ? photo
+      : `${apiBaseUrl}${String(photo).startsWith('/') ? '' : '/'}${photo}`
+    : ''
+
+  return {
+    id: funder.id,
+    name: funder.name || funder.organization_name || 'Funder MicroFun',
+    fundingMin: Number(funder.fundingMin || funder.funding_min || 0),
+    fundingMax: Number(funder.fundingMax || funder.funding_max || 0),
+    interests: allInterests.length ? allInterests : ['General Funding'],
+    primaryInterest: allInterests[0] || 'General Funding',
+    bio: normalizeFunderBio(funder.bio, allInterests),
+    photoUrl,
+    verified: Boolean(funder.verified),
+    initials: getInitials(funder.name || funder.organization_name || 'Funder'),
+  }
+}
+
+function normalizeFunderBio(bio, interests = []) {
+  if (typeof bio === 'string') {
+    const trimmed = bio.trim()
+    if (trimmed && trimmed !== '[]') return trimmed
+  }
+
+  if (interests.length) {
+    return `Fokus pendanaan pada ${interests.slice(0, 3).join(', ')}.`
+  }
+
+  return 'Funder ini belum menambahkan bio investasi lengkap.'
+}
+
+function splitFunderTags(value = '') {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean)
+
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean)
+  } catch {
+    // Plain comma-separated profile fields are common in older funder records.
+  }
+
+  return String(value)
+    .split(/[,;\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 function normalizeApiMentoringRequest(request) {

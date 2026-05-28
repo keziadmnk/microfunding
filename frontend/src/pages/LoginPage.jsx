@@ -163,9 +163,7 @@ function LoginPage() {
           </form>
 
           <div className="seed-help">
-            <strong>Seed account:</strong>
-            <p>Email: admin@microfun.com</p>
-            <p>Password: Password123!</p>
+            <p>Password123!</p>
           </div>
 
           <p className="register-copy">

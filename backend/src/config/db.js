@@ -55,6 +55,20 @@ async function ensureUmkmBusinessColumns(activePool) {
   }
 }
 
+async function ensureUmkmOwnerColumns(activePool) {
+  try {
+    const [columns] = await activePool.query("SHOW COLUMNS FROM umkm_owners");
+    const columnNames = columns.map((c) => c.Field);
+
+    if (!columnNames.includes("npwp")) {
+      console.log("[Migration] Adding column npwp to umkm_owners table...");
+      await activePool.query("ALTER TABLE umkm_owners ADD COLUMN npwp VARCHAR(255) NULL AFTER nik");
+    }
+  } catch (error) {
+    console.error("[Migration Error] Failed to auto-migrate columns in umkm_owners:", error);
+  }
+}
+
 async function ensureFunderColumns(activePool) {
   try {
     const [columns] = await activePool.query("SHOW COLUMNS FROM funders");
@@ -389,6 +403,7 @@ async function testConnection() {
   try {
     const activePool = getPool();
     await activePool.query("SELECT 1");
+    await ensureUmkmOwnerColumns(activePool);
     await ensureUmkmBusinessColumns(activePool);
     await ensureFunderColumns(activePool);
     await ensureMentorColumns(activePool);

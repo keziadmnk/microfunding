@@ -60,7 +60,7 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  const { name, email, password, confirmPassword, role, rememberMe = true } = req.body || {};
+  const { name, email, password, confirmPassword, role, rememberMe = true, umkmProfile = null } = req.body || {};
 
   if (!name || !email || !password || !confirmPassword || !role) {
     return res.status(400).json({ message: "Semua field wajib diisi" });
@@ -80,6 +80,21 @@ async function register(req, res) {
 
   if (!mappedRole) {
     return res.status(400).json({ message: "Role tidak valid" });
+  }
+
+  if (mappedRole === "umkm_owner") {
+    const profile = umkmProfile || {};
+    if (!profile.businessName || !profile.category || !profile.location || !profile.description) {
+      return res.status(400).json({ message: "Nama UMKM, kategori, lokasi, dan deskripsi UMKM wajib diisi." });
+    }
+
+    if (profile.category === "lainnya" && !profile.otherCategory) {
+      return res.status(400).json({ message: "Kategori lainnya wajib diisi." });
+    }
+
+    if (String(profile.description).length > 1000) {
+      return res.status(400).json({ message: "Deskripsi UMKM maksimal 1000 karakter." });
+    }
   }
 
   const connection = await getPool().getConnection();
@@ -107,9 +122,39 @@ async function register(req, res) {
     const userId = userInsert.insertId;
 
     if (mappedRole === "umkm_owner") {
+      await ensureUmkmRegisterColumns(connection);
+
+      const profile = umkmProfile || {};
+      const [ownerInsert] = await connection.query(
+        "INSERT INTO umkm_owners (user_id, npwp, verified, created_at, updated_at) VALUES (?, ?, 0, ?, ?)",
+        [userId, profile.npwp || null, now, now]
+      );
+
       await connection.query(
-        "INSERT INTO umkm_owners (user_id, verified, created_at, updated_at) VALUES (?, 0, ?, ?)",
-        [userId, now, now]
+        `INSERT INTO umkm_business
+          (owner_id, name, category, other_category, location, latitude, longitude, description, year_established, employee_count, monthly_revenue, legal_documents, verified, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+        [
+          ownerInsert.insertId,
+          String(profile.businessName || "").trim(),
+          profile.category,
+          profile.otherCategory || null,
+          profile.location,
+          parseNullableNumber(profile.latitude),
+          parseNullableNumber(profile.longitude),
+          String(profile.description || "").trim(),
+          parseNullableInteger(profile.yearEstablished),
+          parseNullableInteger(profile.employeeCount),
+          profile.monthlyRevenue || null,
+          JSON.stringify(Array.isArray(profile.legalDocuments) ? profile.legalDocuments : []),
+          now,
+          now,
+        ]
+      );
+
+      await connection.query(
+        "UPDATE users SET address = ?, updated_at = ? WHERE id = ?",
+        [profile.address || null, now, userId]
       );
     }
 
@@ -130,7 +175,18 @@ async function register(req, res) {
     await connection.commit();
 
     const [createdRows] = await connection.query(
-      "SELECT id, name, email, role FROM users WHERE id = ? LIMIT 1",
+      `SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.role,
+        COALESCE(o.verified, 0) AS ownerVerified,
+        COALESCE(b.verified, 0) AS businessVerified
+      FROM users u
+      LEFT JOIN umkm_owners o ON o.user_id = u.id
+      LEFT JOIN umkm_business b ON b.owner_id = o.id
+      WHERE u.id = ?
+      LIMIT 1`,
       [userId]
     );
 
@@ -153,9 +209,30 @@ async function me(req, res) {
   const userId = req.user?.sub;
 
   await ensureUserProfileColumns();
+  await ensureUmkmRegisterColumns();
 
   const [rows] = await getPool().query(
-    "SELECT id, name, email, role, phone, location, address, latitude, longitude, bio, profile_photo, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
+    `SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.role,
+      u.phone,
+      u.location,
+      u.address,
+      u.latitude,
+      u.longitude,
+      u.bio,
+      u.profile_photo,
+      u.created_at,
+      u.updated_at,
+      COALESCE(o.verified, 0) AS ownerVerified,
+      COALESCE(b.verified, 0) AS businessVerified
+    FROM users u
+    LEFT JOIN umkm_owners o ON o.user_id = u.id
+    LEFT JOIN umkm_business b ON b.owner_id = o.id
+    WHERE u.id = ?
+    LIMIT 1`,
     [userId]
   );
 
@@ -166,6 +243,44 @@ async function me(req, res) {
   }
 
   return res.json({ user });
+}
+
+async function ensureUmkmRegisterColumns(connection = getPool()) {
+  const [ownerColumns] = await connection.query("SHOW COLUMNS FROM umkm_owners");
+  const ownerExisting = new Set(ownerColumns.map((column) => column.Field));
+  if (!ownerExisting.has("npwp")) {
+    await connection.query("ALTER TABLE umkm_owners ADD COLUMN npwp VARCHAR(255) NULL AFTER nik");
+  }
+
+  const [businessColumns] = await connection.query("SHOW COLUMNS FROM umkm_business");
+  const businessExisting = new Set(businessColumns.map((column) => column.Field));
+  const columnsToAdd = {
+    other_category: "VARCHAR(255) NULL",
+    latitude: "DECIMAL(10, 7) NULL",
+    longitude: "DECIMAL(10, 7) NULL",
+    year_established: "INT NULL",
+    employee_count: "INT NULL",
+    monthly_revenue: "VARCHAR(255) NULL",
+    legal_documents: "TEXT NULL",
+  };
+
+  for (const [column, definition] of Object.entries(columnsToAdd)) {
+    if (!businessExisting.has(column)) {
+      await connection.query(`ALTER TABLE umkm_business ADD COLUMN ${column} ${definition}`);
+    }
+  }
+}
+
+function parseNullableInteger(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number.parseInt(value, 10);
+  return Number.isFinite(number) ? number : null;
+}
+
+function parseNullableNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 async function ensureUserProfileColumns() {

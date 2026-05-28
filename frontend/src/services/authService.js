@@ -33,10 +33,10 @@ export async function login({ email, password, rememberMe }) {
   return payload
 }
 
-export async function register({ name, email, password, confirmPassword, role, rememberMe = true }) {
+export async function register({ name, email, password, confirmPassword, role, rememberMe = true, umkmProfile = null }) {
   const payload = await request('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ name, email, password, confirmPassword, role, rememberMe }),
+    body: JSON.stringify({ name, email, password, confirmPassword, role, rememberMe, umkmProfile }),
   })
 
   localStorage.setItem(TOKEN_STORAGE_KEY, payload.token)

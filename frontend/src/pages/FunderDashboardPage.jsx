@@ -204,6 +204,14 @@ function FunderDashboardPage() {
     navigate(`/dashboard/funder/fund/${profile.id}`)
   }
 
+  function handleApproveFundingRequest(item) {
+    navigate(`/dashboard/funder/fund/${item.businessId}?requestId=${item.id}`, {
+      state: {
+        fundingRequest: item,
+      },
+    })
+  }
+
   async function handleAiRecommendation() {
     const token = localStorage.getItem('microfun_auth_token')
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
@@ -347,6 +355,7 @@ function FunderDashboardPage() {
             error={historyError}
             history={fundingHistory.history}
             loading={historyLoading}
+            onApproveRequest={handleApproveFundingRequest}
             onRefresh={fetchFundingHistory}
             pending={fundingHistory.pending}
           />
@@ -537,7 +546,7 @@ function MsmeCard({ profile, onFundNow, onViewInsight, showInsight = false }) {
   )
 }
 
-function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
+function FundingHistoryView({ error, history, loading, onApproveRequest, onRefresh, pending }) {
   if (loading) {
     return (
       <div className="funder-data-state">
@@ -549,17 +558,6 @@ function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
 
   return (
     <section className="funding-history-page">
-      <header className="funding-history-header">
-        <div>
-          <h1>Funding Requests & History</h1>
-          <p>Kelola pengajuan pendanaan dan pantau riwayat investasi Anda.</p>
-        </div>
-        <button type="button" onClick={onRefresh}>
-          <span className="material-symbols-outlined">refresh</span>
-          Refresh
-        </button>
-      </header>
-
       {error && <p className="funder-error">{error}</p>}
 
       <section className="funding-history-section">
@@ -574,7 +572,7 @@ function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
         {pending.length > 0 ? (
           <div className="funding-request-grid">
             {pending.map((item) => (
-              <FundingRequestCard key={item.id} item={item} />
+              <FundingRequestCard key={item.id} item={item} onApprove={onApproveRequest} />
             ))}
           </div>
         ) : (
@@ -590,8 +588,12 @@ function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
         <div className="funding-history-section-head">
           <h2>
             <span className="material-symbols-outlined">history</span>
-            Investment History
+            Funding History
           </h2>
+          <button type="button" onClick={onRefresh}>
+            <span className="material-symbols-outlined">refresh</span>
+            Refresh
+          </button>
         </div>
 
         <div className="funding-history-table-card">
@@ -603,14 +605,13 @@ function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
                     <th>Date</th>
                     <th>MSME Name</th>
                     <th>Amount Invested</th>
-                    <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((item) => (
                     <tr key={item.id}>
-                      <td>{formatDate(item.createdAt)}</td>
+                      <td>{formatDate(item.updatedAt || item.createdAt)}</td>
                       <td>
                         <div className="funding-history-business">
                           {item.image ? (
@@ -622,7 +623,6 @@ function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
                         </div>
                       </td>
                       <td>{formatCurrency(item.amount)}</td>
-                      <td><StatusBadge status={item.status} /></td>
                       <td>
                         <button type="button">View Details</button>
                       </td>
@@ -644,7 +644,7 @@ function FundingHistoryView({ error, history, loading, onRefresh, pending }) {
   )
 }
 
-function FundingRequestCard({ item }) {
+function FundingRequestCard({ item, onApprove }) {
   return (
     <article className="funding-request-card">
       <header>
@@ -657,11 +657,23 @@ function FundingRequestCard({ item }) {
         </div>
       </header>
 
+      <div className="funding-request-detail-box">
+        <div className="funding-request-amount">
+          <span>Jumlah Pendanaan (Rupiah)</span>
+          <strong>{formatCurrency(item.amount)}</strong>
+          <small>Minimum: Rp 1.000.000 | Maksimum: Rp 100.000.000</small>
+        </div>
+        <div className="funding-request-message">
+          <span>Deskripsi/Permohonan</span>
+          <p>{item.requestDescription || 'UMKM tidak menambahkan deskripsi permohonan.'}</p>
+        </div>
+      </div>
+
       <ProgressSummary goal={formatCurrency(item.fundingTarget)} progress={item.progress} />
-      <p>{item.description || 'UMKM ini belum menambahkan deskripsi bisnis.'}</p>
+      <p>{item.businessDescription || item.description || 'UMKM ini belum menambahkan deskripsi bisnis.'}</p>
 
       <div className="funding-request-actions">
-        <button type="button">Approve</button>
+        <button type="button" onClick={() => onApprove(item)}>Approve</button>
         <button type="button">Decline</button>
       </div>
     </article>
@@ -864,7 +876,7 @@ function getFunderPageTitle(activeTab, displayName) {
 function getFunderPageSubtitle(activeTab) {
   if (activeTab === 'Profile') return 'Kelola informasi profil, budget pendanaan, minat investasi, dan keahlian Anda.'
   if (activeTab === 'Forum') return 'Share knowledge, discuss challenges, and build networks across MicroFun.'
-  if (activeTab === 'Funding History') return 'Kelola pengajuan pendanaan dan pantau riwayat investasi Anda.'
+  if (activeTab === 'Funding History') return ''
   if (activeTab === 'AI Recommendation') return 'Gunakan AI untuk menemukan UMKM yang paling selaras dengan fokus pendanaan Anda.'
   return 'Temukan UMKM potensial, jalankan rekomendasi AI, dan pantau peluang pendanaan.'
 }

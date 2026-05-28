@@ -3,7 +3,7 @@ function DashboardTopBar({ title, subtitle, avatarUrl }) {
     <header className="dashboard-topbar">
       <div>
         <h2>{title}</h2>
-        <p>{subtitle}</p>
+        {subtitle && <p>{subtitle}</p>}
       </div>
 
       <div className="dashboard-topbar-actions">

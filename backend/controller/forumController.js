@@ -20,7 +20,14 @@ async function listPosts(req, res) {
         p.created_at,
         p.updated_at,
         u.id AS author_id,
-        u.name AS author_name,
+        COALESCE(
+          CASE
+            WHEN u.role = 'umkm_owner' THEN NULLIF(b.name, '')
+            WHEN u.role = 'funder' THEN NULLIF(fd.organization_name, '')
+            ELSE NULL
+          END,
+          u.name
+        ) AS author_name,
         u.role AS author_role,
         u.profile_photo,
         COUNT(DISTINCT pl.id) AS like_count,
@@ -28,6 +35,9 @@ async function listPosts(req, res) {
         MAX(CASE WHEN pl.user_id = ? THEN 1 ELSE 0 END) AS liked_by_me
       FROM posts p
       JOIN users u ON u.id = p.posted_by
+      LEFT JOIN umkm_owners o ON o.user_id = u.id
+      LEFT JOIN umkm_business b ON b.owner_id = o.id
+      LEFT JOIN funders fd ON fd.user_id = u.id
       LEFT JOIN post_likes pl ON pl.post_id = p.id
       LEFT JOIN comments c ON c.post_id = p.id
       WHERE p.forum_id = ?
@@ -40,6 +50,8 @@ async function listPosts(req, res) {
         p.updated_at,
         u.id,
         u.name,
+        b.name,
+        fd.organization_name,
         u.role,
         u.profile_photo
       ORDER BY p.created_at DESC, p.id DESC
@@ -55,7 +67,14 @@ async function listPosts(req, res) {
         p.created_at,
         p.updated_at,
         u.id AS author_id,
-        u.name AS author_name,
+        COALESCE(
+          CASE
+            WHEN u.role = 'umkm_owner' THEN NULLIF(b.name, '')
+            WHEN u.role = 'funder' THEN NULLIF(fd.organization_name, '')
+            ELSE NULL
+          END,
+          u.name
+        ) AS author_name,
         u.role AS author_role,
         u.profile_photo,
         COUNT(DISTINCT pl.id) AS like_count,
@@ -63,6 +82,9 @@ async function listPosts(req, res) {
         MAX(CASE WHEN pl.user_id = ? THEN 1 ELSE 0 END) AS liked_by_me
       FROM posts p
       JOIN users u ON u.id = p.posted_by
+      LEFT JOIN umkm_owners o ON o.user_id = u.id
+      LEFT JOIN umkm_business b ON b.owner_id = o.id
+      LEFT JOIN funders fd ON fd.user_id = u.id
       LEFT JOIN post_likes pl ON pl.post_id = p.id
       LEFT JOIN comments c ON c.post_id = p.id
       WHERE p.forum_id = ?
@@ -76,6 +98,8 @@ async function listPosts(req, res) {
         p.updated_at,
         u.id,
         u.name,
+        b.name,
+        fd.organization_name,
         u.role,
         u.profile_photo
       ORDER BY p.created_at DESC, p.id DESC
@@ -325,10 +349,20 @@ async function getCommentsByPost(postIds) {
       c.post_id,
       c.body,
       c.created_at,
-      u.name AS author_name,
+      COALESCE(
+        CASE
+          WHEN u.role = 'umkm_owner' THEN NULLIF(b.name, '')
+          WHEN u.role = 'funder' THEN NULLIF(fd.organization_name, '')
+          ELSE NULL
+        END,
+        u.name
+      ) AS author_name,
       u.role AS author_role
     FROM comments c
     JOIN users u ON u.id = c.user_id
+    LEFT JOIN umkm_owners o ON o.user_id = u.id
+    LEFT JOIN umkm_business b ON b.owner_id = o.id
+    LEFT JOIN funders fd ON fd.user_id = u.id
     WHERE c.post_id IN (${placeholders})
     ORDER BY c.created_at ASC, c.id ASC`,
     postIds
@@ -352,7 +386,7 @@ async function getNetworkParticipants() {
   const [rows] = await getPool().query(
     `SELECT
       u.id,
-      u.name,
+      COALESCE(NULLIF(b.name, ''), NULLIF(f.organization_name, ''), u.name) AS name,
       u.role,
       COALESCE(b.latitude, u.latitude) AS latitude,
       COALESCE(b.longitude, u.longitude) AS longitude,
@@ -360,6 +394,7 @@ async function getNetworkParticipants() {
     FROM users u
     LEFT JOIN umkm_owners o ON o.user_id = u.id
     LEFT JOIN umkm_business b ON b.owner_id = o.id
+    LEFT JOIN funders f ON f.user_id = u.id
     WHERE u.role IN ('umkm_owner', 'funder', 'mentor')
     ORDER BY u.updated_at DESC, u.created_at DESC
     LIMIT 80`

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { getCurrentUser, isAuthenticated, logout } from '../services/authService'
 import './FundNowPage.css'
@@ -8,7 +8,9 @@ const amountPresets = [50000, 100000, 500000, 1000000]
 
 function FundNowPage() {
   const { id } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [business, setBusiness] = useState(null)
   const [amount, setAmount] = useState(1000000)
@@ -20,8 +22,10 @@ function FundNowPage() {
   const [countdown, setCountdown] = useState(5)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [paymentCreated, setPaymentCreated] = useState(false)
+  const [fundingRequest, setFundingRequest] = useState(location.state?.fundingRequest || null)
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+  const requestId = searchParams.get('requestId')
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -38,6 +42,25 @@ function FundNowPage() {
         }
 
         const token = localStorage.getItem('microfun_auth_token')
+        const requestResponse = requestId
+          ? await fetch(`${apiBaseUrl}/api/funding/requests/${requestId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          : null
+
+        if (requestResponse) {
+          const requestPayload = await requestResponse.json()
+          if (!requestResponse.ok) throw new Error(requestPayload.message || 'Gagal memuat request funding.')
+          setFundingRequest(requestPayload.data)
+          setAmount(Number(requestPayload.data?.amount || 1000000))
+          setBusiness(normalizeBusiness({
+            ...requestPayload.data,
+            id: requestPayload.data.businessId,
+            name: requestPayload.data.businessName,
+          }, apiBaseUrl))
+          return
+        }
+
         const response = await fetch(`${apiBaseUrl}/api/funding/umkms/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -57,7 +80,7 @@ function FundNowPage() {
     }
 
     loadPage()
-  }, [apiBaseUrl, id, navigate])
+  }, [apiBaseUrl, id, navigate, requestId])
 
   const serviceFee = useMemo(() => Math.round(Number(amount || 0) * 0.005), [amount])
   const total = useMemo(() => Number(amount || 0) + serviceFee, [amount, serviceFee])
@@ -105,8 +128,12 @@ function FundNowPage() {
     setSuccess('')
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/funding/umkms/${id}/fund`, {
-        method: 'POST',
+      const response = await fetch(
+        requestId
+          ? `${apiBaseUrl}/api/funding/requests/${requestId}/complete`
+          : `${apiBaseUrl}/api/funding/umkms/${id}/fund`,
+        {
+        method: requestId ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -296,6 +323,13 @@ function FundNowPage() {
 
           {error && <p className="fund-now-alert error">{error}</p>}
           {success && <p className="fund-now-alert success">{success}</p>}
+
+          {fundingRequest && (
+            <div className="fund-now-request-note">
+              <span>Request UMKM</span>
+              <p>{fundingRequest.requestDescription || 'UMKM tidak menambahkan deskripsi permohonan.'}</p>
+            </div>
+          )}
 
           <div className="fund-now-field">
             <label htmlFor="fund-amount">Jumlah Kontribusi (IDR)</label>

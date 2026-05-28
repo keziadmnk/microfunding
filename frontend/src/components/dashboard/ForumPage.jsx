@@ -13,6 +13,7 @@ function ForumPage({ currentUser, userLocation }) {
   const [activeFeed, setActiveFeed] = useState('all')
   const [draft, setDraft] = useState('')
   const [commentDrafts, setCommentDrafts] = useState({})
+  const [expandedComments, setExpandedComments] = useState({})
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [locating, setLocating] = useState(false)
@@ -270,9 +271,11 @@ function ForumPage({ currentUser, userLocation }) {
                 <ForumPost
                   key={post.id}
                   commentDraft={commentDrafts[post.id] || ''}
+                  commentsOpen={Boolean(expandedComments[post.id])}
                   onCommentChange={(value) => setCommentDrafts((current) => ({ ...current, [post.id]: value }))}
                   onCommentSubmit={(event) => handleCommentSubmit(event, post.id)}
                   onLike={() => handleLike(post.id)}
+                  onToggleComments={() => setExpandedComments((current) => ({ ...current, [post.id]: !current[post.id] }))}
                   post={post}
                 />
               ))}
@@ -355,7 +358,7 @@ function EcosystemMap({ locating, locationMessage, onUseCurrentLocation, partici
   )
 }
 
-function ForumPost({ commentDraft, onCommentChange, onCommentSubmit, onLike, post }) {
+function ForumPost({ commentDraft, commentsOpen, onCommentChange, onCommentSubmit, onLike, onToggleComments, post }) {
   return (
     <article className="forum-post-item">
       <div className="forum-avatar">{getInitials(post.author?.name)}</div>
@@ -372,35 +375,42 @@ function ForumPost({ commentDraft, onCommentChange, onCommentSubmit, onLike, pos
             <span className="material-symbols-outlined">favorite</span>
             {formatNumber(post.likeCount)} Like
           </button>
-          <span>
+          <button type="button" className="forum-comment-toggle" onClick={onToggleComments}>
             <span className="material-symbols-outlined">chat_bubble</span>
-            {formatNumber(post.commentCount)} Komentar
-          </span>
+            {commentsOpen ? 'Tutup Komentar' : 'Lihat Komentar'}
+            {Number(post.commentCount || 0) > 0 && <small>{formatNumber(post.commentCount)}</small>}
+          </button>
         </div>
 
-        {post.comments?.length > 0 && (
-          <div className="forum-comment-list">
-            {post.comments.map((comment) => (
-              <div key={comment.id} className="forum-comment">
-                <strong>{comment.authorName}</strong>
-                <span>{formatRole(comment.authorRole)} - {formatDate(comment.createdAt)}</span>
-                <p>{comment.body}</p>
+        {commentsOpen && (
+          <>
+            {post.comments?.length > 0 ? (
+              <div className="forum-comment-list">
+                {post.comments.map((comment) => (
+                  <div key={comment.id} className="forum-comment">
+                    <strong>{comment.authorName}</strong>
+                    <span>{formatRole(comment.authorRole)} - {formatDate(comment.createdAt)}</span>
+                    <p>{comment.body}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            ) : (
+              <p className="forum-comment-empty">Belum ada komentar.</p>
+            )}
 
-        <form className="forum-comment-form" onSubmit={onCommentSubmit}>
-          <input
-            value={commentDraft}
-            onChange={(event) => onCommentChange(event.target.value)}
-            placeholder="Tulis komentar..."
-            maxLength={500}
-          />
-          <button type="submit" disabled={!commentDraft.trim()}>
-            <span className="material-symbols-outlined">send</span>
-          </button>
-        </form>
+            <form className="forum-comment-form" onSubmit={onCommentSubmit}>
+              <input
+                value={commentDraft}
+                onChange={(event) => onCommentChange(event.target.value)}
+                placeholder="Tulis komentar..."
+                maxLength={500}
+              />
+              <button type="submit" disabled={!commentDraft.trim()}>
+                <span className="material-symbols-outlined">send</span>
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </article>
   )

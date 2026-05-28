@@ -2,7 +2,38 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { register } from '../services/authService'
+import { WORLD_CITY_OPTIONS, findCityByLabel } from '../components/dashboard/locationOptions'
 import './RegisterPage.css'
+
+const categoryOptions = [
+  { value: 'kuliner', label: 'Kuliner' },
+  { value: 'fashion_tekstil', label: 'Fashion & Tekstil' },
+  { value: 'pertanian_perkebunan', label: 'Pertanian & Perkebunan' },
+  { value: 'jasa', label: 'Jasa' },
+  { value: 'teknologi', label: 'Teknologi' },
+  { value: 'kreatif_seni', label: 'Kreatif & Seni' },
+  { value: 'lainnya', label: 'Lainnya' },
+]
+
+const revenueOptions = [
+  { value: '< 5 juta', label: 'Kurang dari Rp 5 Juta' },
+  { value: '5 - 15 juta', label: 'Rp 5 Juta - Rp 15 Juta' },
+  { value: '15 - 50 juta', label: 'Rp 15 Juta - Rp 50 Juta' },
+  { value: '50 - 100 juta', label: 'Rp 50 Juta - Rp 100 Juta' },
+  { value: '> 100 juta', label: 'Lebih dari Rp 100 Juta' },
+]
+
+const legalDocumentOptions = [
+  { id: 'nib', label: 'NIB (Nomor Induk Berusaha)' },
+  { id: 'npwp', label: 'NPWP Usaha' },
+  { id: 'pirt', label: 'PIRT' },
+  { id: 'halal', label: 'Sertifikasi Halal' },
+  { id: 'bpom', label: 'BPOM' },
+  { id: 'sni', label: 'SNI' },
+  { id: 'siup', label: 'SIUP' },
+  { id: 'tdp', label: 'TDP' },
+  { id: 'hki', label: 'Merek Terdaftar (HKI)' },
+]
 
 const roleCards = [
   {
@@ -39,6 +70,19 @@ function RegisterPage() {
     password: '',
     confirmPassword: '',
     agreeTerms: false,
+    businessName: '',
+    category: '',
+    otherCategory: '',
+    location: '',
+    address: '',
+    latitude: '',
+    longitude: '',
+    yearEstablished: '',
+    employeeCount: '',
+    monthlyRevenue: '',
+    description: '',
+    npwp: '',
+    legalDocuments: [],
   })
 
   const canContinue = useMemo(() => Boolean(selectedRole), [selectedRole])
@@ -49,15 +93,41 @@ function RegisterPage() {
       form.password &&
       form.confirmPassword &&
       form.agreeTerms &&
+      (selectedRole !== 'msme' || (
+        form.businessName.trim() &&
+        form.category &&
+        (form.category !== 'lainnya' || form.otherCategory.trim()) &&
+        form.location.trim() &&
+        form.description.trim()
+      )) &&
       !isLoading
     )
-  }, [form, isLoading])
+  }, [form, isLoading, selectedRole])
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target
     setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
+    }))
+  }
+
+  function handleLocationChange(event) {
+    const city = findCityByLabel(event.target.value)
+    setForm((prev) => ({
+      ...prev,
+      location: city?.label || '',
+      latitude: city?.latitude || '',
+      longitude: city?.longitude || '',
+    }))
+  }
+
+  function toggleLegalDocument(id) {
+    setForm((prev) => ({
+      ...prev,
+      legalDocuments: prev.legalDocuments.includes(id)
+        ? prev.legalDocuments.filter((docId) => docId !== id)
+        : [...prev.legalDocuments, id],
     }))
   }
 
@@ -75,6 +145,28 @@ function RegisterPage() {
       return
     }
 
+    if (selectedRole === 'msme') {
+      if (!form.businessName.trim() || !form.category || !form.location.trim() || !form.description.trim()) {
+        setError('Nama UMKM, kategori, lokasi, dan deskripsi UMKM wajib diisi.')
+        return
+      }
+
+      if (form.category === 'lainnya' && !form.otherCategory.trim()) {
+        setError('Tuliskan kategori lainnya terlebih dahulu.')
+        return
+      }
+
+      if (!findCityByLabel(form.location)) {
+        setError('Lokasi UMKM wajib dipilih dari daftar kota.')
+        return
+      }
+
+      if (form.description.length > 1000) {
+        setError('Deskripsi UMKM maksimal 1000 karakter.')
+        return
+      }
+    }
+
     setIsLoading(true)
 
     try {
@@ -85,9 +177,24 @@ function RegisterPage() {
         confirmPassword: form.confirmPassword,
         role: selectedRole,
         rememberMe: true,
+        umkmProfile: selectedRole === 'msme' ? {
+          businessName: form.businessName.trim(),
+          category: form.category,
+          otherCategory: form.otherCategory.trim(),
+          location: form.location,
+          address: form.address.trim(),
+          latitude: form.latitude,
+          longitude: form.longitude,
+          yearEstablished: form.yearEstablished,
+          employeeCount: form.employeeCount,
+          monthlyRevenue: form.monthlyRevenue,
+          description: form.description.trim(),
+          npwp: form.npwp.trim(),
+          legalDocuments: form.legalDocuments,
+        } : null,
       })
 
-      navigate('/dashboard', { replace: true })
+      navigate(selectedRole === 'msme' ? '/dashboard/umkm' : '/dashboard', { replace: true })
     } catch (submitError) {
       setError(submitError.message || 'Registration failed, please try again.')
     } finally {
@@ -200,6 +307,182 @@ function RegisterPage() {
                   required
                 />
               </div>
+
+              {selectedRole === 'msme' && (
+                <section className="register-umkm-section">
+                  <div className="register-section-heading">
+                    <span className="material-symbols-outlined">storefront</span>
+                    <div>
+                      <h3>Profil Dasar UMKM</h3>
+                      <p>Data ini akan masuk ke dashboard UMKM dan menunggu verifikasi admin.</p>
+                    </div>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="businessName">Nama UMKM *</label>
+                    <input
+                      id="businessName"
+                      name="businessName"
+                      type="text"
+                      value={form.businessName}
+                      onChange={handleChange}
+                      placeholder="Kezia"
+                      required
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="accountEmailPreview">Email Akun *</label>
+                    <input
+                      id="accountEmailPreview"
+                      type="email"
+                      value={form.email}
+                      placeholder="keziadamanik20@gmail.com"
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="register-field-grid">
+                    <div className="field">
+                      <label htmlFor="category">Sektor / Kategori *</label>
+                      <select id="category" name="category" value={form.category} onChange={handleChange} required>
+                        <option value="">Pilih sektor usaha</option>
+                        {categoryOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {form.category === 'lainnya' && (
+                      <div className="field">
+                        <label htmlFor="otherCategory">Tuliskan Kategori Lainnya</label>
+                        <input
+                          id="otherCategory"
+                          name="otherCategory"
+                          type="text"
+                          value={form.otherCategory}
+                          onChange={handleChange}
+                          placeholder="Sebutkan kategori usaha"
+                          required
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="location">Lokasi UMKM *</label>
+                    <input
+                      id="location"
+                      name="location"
+                      type="text"
+                      value={form.location}
+                      onChange={handleLocationChange}
+                      list="register-city-options"
+                      placeholder="Pilih kota lokasi UMKM"
+                      required
+                    />
+                    <datalist id="register-city-options">
+                      {WORLD_CITY_OPTIONS.map((city) => (
+                        <option key={city.label} value={city.label} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="address">Alamat Detail</label>
+                    <input
+                      id="address"
+                      name="address"
+                      type="text"
+                      value={form.address}
+                      onChange={handleChange}
+                      placeholder="Contoh: Jl. Sudirman No. 10, Kecamatan Tanah Abang"
+                    />
+                  </div>
+
+                  <div className="register-field-grid">
+                    <div className="field">
+                      <label htmlFor="yearEstablished">Tahun Mulai Beroperasi</label>
+                      <input
+                        id="yearEstablished"
+                        name="yearEstablished"
+                        type="number"
+                        min="1900"
+                        max="2100"
+                        value={form.yearEstablished}
+                        onChange={handleChange}
+                        placeholder="Contoh: 2019"
+                      />
+                    </div>
+                    <div className="field">
+                      <label htmlFor="employeeCount">Jumlah Karyawan Saat Ini</label>
+                      <input
+                        id="employeeCount"
+                        name="employeeCount"
+                        type="number"
+                        min="0"
+                        value={form.employeeCount}
+                        onChange={handleChange}
+                        placeholder="Contoh: 5"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="monthlyRevenue">Rata-rata Omzet Bulanan</label>
+                    <select id="monthlyRevenue" name="monthlyRevenue" value={form.monthlyRevenue} onChange={handleChange}>
+                      <option value="">Pilih Rentang Omzet</option>
+                      {revenueOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="npwp">NPWP</label>
+                    <input
+                      id="npwp"
+                      name="npwp"
+                      type="text"
+                      value={form.npwp}
+                      onChange={handleChange}
+                      placeholder="Contoh: 12.345.678.9-000.000"
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label htmlFor="description">Deskripsi UMKM *</label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={form.description}
+                      onChange={handleChange}
+                      rows="4"
+                      maxLength="1000"
+                      placeholder="Jelaskan produk, layanan, target pasar, dan keunikan UMKM Anda."
+                      required
+                    />
+                    <small>{form.description.length}/1000 karakter</small>
+                  </div>
+
+                  <div className="register-legal-card">
+                    <h4>Legalitas & Dokumen Usaha</h4>
+                    <p>Centang semua dokumen legalitas yang sudah dimiliki oleh usaha Anda saat ini:</p>
+                    <div className="register-check-grid">
+                      {legalDocumentOptions.map((doc) => (
+                        <label key={doc.id} className="register-check-row">
+                          <input
+                            type="checkbox"
+                            checked={form.legalDocuments.includes(doc.id)}
+                            onChange={() => toggleLegalDocument(doc.id)}
+                          />
+                          <span>{doc.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               <div className="field">
                 <label htmlFor="password">Password</label>

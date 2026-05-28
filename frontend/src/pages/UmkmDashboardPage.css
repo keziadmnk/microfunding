@@ -105,6 +105,7 @@
   gap: 0.65rem;
   padding: 0.85rem 0.9rem;
   color: #43474b;
+  font-weight: 400;
   text-decoration: none;
   background: transparent;
   border: 0;
@@ -199,6 +200,71 @@
   margin: 0 0 1rem;
   color: #ba1a1a;
   font-weight: 600;
+}
+
+.umkm-verification-lock {
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.75rem;
+  border: 1px solid rgba(206, 167, 97, 0.28);
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(18, 41, 55, 0.06);
+  padding: 2rem;
+  text-align: center;
+}
+
+.umkm-verification-lock-icon {
+  width: 4rem;
+  height: 4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1rem;
+  background: rgba(206, 167, 97, 0.16);
+  color: #925e25;
+}
+
+.umkm-verification-lock-icon .material-symbols-outlined {
+  font-size: 2rem;
+}
+
+.umkm-verification-lock > span {
+  color: #925e25;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.umkm-verification-lock h2 {
+  margin: 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.45rem;
+}
+
+.umkm-verification-lock p {
+  max-width: 560px;
+  margin: 0;
+  color: #43474b;
+  line-height: 1.6;
+}
+
+.umkm-verification-lock button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: #122937;
+  color: #fff;
+  padding: 0 1rem;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .dashboard-grid {
@@ -1001,6 +1067,7 @@
 }
 
 .umkm-funding-summary,
+.umkm-funding-progress-card,
 .umkm-funder-list-card,
 .umkm-funding-state {
   border: 1px solid #e1e3e4;
@@ -1011,9 +1078,11 @@
 
 .umkm-funding-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.65fr);
-  gap: 1.15rem;
-  padding: 1.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .umkm-funding-total,
@@ -1021,6 +1090,12 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-height: 130px;
+  border: 1px solid #e1e3e4;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(18, 41, 55, 0.05);
+  padding: 1.25rem;
 }
 
 .umkm-funding-total span,
@@ -1049,8 +1124,32 @@
   font-size: 1.35rem;
 }
 
+.umkm-funding-progress-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.25rem;
+}
+
+.umkm-funding-progress-card > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.umkm-funding-progress-card span {
+  color: #73787c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.umkm-funding-progress-card strong {
+  color: #925e25;
+  font-size: 1.15rem;
+}
+
 .umkm-funding-progress-track {
-  grid-column: 1 / -1;
   height: 0.75rem;
   overflow: hidden;
   border-radius: 999px;
@@ -1166,6 +1265,105 @@
   font-size: 0.85rem;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.umkm-pending-funding-list {
+  display: grid;
+}
+
+.umkm-pending-funding-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e1e3e4;
+}
+
+.umkm-pending-funding-row:last-child {
+  border-bottom: 0;
+}
+
+.umkm-pending-funding-row h4 {
+  margin: 0 0 0.25rem;
+  color: #122937;
+  font-size: 0.95rem;
+}
+
+.umkm-pending-funding-row p {
+  margin: 0;
+  color: #43474b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.umkm-pending-funding-row strong {
+  color: #925e25;
+  white-space: nowrap;
+}
+
+.umkm-pending-funding-row time {
+  color: #73787c;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.umkm-funding-table-wrap {
+  overflow-x: auto;
+}
+
+.umkm-funding-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.umkm-funding-table thead tr {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e3e4;
+}
+
+.umkm-funding-table th {
+  padding: 0.85rem 1rem;
+  color: #73787c;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.umkm-funding-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #edeeef;
+  color: #191c1d;
+  vertical-align: middle;
+}
+
+.umkm-funding-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.umkm-funding-table-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.umkm-funding-table-name span {
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #edeeef;
+  color: #122937;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.umkm-funding-table-name strong {
+  color: #122937;
 }
 
 .umkm-funding-state {
@@ -1454,6 +1652,15 @@
 
   .umkm-funder-row time {
     grid-column: 2;
+    white-space: normal;
+  }
+
+  .umkm-pending-funding-row {
+    grid-template-columns: 1fr;
+  }
+
+  .umkm-pending-funding-row strong,
+  .umkm-pending-funding-row time {
     white-space: normal;
   }
 
@@ -1901,6 +2108,383 @@
   font-size: 0.8rem;
   color: #43474b;
   line-height: 1.45;
+}
+
+.umkm-funder-directory {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.umkm-funder-directory-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.umkm-funder-directory-head span {
+  color: #925e25;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.umkm-funder-directory-head h2 {
+  margin: 0.2rem 0 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.15rem;
+}
+
+.umkm-funder-directory-head p {
+  margin: 0.25rem 0 0;
+  color: #74787c;
+  font-size: 0.86rem;
+}
+
+.umkm-funder-directory-head strong {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #edeeef;
+  color: #122937;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.umkm-funder-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.umkm-funder-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e1e3e4;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(18, 41, 55, 0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.umkm-funder-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(18, 41, 55, 0.1);
+}
+
+.umkm-funder-card-visual {
+  position: relative;
+  height: 150px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgba(18, 41, 55, 0.92), rgba(18, 41, 55, 0.72)),
+    linear-gradient(135deg, rgba(206, 167, 97, 0.35), rgba(146, 94, 37, 0.2));
+}
+
+.umkm-funder-card-avatar {
+  width: 4.4rem;
+  height: 4.4rem;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  background: #fff;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.umkm-funder-card-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.umkm-funder-card-avatar span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.umkm-funder-verified {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #925e25;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.umkm-funder-verified .material-symbols-outlined {
+  font-size: 0.9rem;
+}
+
+.umkm-funder-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.umkm-funder-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.umkm-funder-card-title h3 {
+  margin: 0 0 0.35rem;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1rem;
+}
+
+.umkm-funder-card-title span:not(.material-symbols-outlined) {
+  display: inline-block;
+  border-radius: 999px;
+  background: rgba(146, 94, 37, 0.1);
+  color: #925e25;
+  padding: 0.22rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.umkm-funder-card-title button {
+  border: 0;
+  background: transparent;
+  color: #74787c;
+  cursor: pointer;
+}
+
+.umkm-funder-card-bio {
+  min-height: 3.6rem;
+  margin: 0;
+  color: #43474b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.umkm-funder-investment-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.umkm-funder-investment-range div {
+  border: 1px solid #e1e3e4;
+  border-radius: 0.7rem;
+  background: #f8f9fa;
+  padding: 0.65rem;
+}
+
+.umkm-funder-investment-range span {
+  display: block;
+  color: #74787c;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.umkm-funder-investment-range strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #122937;
+  font-size: 0.86rem;
+}
+
+.umkm-funder-interest-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.umkm-funder-interest-list span {
+  border-radius: 999px;
+  background: rgba(18, 41, 55, 0.07);
+  color: #122937;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.umkm-funder-request-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  margin-top: auto;
+  border: 0;
+  border-radius: 0.75rem;
+  background: #122937;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.umkm-funder-request-btn:hover {
+  background: #001420;
+}
+
+.umkm-funder-data-state {
+  display: grid;
+  place-items: center;
+  gap: 0.55rem;
+  min-height: 190px;
+  border: 1px dashed #c3c7cc;
+  border-radius: 1rem;
+  background: #fff;
+  color: #43474b;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.umkm-funder-data-state h3,
+.umkm-funder-data-state p {
+  margin: 0;
+}
+
+.umkm-funder-data-state .material-symbols-outlined {
+  color: #925e25;
+  font-size: 2rem;
+}
+
+.umkm-funder-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: rgba(18, 41, 55, 0.44);
+  padding: 1rem;
+}
+
+.umkm-funder-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: grid;
+  gap: 1rem;
+  border: 1px solid #e1e3e4;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(18, 41, 55, 0.28);
+  padding: 1.2rem;
+}
+
+.umkm-funder-modal header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.umkm-funder-modal header span:not(.material-symbols-outlined) {
+  color: #925e25;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.umkm-funder-modal h3 {
+  margin: 0.25rem 0 0;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.18rem;
+}
+
+.umkm-funder-modal p {
+  margin: 0.25rem 0 0;
+  color: #74787c;
+  font-size: 0.86rem;
+}
+
+.umkm-funder-modal header button {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e1e3e4;
+  border-radius: 999px;
+  background: #fff;
+  color: #122937;
+  cursor: pointer;
+}
+
+.umkm-funder-modal label {
+  display: grid;
+  gap: 0.42rem;
+  color: #122937;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.umkm-funder-modal input,
+.umkm-funder-modal textarea {
+  width: 100%;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #122937;
+  padding: 0.8rem 0.9rem;
+  font: inherit;
+}
+
+.umkm-funder-modal textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.umkm-funder-modal small {
+  color: #74787c;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.umkm-funder-modal footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid #e1e3e4;
+  padding-top: 1rem;
+}
+
+.umkm-funder-modal footer button {
+  min-height: 42px;
+  border-radius: 0.75rem;
+  padding: 0 1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.umkm-funder-modal footer button:first-child {
+  border: 1px solid #c3c7cc;
+  background: #fff;
+  color: #122937;
+}
+
+.umkm-funder-modal footer button:last-child {
+  border: 0;
+  background: #122937;
+  color: #fff;
 }
 
 /* Form Actions */
@@ -5048,6 +5632,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .umkm-funder-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .action-plan-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -5139,6 +5727,17 @@
 
   .mentor-directory-grid {
     grid-template-columns: 1fr;
+  }
+
+  .umkm-funder-card-grid,
+  .umkm-funder-directory-head,
+  .umkm-funder-investment-range {
+    grid-template-columns: 1fr;
+  }
+
+  .umkm-funder-directory-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .action-plan-grid {

@@ -93,9 +93,11 @@ function DashboardSidebar({
 
         {children}
 
-        <button type="button" className="sidebar-raise-btn">
-          {ctaLabel}
-        </button>
+        {ctaLabel && (
+          <button type="button" className="sidebar-raise-btn">
+            {ctaLabel}
+          </button>
+        )}
       </div>
 
       <div className="sidebar-footer-links">

@@ -233,6 +233,31 @@
   margin-bottom: 1.5rem;
 }
 
+.fund-now-request-note {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(206, 167, 97, 0.34);
+  border-radius: 0.8rem;
+  background: #fff8ed;
+  padding: 0.85rem;
+}
+
+.fund-now-request-note span {
+  color: #925e25;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fund-now-request-note p {
+  margin: 0;
+  color: #43474b;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .fund-now-field > label {
   color: #43474b;
   font-size: 0.9rem;

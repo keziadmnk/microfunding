@@ -208,6 +208,8 @@
 }
 
 .field input,
+.field select,
+.field textarea,
 .input-shell input {
   width: 100%;
   min-height: 50px;
@@ -219,10 +221,118 @@
 }
 
 .field input:focus,
+.field select:focus,
+.field textarea:focus,
 .input-shell input:focus {
   outline: 0;
   border-color: #001420;
   box-shadow: 0 0 0 3px rgba(0, 20, 32, 0.08);
+}
+
+.field textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.field small {
+  color: #73787c;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.register-umkm-section {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid rgba(206, 167, 97, 0.28);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 1rem;
+}
+
+.register-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(195, 199, 204, 0.45);
+  padding-bottom: 0.85rem;
+}
+
+.register-section-heading > .material-symbols-outlined {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: rgba(206, 167, 97, 0.18);
+  color: #78591b;
+}
+
+.register-section-heading h3 {
+  margin: 0;
+  color: #001420;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.05rem;
+}
+
+.register-section-heading p {
+  margin: 0.2rem 0 0;
+  color: #73787c;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.register-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.register-legal-card {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid #e1e3e4;
+  border-radius: 0.85rem;
+  background: #f8f9fa;
+  padding: 0.9rem;
+}
+
+.register-legal-card h4,
+.register-legal-card p {
+  margin: 0;
+}
+
+.register-legal-card h4 {
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.96rem;
+}
+
+.register-legal-card p {
+  color: #43474b;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.register-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.register-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: #43474b;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.register-check-row input {
+  margin-top: 0.15rem;
+  width: 16px;
+  height: 16px;
+  accent-color: #78591b;
 }
 
 .input-shell {
@@ -325,5 +435,12 @@
 
   .register-visual {
     min-height: 280px;
+  }
+}
+
+@media (max-width: 640px) {
+  .register-field-grid,
+  .register-check-grid {
+    grid-template-columns: 1fr;
   }
 }

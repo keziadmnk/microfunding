@@ -1616,6 +1616,21 @@
   font-size: 0.75rem;
 }
 
+.funding-history-section-head button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid #c3c7cc;
+  border-radius: 0.7rem;
+  background: #fff;
+  color: #122937;
+  padding: 0 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .funding-request-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1689,6 +1704,57 @@
   line-height: 1.55;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.funding-request-detail-box {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.funding-request-amount,
+.funding-request-message {
+  border: 1px solid #e1e3e4;
+  border-radius: 0.8rem;
+  background: #f8f9fa;
+  padding: 0.8rem;
+}
+
+.funding-request-amount span,
+.funding-request-message span {
+  display: block;
+  color: #925e25;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.funding-request-amount strong {
+  display: block;
+  margin-top: 0.25rem;
+  color: #122937;
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.15rem;
+}
+
+.funding-request-amount small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #74787c;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.funding-request-message p {
+  display: block;
+  min-height: 0;
+  margin: 0.35rem 0 0;
+  overflow: visible;
+  color: #43474b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  -webkit-line-clamp: unset;
 }
 
 .funding-request-actions {

@@ -127,10 +127,13 @@
 
 .input-wrap > .material-symbols-outlined {
   position: absolute;
-  left: 0.85rem;
+  left: 0.95rem;
   top: 50%;
+  width: 1.35rem;
+  text-align: center;
   transform: translateY(-50%);
   color: #73787c;
+  pointer-events: none;
 }
 
 .input-wrap input {
@@ -138,7 +141,7 @@
   min-height: 50px;
   border-radius: 0.75rem;
   border: 1px solid #c3c7cc;
-  padding: 0.75rem 2.8rem 0.75rem 2.8rem;
+  padding: 0.75rem 3rem 0.75rem 3.45rem;
   font: inherit;
   background: white;
 }

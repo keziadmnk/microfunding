@@ -471,6 +471,22 @@
   font: inherit;
 }
 
+.forum-post-actions .forum-comment-toggle {
+  color: #122937;
+}
+
+.forum-comment-toggle small {
+  display: grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #fdf3e1;
+  color: #795a1b;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
 .forum-post-actions button.liked {
   color: #ba1a1a;
 }
@@ -496,6 +512,15 @@
   margin: 0.35rem 0 0;
   color: #191c1d;
   line-height: 1.5;
+}
+
+.forum-comment-empty {
+  margin: 0.9rem 0 0;
+  border-radius: 0.75rem;
+  background: #f8f9fa;
+  color: #73787c;
+  padding: 0.75rem;
+  font-size: 0.86rem;
 }
 
 .forum-comment-form {
