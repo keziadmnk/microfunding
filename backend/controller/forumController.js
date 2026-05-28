@@ -30,6 +30,7 @@ async function listPosts(req, res) {
         ) AS author_name,
         u.role AS author_role,
         u.profile_photo,
+        b.logo AS business_logo,
         COUNT(DISTINCT pl.id) AS like_count,
         COUNT(DISTINCT c.id) AS comment_count,
         MAX(CASE WHEN pl.user_id = ? THEN 1 ELSE 0 END) AS liked_by_me
@@ -53,7 +54,8 @@ async function listPosts(req, res) {
         b.name,
         fd.organization_name,
         u.role,
-        u.profile_photo
+        u.profile_photo,
+        b.logo
       ORDER BY p.created_at DESC, p.id DESC
       LIMIT 50`,
       [userId, forumId]
@@ -77,6 +79,7 @@ async function listPosts(req, res) {
         ) AS author_name,
         u.role AS author_role,
         u.profile_photo,
+        b.logo AS business_logo,
         COUNT(DISTINCT pl.id) AS like_count,
         COUNT(DISTINCT c.id) AS comment_count,
         MAX(CASE WHEN pl.user_id = ? THEN 1 ELSE 0 END) AS liked_by_me
@@ -101,7 +104,8 @@ async function listPosts(req, res) {
         b.name,
         fd.organization_name,
         u.role,
-        u.profile_photo
+        u.profile_photo,
+        b.logo
       ORDER BY p.created_at DESC, p.id DESC
       LIMIT 50`,
       [userId, forumId, userId]
@@ -123,7 +127,7 @@ async function listPosts(req, res) {
           id: post.author_id,
           name: post.author_name,
           role: post.author_role,
-          profilePhoto: post.profile_photo,
+          profilePhoto: post.profile_photo || post.business_logo,
         },
         likeCount: Number(post.like_count || 0),
         commentCount: Number(post.comment_count || 0),
@@ -140,7 +144,7 @@ async function listPosts(req, res) {
           id: post.author_id,
           name: post.author_name,
           role: post.author_role,
-          profilePhoto: post.profile_photo,
+          profilePhoto: post.profile_photo || post.business_logo,
         },
         likeCount: Number(post.like_count || 0),
         commentCount: Number(post.comment_count || 0),
@@ -357,7 +361,9 @@ async function getCommentsByPost(postIds) {
         END,
         u.name
       ) AS author_name,
-      u.role AS author_role
+      u.role AS author_role,
+      u.profile_photo,
+      b.logo AS business_logo
     FROM comments c
     JOIN users u ON u.id = c.user_id
     LEFT JOIN umkm_owners o ON o.user_id = u.id
@@ -376,6 +382,7 @@ async function getCommentsByPost(postIds) {
       createdAt: comment.created_at,
       authorName: comment.author_name,
       authorRole: comment.author_role,
+      authorProfilePhoto: comment.profile_photo || comment.business_logo,
     });
     grouped[comment.post_id] = postComments;
     return grouped;

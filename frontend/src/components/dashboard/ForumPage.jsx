@@ -29,7 +29,7 @@ function ForumPage({ currentUser, userLocation }) {
         headers: { Authorization: `Bearer ${token}` },
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal memuat forum.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to load forum.')
 
       setPosts(payload.posts || [])
       setMyPosts(payload.myPosts || [])
@@ -83,7 +83,7 @@ function ForumPage({ currentUser, userLocation }) {
         body: JSON.stringify({ body }),
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal membagikan postingan.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to share post.')
 
       setDraft('')
       setActiveFeed('mine')
@@ -116,7 +116,7 @@ function ForumPage({ currentUser, userLocation }) {
         headers: { Authorization: `Bearer ${token}` },
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal memperbarui like.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to update like.')
 
       const serverUpdate = (post) => (
         post.id === postId
@@ -148,7 +148,7 @@ function ForumPage({ currentUser, userLocation }) {
         body: JSON.stringify({ body }),
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal mengirim komentar.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to send comment.')
 
       setCommentDrafts((current) => ({ ...current, [postId]: '' }))
       await fetchForum()
@@ -159,7 +159,7 @@ function ForumPage({ currentUser, userLocation }) {
 
   async function handleUseCurrentLocation() {
     if (!navigator.geolocation) {
-      setLocationMessage('Browser ini belum mendukung deteksi lokasi.')
+      setLocationMessage('This browser does not support location detection.')
       return
     }
 
@@ -183,9 +183,9 @@ function ForumPage({ currentUser, userLocation }) {
             }),
           })
           const payload = await response.json()
-          if (!response.ok) throw new Error(payload.message || 'Gagal menyimpan lokasi.')
+          if (!response.ok) throw new Error(payload.message || 'Failed to save location.')
 
-          setLocationMessage('Koordinat lokasi berhasil disimpan ke database.')
+          setLocationMessage('Location coordinates have been saved to the database.')
           await fetchForum()
         } catch (err) {
           setLocationMessage(err.message)
@@ -194,7 +194,7 @@ function ForumPage({ currentUser, userLocation }) {
         }
       },
       () => {
-        setLocationMessage('Izin lokasi ditolak atau lokasi tidak tersedia.')
+        setLocationMessage('Location permission was denied or unavailable.')
         setLocating(false)
       },
       { enableHighAccuracy: true, timeout: 12000 }
@@ -211,16 +211,16 @@ function ForumPage({ currentUser, userLocation }) {
       />
 
       <div className="forum-stat-grid">
-        <ForumStatCard icon="edit_square" label="Total Postingan Saya" value={stats.myPostCount} />
-        <ForumStatCard icon="mark_chat_unread" label="Total Komentar ke Saya" value={stats.commentsToMe} />
-        <ForumStatCard icon="favorite" label="Total Like Postingan Saya" value={stats.totalLikes} />
+        <ForumStatCard icon="edit_square" label="Posts" value={stats.myPostCount} />
+        <ForumStatCard icon="mark_chat_unread" label="Comments" value={stats.commentsToMe} />
+        <ForumStatCard icon="favorite" label="Likes" value={stats.totalLikes} />
       </div>
 
       <div className="forum-layout">
         <section className="forum-feed-panel">
           <header className="forum-feed-header">
             <div>
-              <h2>Forum Aktivitas</h2>
+              <h2>Forum Activity</h2>
               <p>Collaboration and Discussion Forum enables users to share knowledge, discuss challenges, and build networks within the ecosystem.</p>
             </div>
             <button type="button" onClick={fetchForum} aria-label="Refresh forum">
@@ -231,31 +231,31 @@ function ForumPage({ currentUser, userLocation }) {
           {error && <p className="forum-error">{error}</p>}
 
           <form className="forum-composer-card" onSubmit={handlePostSubmit}>
-            <div className="forum-avatar">{getInitials(currentUser?.name)}</div>
+            <ForumAvatar name={currentUser?.businessName || currentUser?.name} photo={getCurrentUserPhoto(currentUser)} />
             <div>
               <textarea
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                placeholder="Bagikan insight, tantangan, peluang kolaborasi, atau kabar terbaru..."
+                placeholder="Share insights, challenges, collaboration opportunities, or the latest updates..."
                 maxLength={1000}
               />
               <footer>
                 <span>{draft.length}/1000</span>
                 <button type="submit" disabled={submitting || !draft.trim()}>
                   <span className="material-symbols-outlined">send</span>
-                  {submitting ? 'Mengirim...' : 'Share'}
+                  {submitting ? 'Sharing...' : 'Share'}
                 </button>
               </footer>
             </div>
           </form>
 
-          <div className="forum-feed-tabs" role="tablist" aria-label="Filter forum">
+          <div className="forum-feed-tabs" role="tablist" aria-label="Forum filter">
             <button type="button" className={activeFeed === 'all' ? 'active' : ''} onClick={() => setActiveFeed('all')}>
-              Seluruh Forum
+              All Forum
               <span>{formatNumber(stats.forumPostCount)}</span>
             </button>
             <button type="button" className={activeFeed === 'mine' ? 'active' : ''} onClick={() => setActiveFeed('mine')}>
-              Postingan Saya
+              My Posts
               <span>{formatNumber(stats.myPostCount)}</span>
             </button>
           </div>
@@ -263,7 +263,7 @@ function ForumPage({ currentUser, userLocation }) {
           {loading ? (
             <div className="forum-state">
               <span className="material-symbols-outlined">hourglass_empty</span>
-              <p>Memuat forum aktivitas...</p>
+              <p>Loading forum activity...</p>
             </div>
           ) : visiblePosts.length > 0 ? (
             <div className="forum-post-list">
@@ -283,8 +283,8 @@ function ForumPage({ currentUser, userLocation }) {
           ) : (
             <div className="forum-state empty">
               <span className="material-symbols-outlined">forum</span>
-              <h3>{activeFeed === 'mine' ? 'Belum Ada Postingan Saya' : 'Belum Ada Diskusi'}</h3>
-              <p>{activeFeed === 'mine' ? 'Postingan yang Anda share akan tersimpan di sini.' : 'Jadilah yang pertama membagikan insight ke ekosistem MicroFun.'}</p>
+              <h3>{activeFeed === 'mine' ? 'No Posts Yet' : 'No Discussions Yet'}</h3>
+              <p>{activeFeed === 'mine' ? 'Posts you share will be saved here.' : 'Be the first to share insights with the MicroFun ecosystem.'}</p>
             </div>
           )}
         </section>
@@ -361,7 +361,7 @@ function EcosystemMap({ locating, locationMessage, onUseCurrentLocation, partici
 function ForumPost({ commentDraft, commentsOpen, onCommentChange, onCommentSubmit, onLike, onToggleComments, post }) {
   return (
     <article className="forum-post-item">
-      <div className="forum-avatar">{getInitials(post.author?.name)}</div>
+      <ForumAvatar name={post.author?.name} photo={post.author?.profilePhoto} />
       <div className="forum-post-content">
         <header>
           <div>
@@ -388,9 +388,12 @@ function ForumPost({ commentDraft, commentsOpen, onCommentChange, onCommentSubmi
               <div className="forum-comment-list">
                 {post.comments.map((comment) => (
                   <div key={comment.id} className="forum-comment">
-                    <strong>{comment.authorName}</strong>
-                    <span>{formatRole(comment.authorRole)} - {formatDate(comment.createdAt)}</span>
-                    <p>{comment.body}</p>
+                    <ForumAvatar name={comment.authorName} photo={comment.authorProfilePhoto} small />
+                    <div>
+                      <strong>{comment.authorName}</strong>
+                      <span>{formatRole(comment.authorRole)} - {formatDate(comment.createdAt)}</span>
+                      <p>{comment.body}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -414,6 +417,27 @@ function ForumPost({ commentDraft, commentsOpen, onCommentChange, onCommentSubmi
       </div>
     </article>
   )
+}
+
+function ForumAvatar({ name, photo, small = false }) {
+  const imageUrl = resolveAssetUrl(photo)
+
+  return (
+    <div className={`forum-avatar ${small ? 'small' : ''}`}>
+      {imageUrl ? <img src={imageUrl} alt={`Foto profil ${name || 'user'}`} /> : <span>{getInitials(name)}</span>}
+    </div>
+  )
+}
+
+function getCurrentUserPhoto(user) {
+  return user?.profilePhoto || user?.profile_photo || user?.businessLogo || user?.logo || ''
+}
+
+function resolveAssetUrl(value) {
+  const photo = String(value || '').trim()
+  if (!photo) return ''
+  if (photo.startsWith('http') || photo.startsWith('data:image/') || photo.startsWith('/assets/')) return photo
+  return `${apiBaseUrl}${photo.startsWith('/') ? '' : '/'}${photo}`
 }
 
 function buildTileUrls() {

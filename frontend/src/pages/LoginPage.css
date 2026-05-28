@@ -127,23 +127,41 @@
 
 .input-wrap > .material-symbols-outlined {
   position: absolute;
-  left: 0.95rem;
+  left: 1rem;
   top: 50%;
-  width: 1.35rem;
-  text-align: center;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
   transform: translateY(-50%);
   color: #73787c;
+  font-size: 1.25rem;
   pointer-events: none;
 }
 
 .input-wrap input {
+  box-sizing: border-box;
   width: 100%;
   min-height: 50px;
   border-radius: 0.75rem;
   border: 1px solid #c3c7cc;
-  padding: 0.75rem 3rem 0.75rem 3.45rem;
+  padding: 0.75rem 1rem;
   font: inherit;
   background: white;
+}
+
+.input-wrap.with-icon input {
+  padding-left: 4rem;
+}
+
+.input-wrap.with-action input {
+  padding-right: 3.8rem;
+}
+
+.input-wrap input::placeholder {
+  color: #8b9094;
+  opacity: 1;
 }
 
 .input-wrap input:focus {
@@ -156,10 +174,21 @@
   position: absolute;
   right: 0.75rem;
   top: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
   transform: translateY(-50%);
   background: transparent;
   color: #73787c;
   border: 0;
+  border-radius: 999px;
+}
+
+.toggle-password:hover {
+  background: #f3f4f5;
+  color: #001420;
 }
 
 .remember {

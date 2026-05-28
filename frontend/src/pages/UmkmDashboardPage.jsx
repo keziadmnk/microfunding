@@ -40,31 +40,6 @@ import ProfileForm from '../components/dashboard/ProfileForm'
 import AiBusinessAdvisor from '../components/dashboard/AiBusinessAdvisor'
 import './UmkmDashboardPage.css'
 
-const forumPosts = [
-  {
-    author: 'Ahmad Ridwan (Investor)',
-    role: 'Investor',
-    time: '2 jam yang lalu',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDSrYW5kWc6K8OBpO5cBe8wVNZ1qamPVr4ZglIkrb4YPRRR_4UvmpQkNrFJG93dQ4MMOBQcgZpndLgpNoT1gaGeHgBDC87ggmptRpplp3C93Q0nP-tVaxvXu15Qou40Qj8SwgemDkg6Bk_JVRZn56LhGnklVIi4U2xwOZxUjDq4ROoA6jsXF5qlVSXgkEv2YbfydxnrICT_UjrYnuce1d5bhm3Lzk8mt421tP9NeEODtt4A7HKeMP62jPz7LyLxs_7bD18ENrVdnfI',
-    content:
-      'Sedang mencari UMKM di sektor agroteknologi untuk pendanaan Q4. Ada yang punya profil menarik?',
-    replies: '24 Balasan',
-    likes: '12 Suka',
-  },
-  {
-    author: 'Siti Aminah (Kopi Merapi)',
-    role: 'UMKM Owner',
-    time: '5 jam yang lalu',
-    avatar:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCiisoVElXb4MZr8sivsvP9brGsqu7U_U0HXuUuIVBx9l4HcyLoLaWgNqRz0BjrKbhfb5Xx8H_2QFstmav4RnJDzh8KuuBRc4a8JkEG9zyo_RDffVqpzA32aBwCsucOo4ckn-A54Je_1F5ROiLhCgXfRs31FfUmPx_xoP0s-23y0cfRPDsZdRKZvr4AdUWGS3wPdY8Gr5cLkMcOaYteFA6pp5AEHyvnIB6wdvBBB4aZs2mV8g_n8JIM37u55fi_sIhSeOYJ-WCswIQ',
-    content:
-      'Terima kasih untuk mentor Marcus Thorne atas sesi scaling logistik tadi siang. Sangat mencerahkan!',
-    replies: '8 Balasan',
-    likes: '45 Suka',
-  },
-]
-
 const mentorshipSessions = [
   {
     title: 'Financial Modeling',
@@ -103,9 +78,9 @@ const umkmNavItems = [
     label: 'Mentoring',
     icon: 'video_chat',
     children: [
-      { label: 'Cari Mentor', icon: 'person_search' },
-      { label: 'Mentoring Saya', icon: 'groups' },
-      { label: 'Task Saya', icon: 'task_alt' },
+      { label: 'Find Mentor', icon: 'person_search' },
+      { label: 'My Mentoring', icon: 'groups' },
+      { label: 'My Task', icon: 'task_alt' },
     ],
   },
   { label: 'Funding History', icon: 'history' },
@@ -117,18 +92,18 @@ const umkmTabRoutes = {
   Dashboard: '/dashboard/umkm',
   'AI Matching': '/dashboard/umkm',
   'AI Business Advisor': '/dashboard/umkm',
-  'Cari Mentor': '/dashboard/umkm/mentoring/find',
-  'Mentoring Saya': '/dashboard/umkm/mentoring/my',
-  'Task Saya': '/dashboard/umkm/mentoring/tasks',
+  'Find Mentor': '/dashboard/umkm/mentoring/find',
+  'My Mentoring': '/dashboard/umkm/mentoring/my',
+  'My Task': '/dashboard/umkm/mentoring/tasks',
   'Funding History': '/dashboard/umkm',
   Forum: '/dashboard/umkm',
   Profile: '/dashboard/umkm',
 }
 
 const umkmRouteTabs = {
-  '/dashboard/umkm/mentoring/find': 'Cari Mentor',
-  '/dashboard/umkm/mentoring/my': 'Mentoring Saya',
-  '/dashboard/umkm/mentoring/tasks': 'Task Saya',
+  '/dashboard/umkm/mentoring/find': 'Find Mentor',
+  '/dashboard/umkm/mentoring/my': 'My Mentoring',
+  '/dashboard/umkm/mentoring/tasks': 'My Task',
 }
 
 const mentoringRequestStorageKey = 'microfun_umkm_mentoring_requests'
@@ -165,6 +140,32 @@ function UmkmDashboardPage() {
   const [selectedFunder, setSelectedFunder] = useState(null)
   const [funderRequestMessage, setFunderRequestMessage] = useState('')
   const [funderRequestSubmitting, setFunderRequestSubmitting] = useState(false)
+  const [forumPreviewPosts, setForumPreviewPosts] = useState([])
+  const [forumPreviewLoading, setForumPreviewLoading] = useState(false)
+  const [forumPreviewError, setForumPreviewError] = useState('')
+
+  const fetchForumPreview = useCallback(async () => {
+    const token = localStorage.getItem('microfun_auth_token')
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
+    setForumPreviewLoading(true)
+    setForumPreviewError('')
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/forum/posts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.message || 'Failed to load forum activity.')
+
+      setForumPreviewPosts((payload.posts || []).slice(0, 2).map((post) => normalizeForumPreviewPost(post, apiBaseUrl)))
+    } catch (err) {
+      setForumPreviewError(err.message)
+      setForumPreviewPosts([])
+    } finally {
+      setForumPreviewLoading(false)
+    }
+  }, [])
 
   const fetchMentors = useCallback(async () => {
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
@@ -196,7 +197,7 @@ function UmkmDashboardPage() {
         },
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal memuat funding history.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to load funding history.')
 
       setFundingHistory({
         summary: payload.summary || null,
@@ -225,7 +226,7 @@ function UmkmDashboardPage() {
         },
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal memuat daftar funder.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to load funder list.')
       setAvailableFunders((payload.data || []).map(normalizeFunderForUmkm))
     } catch (err) {
       setFundersError(err.message)
@@ -261,6 +262,7 @@ function UmkmDashboardPage() {
         fetchMentors()
         fetchFundingHistory()
         fetchAvailableFunders()
+        fetchForumPreview()
       })
       .catch((err) => {
         setError(err.message || 'Session expired, please login again.')
@@ -270,7 +272,7 @@ function UmkmDashboardPage() {
       .finally(() => {
         setLoading(false)
       })
-  }, [fetchAvailableFunders, fetchFundingHistory, fetchMentors, navigate])
+  }, [fetchAvailableFunders, fetchForumPreview, fetchFundingHistory, fetchMentors, navigate])
 
   function handleTabChange(tab) {
     setActiveTabState(tab)
@@ -280,56 +282,57 @@ function UmkmDashboardPage() {
     }
   }
 
-  const displayName = useMemo(() => user?.name || 'UMKM', [user])
+  const displayName = useMemo(() => user?.name || 'MSME', [user])
+  const businessAvatarUrl = useMemo(() => getUmkmBusinessAvatar(user), [user])
   const isVerificationLocked = user?.role === 'umkm_owner' && Number(user?.businessVerified ?? user?.ownerVerified ?? 0) !== 1
   const shouldShowLockedFeature = isVerificationLocked && activeTab !== 'Profile'
   const topbarCopy = useMemo(() => {
     if (activeTab === 'Profile') {
       return {
-        title: 'Pengaturan Profil UMKM',
-        subtitle: 'Kelola informasi usaha, dokumen legalitas, dan target pendanaan AI Anda.',
+        title: 'MSME Profile Settings',
+        subtitle: 'Manage business information, legal documents, and AI funding targets.',
       }
     }
 
     if (activeTab === 'AI Business Advisor') {
       return {
         title: 'AI Business Advisor',
-        subtitle: 'Konsultasi strategi bisnis berbasis profil UMKM dan insight pasar.',
+        subtitle: 'Get business strategy guidance based on your MSME profile and market insights.',
       }
     }
 
     if (activeTab === 'AI Matching') {
       return {
         title: 'AI Matching',
-        subtitle: 'Temukan funder dan mentor yang cocok berdasarkan profil bisnis UMKM Anda.',
+        subtitle: 'Find funders and mentors that match your MSME business profile.',
       }
     }
 
-    if (activeTab === 'Cari Mentor') {
+    if (activeTab === 'Find Mentor') {
       return {
-        title: 'Cari Mentor',
-        subtitle: 'Pilih mentor yang paling sesuai dengan tantangan dan target bisnis Anda.',
+        title: 'Find Mentor',
+        subtitle: 'Choose the mentor that best matches your challenges and business goals.',
       }
     }
 
-    if (activeTab === 'Mentoring Saya') {
+    if (activeTab === 'My Mentoring') {
       return {
-        title: 'Mentoring Saya',
-        subtitle: 'Pantau request dan sesi mentoring yang sedang atau akan berjalan.',
+        title: 'My Mentoring',
+        subtitle: 'Monitor your mentoring requests and upcoming or ongoing sessions.',
       }
     }
 
-    if (activeTab === 'Task Saya') {
+    if (activeTab === 'My Task') {
       return {
-        title: 'Task Saya',
-        subtitle: 'Lihat semua task dari mentor dalam satu tempat.',
+        title: 'My Task',
+        subtitle: 'View all mentor-assigned tasks in one place.',
       }
     }
 
     if (activeTab === 'Funding History') {
       return {
         title: 'Funding History',
-        subtitle: 'Pantau total dana terkumpul dan daftar funder yang sudah mendukung UMKM Anda.',
+        subtitle: 'Track total funds raised and funders who have supported your MSME.',
       }
     }
 
@@ -401,9 +404,9 @@ function UmkmDashboardPage() {
         body: JSON.stringify(formData),
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal mengirim request funding.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to send funding request.')
 
-      setFunderRequestMessage(payload.message || 'Request funding berhasil dikirim.')
+      setFunderRequestMessage(payload.message || 'Funding request sent successfully.')
       setSelectedFunder(null)
       fetchFundingHistory()
     } catch (err) {
@@ -430,7 +433,7 @@ function UmkmDashboardPage() {
         },
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.message || 'Gagal menjalankan analisis AI.')
+      if (!response.ok) throw new Error(data.message || 'Failed to run AI analysis.')
       setAiMatchingResult(data)
     } catch (err) {
       setAiMatchingError(err.message)
@@ -457,7 +460,8 @@ function UmkmDashboardPage() {
         <DashboardTopBar
           title={topbarCopy.title}
           subtitle={topbarCopy.subtitle}
-          avatarUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuD_ZPlwaN976hVEFlfHD9DhJytlci7bJpxywRgmDNNDsqteBZmz0nf92DTpTM6NVjyhJrNq_q3pP490-OxJdaJ8pLCC8mb8Vx1S5W6SVasoDZU-qlTX-jQ3GbZxKzGnoZU8R7gBTz4eV6CAj6qcOKs3z5X3dV9eNbGWnkdVGJqbXNiuBjUeC6UT4oTD8-WPao59TFUwijqoyHWEf8iwWmuZ9804veRR8GWYlkNx1-xxatuu6HwtQhkwH762hVXSK6e9mgrwnj9yEh0"
+          avatarAlt={`${user?.businessName || displayName} logo`}
+          avatarUrl={businessAvatarUrl}
         />
 
         {error && <p className="dashboard-error">{error}</p>}
@@ -479,13 +483,13 @@ function UmkmDashboardPage() {
             onAnalyze={handleAiMatching}
             onRequestFunder={setSelectedFunder}
             onRequestMentor={(mentor) => {
-              setAiRequestMessage(`Silakan pilih ${mentor.name} di halaman Cari Mentor untuk mengirim request mentoring.`)
-              handleTabChange('Cari Mentor')
+              setAiRequestMessage(`Please select ${mentor.name} on the Find Mentor page to send a mentoring request.`)
+              handleTabChange('Find Mentor')
             }}
             requestMessage={aiRequestMessage}
             result={aiMatchingResult}
           />
-        ) : activeTab === 'Cari Mentor' ? (
+        ) : activeTab === 'Find Mentor' ? (
           <FindMentorView
             error={mentorsError}
             loading={mentorsLoading}
@@ -493,9 +497,9 @@ function UmkmDashboardPage() {
             onRequest={setSelectedMentor}
             requestMessage={requestMessage}
           />
-        ) : activeTab === 'Mentoring Saya' ? (
+        ) : activeTab === 'My Mentoring' ? (
           <MyMentoringView userId={user?.id} />
-        ) : activeTab === 'Task Saya' ? (
+        ) : activeTab === 'My Task' ? (
           <UmkmTaskView userId={user?.id} />
         ) : activeTab === 'Funding History' ? (
           <FundingHistoryView
@@ -522,29 +526,41 @@ function UmkmDashboardPage() {
               onAnalyze={handleAiMatching}
               onRequestFunder={setSelectedFunder}
               onRequestMentor={(mentor) => {
-                setAiRequestMessage(`Silakan pilih ${mentor.name} di halaman Cari Mentor untuk mengirim request mentoring.`)
-                handleTabChange('Cari Mentor')
+                setAiRequestMessage(`Please select ${mentor.name} on the Find Mentor page to send a mentoring request.`)
+                handleTabChange('Find Mentor')
               }}
               requestMessage={aiRequestMessage}
               result={aiMatchingResult}
             />
 
-            <DashboardSection className="dashboard-section dashboard-forum-section" span="wide" title="Forum Aktivitas" actionLabel="Lihat Semua">
+            <DashboardSection
+              className="dashboard-section dashboard-forum-section"
+              span="wide"
+              title="Forum Activity"
+              actionLabel="View All"
+              onAction={() => handleTabChange('Forum')}
+            >
               <div className="forum-list" id="forum">
-                {forumPosts.map((post) => (
-                  <ForumPostCard key={`${post.author}-${post.time}`} {...post} />
-                ))}
+                {forumPreviewLoading ? (
+                  <p className="dashboard-muted-copy">Loading forum activity...</p>
+                ) : forumPreviewPosts.length > 0 ? (
+                  forumPreviewPosts.map((post) => (
+                    <ForumPostCard key={post.id} {...post} />
+                  ))
+                ) : (
+                  <p className="dashboard-muted-copy">{forumPreviewError || 'No forum activity yet.'}</p>
+                )}
               </div>
 
               <div className="forum-composer">
                 <img
-                  alt={`${displayName} profile`}
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_ZPlwaN976hVEFlfHD9DhJytlci7bJpxywRgmDNNDsqteBZmz0nf92DTpTM6NVjyhJrNq_q3pP490-OxJdaJ8pLCC8mb8Vx1S5W6SVasoDZU-qlTX-jQ3GbZxKzGnoZU8R7gBTz4eV6CAj6qcOKs3z5X3dV9eNbGWnkdVGJqbXNiuBjUeC6UT4oTD8-WPao59TFUwijqoyHWEf8iwWmuZ9804veRR8GWYlkNx1-xxatuu6HwtQhkwH762hVXSK6e9mgrwnj9yEh0"
+                  alt={`${user?.businessName || displayName} logo`}
+                  src={businessAvatarUrl}
                 />
                 <div className="forum-composer-input">
                   <input
                     type="text"
-                    placeholder="Bagikan pembaruan atau ajukan pertanyaan..."
+                    placeholder="Share an update or ask a question..."
                   />
                   <button type="button" aria-label="Send forum message">
                     <span className="material-symbols-outlined" aria-hidden="true">
@@ -608,9 +624,9 @@ function UmkmDashboardPage() {
             <span className="material-symbols-outlined" style={{ fontSize: '3.5rem', color: '#cea761', marginBottom: '1.25rem' }}>
               construction
             </span>
-            <h3 style={{ margin: 0, color: '#122937', fontSize: '1.4rem', fontWeight: 800 }}>Fitur Sedang Dikembangkan</h3>
+            <h3 style={{ margin: 0, color: '#122937', fontSize: '1.4rem', fontWeight: 800 }}>Feature In Progress</h3>
             <p style={{ color: '#43474b', margin: '0.75rem 0 1.75rem', fontSize: '0.95rem', lineHeight: 1.6 }}>
-              Halaman <strong>{activeTab}</strong> saat ini sedang dipersiapkan dan akan segera hadir untuk menunjang pertumbuhan bisnis Anda.
+              The <strong>{activeTab}</strong> page is being prepared and will be available soon to support your business growth.
             </p>
             <button
               type="button"
@@ -619,7 +635,7 @@ function UmkmDashboardPage() {
               style={{ margin: '0 auto', display: 'flex', border: 0 }}
             >
               <span className="material-symbols-outlined">dashboard</span>
-              Kembali ke Dashboard
+              Back to Dashboard
             </button>
           </div>
         )}
@@ -663,11 +679,11 @@ function VerificationLockedView() {
       <div className="umkm-verification-lock-icon">
         <span className="material-symbols-outlined">lock</span>
       </div>
-      <span>Menunggu Verifikasi Admin</span>
-      <h2>Fitur Anda masih dikunci</h2>
+      <span>Awaiting Admin Verification</span>
+      <h2>Your Features Are Still Locked</h2>
       <p>
-        Setelah pendaftaran, akun UMKM hanya dapat membuka halaman Profile sampai admin menyetujui
-        data dan dokumen legalitas usaha Anda.
+        After registration, MSME accounts can only access the Profile page until an admin approves
+        their business data and legal documents.
       </p>
     </section>
   )
@@ -701,26 +717,26 @@ function AiMatchingView({
               </span>
               <span>Powered by AI</span>
             </div>
-            <h2>Cari Funder dan Mentor dengan AI</h2>
+            <h2>Find Funders and Mentors with AI</h2>
             <p>
-              Sistem AI kami menganalisis profil bisnis, sektor usaha, dan kebutuhan Anda
-              untuk menemukan funder dan mentor yang paling sesuai.
+              Our AI system analyzes your business profile, industry, and needs
+              to find the most suitable funders and mentors.
             </p>
             <div className="dashboard-hero-metrics">
               <StatCard
                 icon="analytics"
-                title="Skor Kecocokan AI"
-                description="Analisis multi-dimensi berbasis profil bisnis Anda"
+                title="AI Match Score"
+                description="Multi-dimensional analysis based on your business profile"
               />
               <StatCard
                 icon="groups_3"
-                title="3 Funder + 3 Mentor"
-                description="Rekomendasi terkurasi sesuai sektor & kebutuhan modal"
+                title="3 Funders + 3 Mentors"
+                description="Curated recommendations based on sector and funding needs"
               />
               <StatCard
                 icon="forum"
-                title="Penjelasan AI Insight"
-                description="Alasan mengapa setiap rekomendasi cocok untuk bisnis Anda"
+                title="AI Insight Explanation"
+                description="Why each recommendation is relevant to your business"
               />
             </div>
             <div className="dashboard-hero-actions">
@@ -733,13 +749,13 @@ function AiMatchingView({
                 <span className="material-symbols-outlined" aria-hidden="true">
                   {loading ? 'hourglass_empty' : 'bolt'}
                 </span>
-                {loading ? 'Menganalisis...' : 'Mulai Analisis AI'}
+                {loading ? 'Analyzing...' : 'Start AI Analysis'}
               </button>
               <a href="#ai-match-results" className="dashboard-text-action">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   search
                 </span>
-                Lihat Hasil
+                View Results
               </a>
             </div>
           </div>
@@ -770,11 +786,11 @@ function FunderDirectoryPanel({ error, funders, loading, onRequestFunder, reques
     <section className="umkm-funder-directory" id="ai-funder-directory">
       <header className="umkm-funder-directory-head">
         <div>
-          <span>Database Funder</span>
-          <h2>Daftar Funder Terdaftar</h2>
-          <p>Pilih funder yang sesuai dengan kebutuhan pendanaan dan profil usaha Anda.</p>
+          <span>All Funders</span>
+          <h2>Registered Funders</h2>
+          <p>Choose funders that match your funding needs and business profile.</p>
         </div>
-        <strong>{funders.length} funder aktif</strong>
+        <strong>{funders.length} active funders</strong>
       </header>
 
       {requestMessage && (
@@ -789,7 +805,7 @@ function FunderDirectoryPanel({ error, funders, loading, onRequestFunder, reques
       {loading ? (
         <div className="umkm-funder-data-state">
           <span className="material-symbols-outlined spinner-icon">hourglass_empty</span>
-          <p>Memuat daftar funder dari database...</p>
+          <p>Loading funders from the database...</p>
         </div>
       ) : funders.length > 0 ? (
         <div className="umkm-funder-card-grid">
@@ -800,8 +816,8 @@ function FunderDirectoryPanel({ error, funders, loading, onRequestFunder, reques
       ) : (
         <div className="umkm-funder-data-state empty">
           <span className="material-symbols-outlined">account_balance</span>
-          <h3>Belum Ada Funder</h3>
-          <p>Funder yang melengkapi profil akan muncul di daftar ini.</p>
+          <h3>No Funders Yet</h3>
+          <p>Funders who complete their profiles will appear in this list.</p>
         </div>
       )}
     </section>
@@ -842,7 +858,7 @@ function FunderDirectoryCard({ funder, onRequest }) {
             <strong>{formatRupiah(funder.fundingMin)}</strong>
           </div>
           <div>
-            <span>Maksimum</span>
+            <span>Maximum</span>
             <strong>{formatRupiah(funder.fundingMax)}</strong>
           </div>
         </div>
@@ -881,15 +897,15 @@ function FunderRequestModal({ funder, onClose, onSubmit, submitting }) {
           <div>
             <span>Request Funding</span>
             <h3>{funder.name}</h3>
-            <p>Kirim permohonan pendanaan ke funder pilihan Anda.</p>
+            <p>Send a funding request to your selected funder.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup modal">
+          <button type="button" onClick={onClose} aria-label="Close modal">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <label>
-          Jumlah Pendanaan (Rupiah) *
+          Funding Amount (Rupiah) *
           <input
             type="number"
             min="1000000"
@@ -897,27 +913,27 @@ function FunderRequestModal({ funder, onClose, onSubmit, submitting }) {
             step="100000"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            placeholder="Contoh: 50000000"
+            placeholder="Example: 50000000"
             required
           />
-          <small>Minimum: Rp 1.000.000 | Maksimum: Rp 100.000.000</small>
+          <small>Minimum: Rp 1,000,000 | Maximum: Rp 100,000,000</small>
         </label>
 
         <label>
-          Deskripsi/Permohonan (Opsional)
+          Description / Request (Optional)
           <textarea
             maxLength={1000}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder="Jelaskan alasan permohonan pendanaan, rencana penggunaan dana, dll..."
+            placeholder="Explain your funding request, fund usage plan, and other relevant details..."
           />
-          <small>{description.length}/1000 karakter</small>
+          <small>{description.length}/1000 characters</small>
         </label>
 
         <footer>
-          <button type="button" onClick={onClose} disabled={submitting}>Batal</button>
+          <button type="button" onClick={onClose} disabled={submitting}>Cancel</button>
           <button type="submit" disabled={submitting}>
-            {submitting ? 'Mengirim...' : 'Kirim Request'}
+            {submitting ? 'Sending...' : 'Send Request'}
           </button>
         </footer>
       </form>
@@ -936,7 +952,7 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
     return (
       <div className="umkm-funding-state">
         <span className="material-symbols-outlined">hourglass_empty</span>
-        <p>Memuat funding history...</p>
+          <p>Loading funding history...</p>
       </div>
     )
   }
@@ -947,10 +963,10 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
 
       <section className="umkm-funding-summary">
         <div className="umkm-funding-total">
-          <span>Terkumpul</span>
+          <span>Raised</span>
           <strong>{formatRupiah(fundedAmount)}</strong>
           <p>
-            dari <b>{formatRupiah(fundingTarget)}</b>
+            of <b>{formatRupiah(fundingTarget)}</b>
           </p>
         </div>
         <div className="umkm-funding-meta">
@@ -961,10 +977,10 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
 
       <section className="umkm-funding-progress-card">
         <div>
-          <span>Sisa kebutuhan dana</span>
+          <span>Remaining funding need</span>
           <strong>{formatRupiah(remainingAmount)}</strong>
         </div>
-        <div className="umkm-funding-progress-track" aria-label={`Progress pendanaan ${progress}%`}>
+        <div className="umkm-funding-progress-track" aria-label={`Funding progress ${progress}%`}>
           <span style={{ width: `${progress}%` }} />
         </div>
       </section>
@@ -973,7 +989,7 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
         <div className="umkm-funder-list-head">
           <h3>
             <span className="material-symbols-outlined">pending_actions</span>
-            Request Sedang Diajukan
+            Pending Requests
           </h3>
         </div>
 
@@ -983,7 +999,7 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
               <article key={request.id} className="umkm-pending-funding-row">
                 <div>
                   <h4>{request.name || 'Funder MicroFun'}</h4>
-                  <p>{request.description || 'Tidak ada deskripsi permohonan.'}</p>
+                  <p>{request.description || 'No request description provided.'}</p>
                 </div>
                 <strong>{formatRupiah(request.amount)}</strong>
                 <time>{formatDisplayDate(request.requestedAt)}</time>
@@ -993,8 +1009,8 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
         ) : (
           <div className="umkm-funding-state empty compact">
             <span className="material-symbols-outlined">task_alt</span>
-            <h3>Tidak Ada Request Pending</h3>
-            <p>Request yang masih menunggu approval funder akan muncul di sini.</p>
+            <h3>No Pending Requests</h3>
+            <p>Requests waiting for funder approval will appear here.</p>
           </div>
         )}
       </section>
@@ -1012,9 +1028,9 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
             <table className="umkm-funding-table">
               <thead>
                 <tr>
-                  <th>Nama Funder</th>
-                  <th>Total yang Didanai</th>
-                  <th>Tanggal</th>
+                  <th>Funder Name</th>
+                    <th>Total Funded</th>
+                    <th>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -1036,8 +1052,8 @@ function FundingHistoryView({ error, funders, loading, onRefresh, pendingRequest
         ) : (
           <div className="umkm-funding-state empty">
             <span className="material-symbols-outlined">account_balance_wallet</span>
-            <h3>Belum Ada Funder</h3>
-            <p>Funder yang sudah melakukan pendanaan berhasil akan muncul di sini.</p>
+            <h3>No Funders Yet</h3>
+            <p>Funders who have successfully provided funding will appear here.</p>
           </div>
         )}
       </section>
@@ -1065,7 +1081,7 @@ function AiMatchingPanel({ error, onRequestFunder, onRequestMentor, requestMessa
       <div className="ai-match-summary">
         <span className="material-symbols-outlined">auto_awesome</span>
         <div>
-          <strong>Hasil Rekomendasi AI</strong>
+          <strong>AI Recommendation Results</strong>
           <p>{result.summary}</p>
         </div>
       </div>
@@ -1079,16 +1095,16 @@ function AiMatchingPanel({ error, onRequestFunder, onRequestMentor, requestMessa
 
       {insightItem && (
         <div className="ai-match-insight-alert">
-          <button type="button" onClick={() => setInsightItem(null)} aria-label="Tutup insight">
+          <button type="button" onClick={() => setInsightItem(null)} aria-label="Close insight">
             <span className="material-symbols-outlined">close</span>
           </button>
-          <strong>AI Insight untuk {insightItem.name}</strong>
+          <strong>AI Insight for {insightItem.name}</strong>
           <p>{insightItem.reason}</p>
           <small>{insightItem.nextStep}</small>
         </div>
       )}
 
-      <div className="ai-match-tabs" role="tablist" aria-label="Jenis rekomendasi AI">
+      <div className="ai-match-tabs" role="tablist" aria-label="AI recommendation type">
         <button type="button" className={activeType === 'funder' ? 'active' : ''} onClick={() => setActiveType('funder')}>
           <span className="material-symbols-outlined">account_balance</span>
           Funder
@@ -1101,12 +1117,12 @@ function AiMatchingPanel({ error, onRequestFunder, onRequestMentor, requestMessa
 
       {activeType === 'funder' ? (
       <RecommendationGroup
-        actionLabel="Request Pendanaan"
+        actionLabel="Request Funding"
         icon="account_balance"
         items={result.funders || []}
         onViewInsight={setInsightItem}
         onRequest={onRequestFunder}
-        title="Rekomendasi Funder"
+        title="Recommended Funders"
         type="funder"
       />
       ) : (
@@ -1116,7 +1132,7 @@ function AiMatchingPanel({ error, onRequestFunder, onRequestMentor, requestMessa
         items={result.mentors || []}
         onViewInsight={setInsightItem}
         onRequest={onRequestMentor}
-        title="Rekomendasi Mentor"
+        title="Recommended Mentors"
         type="mentor"
       />
       )}
@@ -1152,25 +1168,24 @@ function FindMentorView({ error, loading, mentors, onRequest, requestMessage }) 
     <div className="mentoring-page">
       <header className="mentoring-heading">
         <div>
-          <p className="mentoring-heading-sub">Pilih mentor berdasarkan profil, bidang keahlian, prestasi, dan pengalaman mereka.</p>
         </div>
-        <span>{filteredMentors.length} mentor tersedia</span>
+        <span>{filteredMentors.length} mentors available</span>
       </header>
 
-      <section className="mentor-filter-panel" aria-label="Filter cari mentor">
+      <section className="mentor-filter-panel" aria-label="Find mentor filters">
         <label className="mentor-search-field">
           <span className="material-symbols-outlined" aria-hidden="true">search</span>
           <input
             type="search"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="Cari nama mentor atau keahlian..."
+            placeholder="Search mentor name or expertise..."
           />
         </label>
         <label>
-          <span>Bidang Keahlian</span>
+          <span>Expertise</span>
           <select value={skillFilter} onChange={(event) => setSkillFilter(event.target.value)}>
-            <option value="all">Semua keahlian</option>
+            <option value="all">All expertise</option>
             {skillOptions.map((skill) => (
               <option key={skill} value={skill}>{skill}</option>
             ))}
@@ -1179,7 +1194,7 @@ function FindMentorView({ error, loading, mentors, onRequest, requestMessage }) 
         <label>
           <span>Status</span>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-            <option value="all">Semua status</option>
+            <option value="all">All status</option>
             <option value="Available">Available</option>
             <option value="Busy">Busy</option>
           </select>
@@ -1202,17 +1217,17 @@ function FindMentorView({ error, loading, mentors, onRequest, requestMessage }) 
       {loading ? (
         <div className="mentoring-empty-state">
           <span className="material-symbols-outlined">hourglass_empty</span>
-          <p>Memuat daftar mentor...</p>
+          <p>Loading mentor list...</p>
         </div>
       ) : mentors.length === 0 ? (
         <div className="mentoring-empty-state">
           <span className="material-symbols-outlined">school</span>
-          <p>Belum ada mentor yang melengkapi profil.</p>
+          <p>No mentors have completed their profile yet.</p>
         </div>
       ) : filteredMentors.length === 0 ? (
         <div className="mentoring-empty-state">
           <span className="material-symbols-outlined">manage_search</span>
-          <p>Tidak ada mentor yang cocok dengan filter saat ini.</p>
+          <p>No mentors match the current filters.</p>
         </div>
       ) : (
         <div className="mentor-directory-grid">
@@ -1224,7 +1239,7 @@ function FindMentorView({ error, loading, mentors, onRequest, requestMessage }) 
                 </div>
                 <div>
                   <h3>{mentor.name}</h3>
-                  <p>{mentor.current_job || 'Mentor UMKM'}</p>
+                  <p>{mentor.current_job || 'MSME Mentor'}</p>
                 </div>
               </header>
               <div className="mentor-directory-meta">
@@ -1239,11 +1254,11 @@ function FindMentorView({ error, loading, mentors, onRequest, requestMessage }) 
                 )}
               </div>
               <div className="mentor-directory-skills">
-                {mentor.skills.length > 0 ? mentor.skills.map((skill) => <span key={skill}>{skill}</span>) : <span>Keahlian belum diisi</span>}
+                {mentor.skills.length > 0 ? mentor.skills.map((skill) => <span key={skill}>{skill}</span>) : <span>No expertise added</span>}
               </div>
-              <InfoBlock title="Pengalaman" value={mentor.experience || 'Belum ada pengalaman yang ditambahkan.'} />
-              <InfoBlock title="Prestasi" value={mentor.achievements || 'Belum ada prestasi yang ditambahkan.'} />
-              <InfoBlock title="Tentang Mentor" value={mentor.about || 'Mentor ini belum menambahkan bio.'} />
+              <InfoBlock title="Experience" value={mentor.experience || 'No experience has been added yet.'} />
+              <InfoBlock title="Achievements" value={mentor.achievements || 'No achievements have been added yet.'} />
+              <InfoBlock title="About Mentor" value={mentor.about || 'This mentor has not added a bio yet.'} />
               <button type="button" onClick={() => onRequest(mentor)}>
                 Request Mentoring
               </button>
@@ -1266,7 +1281,7 @@ function InfoBlock({ title, value }) {
 
 function MyMentoringView({ userId }) {
   const navigate = useNavigate()
-  const [activeFilter, setActiveFilter] = useState('Semua')
+  const [activeFilter, setActiveFilter] = useState('All')
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -1314,14 +1329,11 @@ function MyMentoringView({ userId }) {
   return (
     <div className="mentoring-subpage">
       <div className="mentoring-heading">
-        <div>
-          <span>Mentoring UMKM</span>
-          <p className="mentoring-heading-sub">Pantau seluruh request dan program mentoring berdasarkan statusnya.</p>
-        </div>
+        <div />
       </div>
 
       {error && <div className="mentoring-alert error">{error}</div>}
-      <div className="mentoring-tabs" role="tablist" aria-label="Filter mentoring saya">
+      <div className="mentoring-tabs" role="tablist" aria-label="My mentoring filters">
         {tabs.map((tab) => (
           <button key={tab.label} type="button" className={activeFilter === tab.label ? 'active' : ''} onClick={() => setActiveFilter(tab.label)}>
             {tab.label}
@@ -1333,12 +1345,12 @@ function MyMentoringView({ userId }) {
       {loading ? (
         <div className="mentoring-empty-state">
           <span className="material-symbols-outlined">hourglass_top</span>
-          <p>Memuat data mentoring...</p>
+          <p>Loading mentoring data...</p>
         </div>
       ) : filteredSessions.length === 0 ? (
         <div className="mentoring-empty-state">
           <span className="material-symbols-outlined">event_busy</span>
-          <p>Belum ada mentoring pada status ini.</p>
+          <p>No mentoring items for this status yet.</p>
         </div>
       ) : (
         <div className="mentoring-session-list">
@@ -1352,12 +1364,12 @@ function MyMentoringView({ userId }) {
 }
 
 const mentoringFilterTabs = [
-  { label: 'Semua', statuses: ['all'] },
-  { label: 'Menunggu', statuses: ['Pending'] },
-  { label: 'Aktif', statuses: ['Accepted', 'Active'] },
-  { label: 'Ditolak', statuses: ['Rejected'] },
-  { label: 'Selesai', statuses: ['Completed'] },
-  { label: 'Dibatalkan', statuses: ['Cancelled'] },
+  { label: 'All', statuses: ['all'] },
+  { label: 'Pending', statuses: ['Pending'] },
+  { label: 'Active', statuses: ['Accepted', 'Active'] },
+  { label: 'Rejected', statuses: ['Rejected'] },
+  { label: 'Completed', statuses: ['Completed'] },
+  { label: 'Cancelled', statuses: ['Cancelled'] },
 ]
 
 const dummyMentoringItems = [
@@ -1365,9 +1377,9 @@ const dummyMentoringItems = [
       id: 'dummy-pending-101',
       mentorName: 'Sarah Jenkins',
       mentorProfession: 'Growth Marketing Strategist',
-      topic: 'Strategi marketing digital',
-      duration: '1 bulan mentoring',
-      schedulePreference: 'Sabtu pagi',
+      topic: 'Digital marketing strategy',
+      duration: '1 month mentoring',
+      schedulePreference: 'Saturday morning',
       status: 'Pending',
       requestDate: '2026-05-22',
     },
@@ -1375,47 +1387,47 @@ const dummyMentoringItems = [
       id: 'dummy-accepted-102',
       mentorName: 'Marcus Thorne',
       mentorProfession: 'Operations & Logistics Advisor',
-      topic: 'Scaling operasional dan logistik',
-      duration: '3 bulan mentoring',
-      schedulePreference: 'Rabu malam',
+      topic: 'Operational and logistics scaling',
+      duration: '3 months mentoring',
+      schedulePreference: 'Wednesday evening',
       status: 'Accepted',
       requestDate: '2026-05-16',
       startDate: '2026-05-29',
-      nextSession: 'Jumat, 29 Mei 2026 - 19.30',
+      nextSession: 'Friday, May 29, 2026 - 19.30',
       taskProgress: 15,
     },
     {
       id: 'dummy-active-103',
       mentorName: 'Daniel Hart',
       mentorProfession: 'Finance Mentor',
-      topic: 'Evaluasi model keuangan',
-      duration: '1 bulan mentoring',
-      schedulePreference: 'Selasa sore',
+      topic: 'Financial model evaluation',
+      duration: '1 month mentoring',
+      schedulePreference: 'Tuesday afternoon',
       status: 'Active',
       requestDate: '2026-05-06',
       startDate: '2026-05-10',
       endDate: '2026-06-10',
-      nextSession: 'Selasa, 2 Juni 2026 - 16.00',
+      nextSession: 'Tuesday, June 2, 2026 - 16.00',
       taskProgress: 62,
     },
     {
       id: 'dummy-rejected-104',
       mentorName: 'Nadia Prameswari',
       mentorProfession: 'Export Readiness Consultant',
-      topic: 'Persiapan ekspor produk makanan',
-      duration: '1 sesi konsultasi',
-      schedulePreference: 'Senin pagi',
+      topic: 'Food product export readiness',
+      duration: '1 consultation session',
+      schedulePreference: 'Monday morning',
       status: 'Rejected',
       requestDate: '2026-04-28',
-      rejectionReason: 'Jadwal mentor penuh untuk bulan ini dan belum bisa menerima request baru.',
+      rejectionReason: 'The mentor schedule is full this month and cannot accept new requests yet.',
     },
     {
       id: 'dummy-completed-105',
       mentorName: 'Raka Wibisana',
       mentorProfession: 'Branding Consultant',
-      topic: 'Rebranding kemasan produk',
-      duration: '1 bulan mentoring',
-      schedulePreference: 'Kamis malam',
+      topic: 'Product packaging rebranding',
+      duration: '1 month mentoring',
+      schedulePreference: 'Thursday evening',
       status: 'Completed',
       requestDate: '2026-03-18',
       startDate: '2026-03-25',
@@ -1427,9 +1439,9 @@ const dummyMentoringItems = [
       id: 'dummy-cancelled-106',
       mentorName: 'Maya Hartono',
       mentorProfession: 'Retail Expansion Mentor',
-      topic: 'Validasi channel reseller',
-      duration: '1 sesi konsultasi',
-      schedulePreference: 'Minggu siang',
+      topic: 'Reseller channel validation',
+      duration: '1 consultation session',
+      schedulePreference: 'Sunday afternoon',
       status: 'Cancelled',
       requestDate: '2026-04-12',
     },
@@ -1437,60 +1449,60 @@ const dummyMentoringItems = [
 
 const workspaceTabs = [
   'Overview',
-  'Jadwal Sesi',
+  'Session Schedule',
   'Task & Action Plan',
-  'Catatan Mentor',
+  'Mentor Notes',
   'Chat',
   'File Sharing',
-  'Evaluasi',
+  'Evaluation',
 ]
 
 const workspaceDummyContent = {
   sessions: [
     {
       id: 'session-1',
-      title: 'Kickoff dan pemetaan masalah',
-      date: '29 Mei 2026',
+      title: 'Kickoff and problem mapping',
+      date: 'May 29, 2026',
       time: '19.30 - 20.30',
       platform: 'Google Meet',
       meetingLink: 'https://meet.google.com/dummy-session',
-      agenda: 'Menyepakati target mentoring, baseline bisnis, dan prioritas 2 minggu pertama.',
+      agenda: 'Agree on mentoring goals, business baseline, and priorities for the first 2 weeks.',
       status: 'Upcoming',
     },
     {
       id: 'session-2',
-      title: 'Review strategi konten',
-      date: '22 Mei 2026',
+      title: 'Content strategy review',
+      date: 'May 22, 2026',
       time: '19.00 - 20.00',
       platform: 'Zoom',
       meetingLink: 'https://zoom.us/dummy-session',
-      agenda: 'Membahas kalender konten dan struktur campaign.',
+      agenda: 'Discuss the content calendar and campaign structure.',
       status: 'Completed',
     },
   ],
   tasks: [
     {
       id: 'task-1',
-      title: 'Susun kalender konten 14 hari',
-      instruction: 'Buat rencana konten harian lengkap dengan tujuan, format, dan caption pendek.',
-      deadline: '31 Mei 2026',
-      priority: 'Tinggi',
+      title: 'Prepare a 14-day content calendar',
+      instruction: 'Create a daily content plan with goals, formats, and short captions.',
+      deadline: 'May 31, 2026',
+      priority: 'High',
       status: 'Pending',
     },
     {
       id: 'task-2',
       title: 'Audit katalog WhatsApp Business',
-      instruction: 'Update 5 produk utama dengan foto, harga, dan deskripsi yang lebih jelas.',
-      deadline: '2 Juni 2026',
-      priority: 'Sedang',
+      instruction: 'Update 5 main products with clearer photos, prices, and descriptions.',
+      deadline: 'June 2, 2026',
+      priority: 'Medium',
       status: 'In Progress',
     },
     {
       id: 'task-3',
-      title: 'Catat performa penjualan mingguan',
-      instruction: 'Rekap omzet, order, dan channel penjualan untuk dibahas pada sesi berikutnya.',
-      deadline: '7 Juni 2026',
-      priority: 'Rendah',
+      title: 'Record weekly sales performance',
+      instruction: 'Summarize revenue, orders, and sales channels for the next session.',
+      deadline: 'June 7, 2026',
+      priority: 'Low',
       status: 'Done',
     },
   ],
@@ -1502,28 +1514,28 @@ const workspaceDummyContent = {
       orders: '96',
       followers: '3.840',
       engagement: '5.8%',
-      blocker: 'Tim belum konsisten posting setiap hari.',
-      implementationResult: 'Konten edukasi mulai menghasilkan pesan masuk baru.',
-      question: 'Bagaimana menentukan CTA untuk audience reseller?',
+      blocker: 'The team has not posted consistently every day.',
+      implementationResult: 'Educational content has started generating new inbound messages.',
+      question: 'How should we define CTAs for a reseller audience?',
     },
   ],
   notes: [
     {
       id: 'note-1',
-      sessionTitle: 'Review strategi konten',
-      date: '22 Mei 2026',
-      evaluation: 'UMKM sudah memahami target pelanggan, tetapi konten masih terlalu umum.',
-      advice: 'Fokuskan 3 format konten: edukasi produk, testimoni, dan promo bundling.',
-      nextRecommendation: 'Uji satu campaign selama 14 hari dan ukur pesan masuk per format.',
+      sessionTitle: 'Content strategy review',
+      date: 'May 22, 2026',
+      evaluation: 'The MSME already understands the target customers, but the content is still too broad.',
+      advice: 'Focus on 3 content formats: product education, testimonials, and bundle promotions.',
+      nextRecommendation: 'Test one campaign for 14 days and measure inbound messages per format.',
     },
   ],
   messages: [
-    { id: 'message-1', sender: 'Mentor', text: 'Silakan kirim rekap penjualan minggu ini sebelum sesi berikutnya.', time: 'Kemarin' },
-    { id: 'message-2', sender: 'UMKM', text: 'Baik, saya siapkan omzet, order, dan data konten Instagram.', time: 'Hari ini' },
+    { id: 'message-1', sender: 'Mentor', text: 'Please send this week sales recap before the next session.', time: 'Yesterday' },
+    { id: 'message-2', sender: 'MSME', text: 'Sure, I will prepare revenue, order, and Instagram content data.', time: 'Today' },
   ],
   files: [
-    { id: 'file-1', name: 'Template Kalender Konten.xlsx', meta: 'Mentor • 245 KB' },
-    { id: 'file-2', name: 'Rekap Penjualan Minggu 1.pdf', meta: 'UMKM • 520 KB' },
+    { id: 'file-1', name: 'Content Calendar Template.xlsx', meta: 'Mentor - 245 KB' },
+    { id: 'file-2', name: 'Week 1 Sales Recap.pdf', meta: 'MSME - 520 KB' },
   ],
 }
 
@@ -1544,11 +1556,11 @@ function MentoringRequestCard({ session, onCancel, onFindMentor, onOpenWorkspace
         </div>
 
         <div className="mentoring-request-meta">
-          <InfoPair label="Preferensi Jadwal" value={session.schedulePreference} />
-          <InfoPair label="Tanggal Request" value={formatDisplayDate(session.requestDate)} />
-          {session.startDate && <InfoPair label="Tanggal Mulai" value={formatDisplayDate(session.startDate)} />}
-          {session.endDate && <InfoPair label="Tanggal Selesai" value={formatDisplayDate(session.endDate)} />}
-          {session.nextSession && <InfoPair label="Sesi Berikutnya" value={session.nextSession} />}
+          <InfoPair label="Schedule Preference" value={session.schedulePreference} />
+          <InfoPair label="Request Date" value={formatDisplayDate(session.requestDate)} />
+          {session.startDate && <InfoPair label="Start Date" value={formatDisplayDate(session.startDate)} />}
+          {session.endDate && <InfoPair label="End Date" value={formatDisplayDate(session.endDate)} />}
+          {session.nextSession && <InfoPair label="Next Session" value={session.nextSession} />}
         </div>
 
         {session.rejectionReason && (
@@ -1572,33 +1584,33 @@ function MentoringRequestCard({ session, onCancel, onFindMentor, onOpenWorkspace
       <div className="mentoring-request-actions">
         {session.status === 'Pending' && (
           <>
-            <button type="button" className="secondary">Lihat Detail</button>
-            <button type="button" className="danger" onClick={onCancel}>Batalkan Request</button>
+            <button type="button" className="secondary">View Details</button>
+            <button type="button" className="danger" onClick={onCancel}>Cancel Request</button>
           </>
         )}
         {session.status === 'Rejected' && (
           <>
-            <button type="button" className="secondary">Lihat Alasan</button>
-            <button type="button" onClick={onFindMentor}>Cari Mentor Lain</button>
+            <button type="button" className="secondary">View Reason</button>
+            <button type="button" onClick={onFindMentor}>Find Another Mentor</button>
           </>
         )}
         {session.status === 'Accepted' && (
           <>
-            <button type="button" className="secondary">Lihat Detail</button>
-            <button type="button" onClick={onOpenWorkspace}>Masuk Workspace</button>
+            <button type="button" className="secondary">View Details</button>
+            <button type="button" onClick={onOpenWorkspace}>Open Workspace</button>
           </>
         )}
         {session.status === 'Active' && (
-          <button type="button" onClick={onOpenWorkspace}>Masuk Workspace</button>
+          <button type="button" onClick={onOpenWorkspace}>Open Workspace</button>
         )}
         {session.status === 'Completed' && (
           <>
-            <button type="button" className="secondary">Lihat Arsip</button>
-            {!session.hasRating && <button type="button">Beri Rating</button>}
+            <button type="button" className="secondary">View Archive</button>
+            {!session.hasRating && <button type="button">Rate Mentor</button>}
           </>
         )}
         {session.status === 'Cancelled' && (
-          <button type="button" className="secondary">Lihat Detail</button>
+          <button type="button" className="secondary">View Details</button>
         )}
       </div>
     </article>
@@ -1705,16 +1717,16 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
   }, [mentoringId])
 
   if (loading) {
-    return <div className="mentoring-empty-state"><span className="material-symbols-outlined">hourglass_top</span><p>Memuat workspace mentoring...</p></div>
+    return <div className="mentoring-empty-state"><span className="material-symbols-outlined">hourglass_top</span><p>Loading mentoring workspace...</p></div>
   }
 
   if (error && !workspace.status) {
     return (
       <div className="mentoring-workspace-blocked">
         <span className="material-symbols-outlined">error</span>
-        <h2>Workspace tidak dapat dimuat</h2>
+        <h2>Workspace Cannot Be Loaded</h2>
         <p>{error}</p>
-        <button type="button" onClick={onBack}>Kembali ke Mentoring Saya</button>
+        <button type="button" onClick={onBack}>Back to My Mentoring</button>
       </div>
     )
   }
@@ -1723,9 +1735,9 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
     return (
       <div className="mentoring-workspace-blocked">
         <span className="material-symbols-outlined">lock</span>
-        <h2>Workspace belum tersedia</h2>
-        <p>Workspace hanya dapat diakses untuk mentoring berstatus Accepted, Active, atau Completed.</p>
-        <button type="button" onClick={onBack}>Kembali ke Mentoring Saya</button>
+        <h2>Workspace Not Available Yet</h2>
+        <p>The workspace can only be accessed for mentoring with Accepted, Active, or Completed status.</p>
+        <button type="button" onClick={onBack}>Back to My Mentoring</button>
       </div>
     )
   }
@@ -1762,7 +1774,7 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
     const draft = taskSubmissionDrafts[task.id] || {}
     const note = String(draft.note || '').trim()
     if (!draft.fileName && !note) {
-      setError('Unggah file atau isi keterangan sebelum mengumpulkan task.')
+      setError('Upload a file or add notes before submitting the task.')
       return
     }
     try {
@@ -1892,18 +1904,18 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
             <div className="umkm-overview-main">
               <WorkspacePanel title="Workspace Information" className="workspace-panel-wide">
                 <div className="workspace-info-split">
-                  <InfoPair label="Profil Mentor" value={workspace.mentorSummary || `${workspace.mentorName} mendampingi mentoring ini.`} />
-                  <InfoPair label="Tujuan Mentoring" value={workspace.goal || '-'} />
+                  <InfoPair label="Mentor Profile" value={workspace.mentorSummary || `${workspace.mentorName} is guiding this mentoring program.`} />
+                  <InfoPair label="Mentoring Goal" value={workspace.goal || '-'} />
                 </div>
-                <InfoPair label="Ringkasan Mentoring" value={workspace.summary || '-'} />
+                <InfoPair label="Mentoring Summary" value={workspace.summary || '-'} />
               </WorkspacePanel>
 
-              <WorkspacePanel title="Ringkasan Aktivitas" className="workspace-panel-wide">
+              <WorkspacePanel title="Activity Summary" className="workspace-panel-wide">
                 <div className="umkm-overview-metrics">
-                  <article><span>Sesi selesai</span><strong>{completedSessions}/{sessions.length}</strong><p>{nextSession ? `Berikutnya: ${nextSession.title}` : 'Belum ada sesi berikutnya'}</p></article>
-                  <article><span>Task terkumpul</span><strong>{uploadedTasks}/{tasks.length}</strong><p>{activeTasks.length} task masih aktif</p></article>
-                  <article><span>Materi mentor</span><strong>{files.length}</strong><p>File dapat diakses di File Sharing</p></article>
-                  <article><span>Catatan mentor</span><strong>{notes.length}</strong><p>Insight sesi tersimpan rapi</p></article>
+                  <article><span>Completed Sessions</span><strong>{completedSessions}/{sessions.length}</strong><p>{nextSession ? `Next: ${nextSession.title}` : 'No upcoming session yet'}</p></article>
+                  <article><span>Submitted Tasks</span><strong>{uploadedTasks}/{tasks.length}</strong><p>{activeTasks.length} active tasks remaining</p></article>
+                  <article><span>Mentor Materials</span><strong>{files.length}</strong><p>Files are available in File Sharing</p></article>
+                  <article><span>Mentor Notes</span><strong>{notes.length}</strong><p>Session insights are saved neatly</p></article>
                 </div>
               </WorkspacePanel>
 
@@ -1911,13 +1923,13 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                 {progressHistory[0] ? (
                   <div className="workspace-last-progress">
                     <strong>{formatDisplayDate(progressHistory[0].updateDate)}</strong>
-                    <p>Omzet: {progressHistory[0].revenue || '-'} • Order: {progressHistory[0].orders || '-'} • Followers: {progressHistory[0].followers || '-'}</p>
-                    <span>{progressHistory[0].implementationResult || progressHistory[0].blocker || 'Progress terkirim.'}</span>
+                    <p>Revenue: {progressHistory[0].revenue || '-'} - Orders: {progressHistory[0].orders || '-'} - Followers: {progressHistory[0].followers || '-'}</p>
+                    <span>{progressHistory[0].implementationResult || progressHistory[0].blocker || 'Progress submitted.'}</span>
                   </div>
                 ) : (
                   <div className="workspace-empty-panel">
                     <span className="material-symbols-outlined">info</span>
-                    <p>Belum ada data update bisnis terbaru. Progress terakhir akan muncul dari update bisnis yang dikirim UMKM.</p>
+                    <p>No recent business update data yet. The latest progress will appear after the MSME sends a business update.</p>
                   </div>
                 )}
               </WorkspacePanel>}
@@ -1929,29 +1941,29 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                   <span>Next Session</span>
                   {nextSession?.platform && <small>{nextSession.platform}</small>}
                 </header>
-                <h3>{nextSession?.title || 'Belum ada sesi'}</h3>
-                <p>{nextSession ? `${nextSession.date} • ${nextSession.time || '-'}` : 'Mentor belum menjadwalkan sesi berikutnya.'}</p>
+                <h3>{nextSession?.title || 'No session yet'}</h3>
+                <p>{nextSession ? `${nextSession.date} - ${nextSession.time || '-'}` : 'The mentor has not scheduled the next session yet.'}</p>
                 {nextSession?.meetingLink && nextSession.meetingLink !== '#' && (
                   <a href={nextSession.meetingLink} target="_blank" rel="noreferrer">Join Room</a>
                 )}
               </article>
               <article className="workspace-active-task-card">
-                <h3>Task Aktif</h3>
+                <h3>Active Tasks</h3>
                 {activeTasks.length > 0 ? (
                   <ul>{activeTasks.slice(0, 3).map((task) => <li key={task.id}>{task.title}</li>)}</ul>
                 ) : (
                   <div className="workspace-empty-panel compact">
                     <span className="material-symbols-outlined">assignment</span>
-                    <p>Tidak ada task aktif saat ini.</p>
+                    <p>There are no active tasks right now.</p>
                   </div>
                 )}
-                <button type="button" onClick={() => openWorkspaceTab('Task & Action Plan')}>Lihat Semua Task</button>
+                <button type="button" onClick={() => openWorkspaceTab('Task & Action Plan')}>View All Tasks</button>
               </article>
             </aside>
           </section>
         )}
 
-      {activeTab === 'Jadwal Sesi' && (
+      {activeTab === 'Session Schedule' && (
         <section className="workspace-list">
           {sessions.map((session) => (
             <article key={session.id} className="workspace-session-card">
@@ -1973,7 +1985,7 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                 ) : (
                   <a href={session.meetingLink} target="_blank" rel="noreferrer">Join Meeting</a>
                 )}
-                <button type="button" onClick={() => setSelectedSessionDetail(session)}>Lihat Detail</button>
+                <button type="button" onClick={() => setSelectedSessionDetail(session)}>View Details</button>
               </div>
             </article>
           ))}
@@ -1985,17 +1997,17 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
           <div className="workspace-task-board-head">
             <div>
               <span>Action Plan</span>
-              <h3>Task & Pengumpulan</h3>
-              <p>Kerjakan task dari mentor, lalu kumpulkan dengan file pendukung atau keterangan tertulis.</p>
+              <h3>Tasks & Submission</h3>
+              <p>Complete mentor-assigned tasks, then submit supporting files or written notes.</p>
             </div>
-            <strong>{tasks.filter((task) => task.status === 'Done' || task.submission).length}/{tasks.length} selesai</strong>
+            <strong>{tasks.filter((task) => task.status === 'Done' || task.submission).length}/{tasks.length} completed</strong>
           </div>
 
           <div className="workspace-task-todo-list">
             {tasks.length === 0 ? (
               <div className="workspace-empty-panel">
                 <span className="material-symbols-outlined">assignment</span>
-                <p>Belum ada task dari mentor.</p>
+                <p>No tasks from mentors yet.</p>
               </div>
             ) : tasks.map((task) => {
               const submission = task.submission
@@ -2031,7 +2043,7 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                           <span className="material-symbols-outlined">task_alt</span>
                           <div>
                             <strong>{submissionMeta.label}</strong>
-                            <p>{submission?.submittedAt ? formatDisplayDate(submission.submittedAt) : 'Status task sudah selesai.'}</p>
+                            <p>{submission?.submittedAt ? formatDisplayDate(submission.submittedAt) : 'Task status is completed.'}</p>
                           </div>
                         </div>
                         {submission?.fileName && (
@@ -2042,19 +2054,19 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                         )}
                         {submission?.note && (
                           <div className="workspace-submission-note">
-                            <span>Keterangan</span>
+                            <span>Notes</span>
                             <p>{submission.note}</p>
                           </div>
                         )}
                         <button type="button" className="workspace-cancel-submit" onClick={() => cancelTaskSubmission(task)}>
-                          Batalkan Kumpulkan
+                          Cancel Submission
                         </button>
                       </div>
                     ) : (
                       <>
                         <label className="workspace-task-upload">
                           <span className="material-symbols-outlined">upload_file</span>
-                          Pilih File
+                          Choose File
                           <input type="file" onChange={(event) => handleTaskFileDraft(task.id, event.target.files?.[0])} />
                         </label>
                         {draft.fileName && (
@@ -2064,11 +2076,11 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                           </div>
                         )}
                         <label className="workspace-task-note">
-                          <span>Keterangan / jawaban</span>
+                          <span>Notes / answer</span>
                           <textarea
                             value={draft.note || ''}
                             onChange={(event) => updateTaskSubmissionDraft(task.id, 'note', event.target.value)}
-                            placeholder="Tulis ringkasan pengerjaan, link dokumen, atau kendala yang perlu diketahui mentor..."
+                            placeholder="Write a work summary, document link, or blocker the mentor should know..."
                           />
                         </label>
                         <button
@@ -2077,7 +2089,7 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                           disabled={!canSubmit}
                           onClick={() => submitTaskAssignment(task)}
                         >
-                          Kumpulkan
+                          Submit
                         </button>
                       </>
                     )}
@@ -2093,35 +2105,35 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
         <section className="workspace-progress-layout">
           <form className="workspace-progress-form" onSubmit={submitProgress}>
             <div className="workspace-form-grid">
-              <label>Tanggal update<input type="date" value={progressForm.updateDate} onChange={(event) => updateProgressField('updateDate', event.target.value)} required /></label>
-              <label>Omzet<input value={progressForm.revenue} onChange={(event) => updateProgressField('revenue', event.target.value)} placeholder="Contoh: Rp 8.500.000" /></label>
-              <label>Jumlah order<input value={progressForm.orders} onChange={(event) => updateProgressField('orders', event.target.value)} placeholder="Contoh: 120" /></label>
-              <label>Followers<input value={progressForm.followers} onChange={(event) => updateProgressField('followers', event.target.value)} placeholder="Contoh: 4.200" /></label>
-              <label>Engagement<input value={progressForm.engagement} onChange={(event) => updateProgressField('engagement', event.target.value)} placeholder="Contoh: 6.5%" /></label>
+              <label>Update Date<input type="date" value={progressForm.updateDate} onChange={(event) => updateProgressField('updateDate', event.target.value)} required /></label>
+              <label>Revenue<input value={progressForm.revenue} onChange={(event) => updateProgressField('revenue', event.target.value)} placeholder="Example: Rp 8,500,000" /></label>
+              <label>Total Orders<input value={progressForm.orders} onChange={(event) => updateProgressField('orders', event.target.value)} placeholder="Example: 120" /></label>
+              <label>Followers<input value={progressForm.followers} onChange={(event) => updateProgressField('followers', event.target.value)} placeholder="Example: 4,200" /></label>
+              <label>Engagement<input value={progressForm.engagement} onChange={(event) => updateProgressField('engagement', event.target.value)} placeholder="Example: 6.5%" /></label>
             </div>
-            <label>Kendala terbaru<textarea value={progressForm.blocker} onChange={(event) => updateProgressField('blocker', event.target.value)} /></label>
-            <label>Hasil implementasi saran mentor<textarea value={progressForm.implementationResult} onChange={(event) => updateProgressField('implementationResult', event.target.value)} /></label>
-            <label>Pertanyaan untuk mentor<textarea value={progressForm.question} onChange={(event) => updateProgressField('question', event.target.value)} /></label>
-            <button type="submit">Kirim Progress</button>
+            <label>Latest Blocker<textarea value={progressForm.blocker} onChange={(event) => updateProgressField('blocker', event.target.value)} /></label>
+            <label>Mentor Advice Implementation Result<textarea value={progressForm.implementationResult} onChange={(event) => updateProgressField('implementationResult', event.target.value)} /></label>
+            <label>Question for Mentor<textarea value={progressForm.question} onChange={(event) => updateProgressField('question', event.target.value)} /></label>
+            <button type="submit">Submit Progress</button>
           </form>
           <div className="workspace-progress-history">
             {progressHistory.map((item) => (
               <article key={item.id}>
                 <strong>{formatDisplayDate(item.updateDate)}</strong>
-                <p>Omzet: {item.revenue || '-'} • Order: {item.orders || '-'} • Followers: {item.followers || '-'}</p>
-                <span>{item.implementationResult || item.blocker || 'Progress terkirim.'}</span>
+                <p>Revenue: {item.revenue || '-'} - Orders: {item.orders || '-'} - Followers: {item.followers || '-'}</p>
+                <span>{item.implementationResult || item.blocker || 'Progress submitted.'}</span>
               </article>
             ))}
           </div>
         </section>
       )}
 
-      {activeTab === 'Catatan Mentor' && (
+      {activeTab === 'Mentor Notes' && (
         <section className="workspace-note-list">
           {notes.length === 0 ? (
             <div className="workspace-empty-panel">
               <span className="material-symbols-outlined">edit_note</span>
-              <p>Belum ada catatan mentor untuk workspace ini.</p>
+              <p>No mentor notes for this workspace yet.</p>
             </div>
           ) : notes.map((note) => (
             <article key={note.id} className="workspace-note-card">
@@ -2129,14 +2141,14 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
                 <span className="material-symbols-outlined">edit_note</span>
                 <div>
                   <h3>{note.sessionTitle}</h3>
-                  <p>Sesi: {note.sessionTitle}{note.sessionDate ? ` • ${formatDisplayDate(note.sessionDate)}` : ''}</p>
+                  <p>Session: {note.sessionTitle}{note.sessionDate ? ` - ${formatDisplayDate(note.sessionDate)}` : ''}</p>
                 </div>
                 <time>{formatDisplayDate(note.date)}</time>
               </div>
               <div className="workspace-note-grid">
-                <InfoPair label="Evaluasi" value={note.evaluation || '-'} />
-                <InfoPair label="Saran" value={note.advice || '-'} />
-                <InfoPair label="Rekomendasi Lanjutan" value={note.nextRecommendation || '-'} />
+                <InfoPair label="Evaluation" value={note.evaluation || '-'} />
+                <InfoPair label="Advice" value={note.advice || '-'} />
+                <InfoPair label="Next Recommendation" value={note.nextRecommendation || '-'} />
               </div>
             </article>
           ))}
@@ -2149,10 +2161,10 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
             {chatMessages.length === 0 ? (
               <div className="workspace-empty-panel">
                 <span className="material-symbols-outlined">chat</span>
-                <p>Belum ada pesan pada workspace ini.</p>
+                <p>No messages in this workspace yet.</p>
               </div>
             ) : chatMessages.map((message) => (
-              <article key={message.id} className={message.sender === 'UMKM' ? 'me' : ''}>
+                <article key={message.id} className={message.sender === 'MSME' ? 'me' : ''}>
                 <strong>{message.sender}</strong>
                 <p>{message.text}</p>
                 <span>{message.time}</span>
@@ -2160,8 +2172,8 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
             ))}
           </div>
           <form onSubmit={sendMessage}>
-            <input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Tulis pesan..." />
-            <button type="submit">Kirim</button>
+            <input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Write a message..." />
+            <button type="submit">Send</button>
           </form>
         </section>
       )}
@@ -2171,7 +2183,7 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
           {files.length === 0 ? (
             <div className="workspace-upload-placeholder">
               <span className="material-symbols-outlined">folder_open</span>
-              <p>Belum ada materi dari mentor untuk workspace ini.</p>
+              <p>No mentor materials for this workspace yet.</p>
             </div>
           ) : files.map((file) => (
             <article key={file.id} className="workspace-material-card">
@@ -2179,7 +2191,7 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
               <div>
                 <h3>{file.title}</h3>
                 <p>{file.description || file.fileName}</p>
-                <small>{file.fileName} • {file.fileSizeLabel} • Diunggah {file.createdAtLabel}</small>
+                <small>{file.fileName} - {file.fileSizeLabel} - Uploaded {file.createdAtLabel}</small>
               </div>
               <a href={file.fileUrl} target="_blank" rel="noreferrer">Download</a>
             </article>
@@ -2187,19 +2199,19 @@ function MentoringWorkspacePlaceholder({ mentoringId, onBack }) {
         </section>
       )}
 
-      {activeTab === 'Evaluasi' && (
+      {activeTab === 'Evaluation' && (
         <section className="workspace-evaluation">
           {workspace.status === 'Completed' ? (
             <form>
               <label>Rating 1-5<input type="number" min="1" max="5" placeholder="5" /></label>
-              <label>Feedback<textarea placeholder="Ceritakan pengalaman mentoring..." /></label>
-              <label>Testimoni dampak mentoring<textarea placeholder="Apa dampak mentoring untuk bisnis Anda?" /></label>
-              <button type="button">Kirim Evaluasi</button>
+              <label>Feedback<textarea placeholder="Share your mentoring experience..." /></label>
+              <label>Mentoring Impact Testimonial<textarea placeholder="What impact did mentoring have on your business?" /></label>
+              <button type="button">Submit Evaluation</button>
             </form>
           ) : (
             <div className="mentoring-empty-state">
               <span className="material-symbols-outlined">rate_review</span>
-              <p>Evaluasi tersedia setelah mentoring selesai.</p>
+              <p>Evaluation is available after mentoring is completed.</p>
             </div>
           )}
         </section>
@@ -2227,42 +2239,42 @@ function SessionDetailModal({ onClose, session }) {
       <article className="workspace-detail-modal">
         <header>
           <div>
-            <span>Detail Sesi Mentoring</span>
+            <span>Mentoring Session Details</span>
             <h3>{session.title}</h3>
-            <p>{session.platform || 'Platform belum ditentukan'}</p>
+            <p>{session.platform || 'Platform not specified yet'}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup detail sesi">
+          <button type="button" onClick={onClose} aria-label="Close session details">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <div className="workspace-detail-grid">
           <InfoPair label="Status" value={session.status} />
-          <InfoPair label="Tanggal" value={session.date} />
-          <InfoPair label="Jam" value={session.time || '-'} />
+          <InfoPair label="Date" value={session.date} />
+          <InfoPair label="Time" value={session.time || '-'} />
           <InfoPair label="Platform" value={session.platform || '-'} />
         </div>
 
         <section>
-          <strong>Agenda Sesi</strong>
-          <p>{session.agenda || 'Agenda sesi belum ditambahkan mentor.'}</p>
+          <strong>Session Agenda</strong>
+          <p>{session.agenda || 'The mentor has not added a session agenda yet.'}</p>
         </section>
         {session.cancellationReason && (
           <section>
-            <strong>Alasan Pembatalan</strong>
+            <strong>Cancellation Reason</strong>
             <p>{session.cancellationReason}</p>
           </section>
         )}
 
         <footer>
           {session.status === 'Completed' ? (
-            <button type="button" className="secondary" disabled>Sesi sudah selesai</button>
+            <button type="button" className="secondary" disabled>Session completed</button>
           ) : session.meetingLink && session.meetingLink !== '#' ? (
             <a href={session.meetingLink} target="_blank" rel="noreferrer">Join Meeting</a>
           ) : (
-            <button type="button" className="secondary" disabled>Link belum tersedia</button>
+            <button type="button" className="secondary" disabled>Link not available yet</button>
           )}
-          <button type="button" onClick={onClose}>Tutup</button>
+          <button type="button" onClick={onClose}>Close</button>
         </footer>
       </article>
     </div>
@@ -2272,12 +2284,12 @@ function SessionDetailModal({ onClose, session }) {
 function getWorkspaceTabIcon(tab) {
   const icons = {
     Overview: 'space_dashboard',
-    'Jadwal Sesi': 'calendar_month',
+    'Session Schedule': 'calendar_month',
     'Task & Action Plan': 'assignment_turned_in',
-    'Catatan Mentor': 'edit_note',
+    'Mentor Notes': 'edit_note',
     Chat: 'chat_bubble',
     'File Sharing': 'attach_file',
-    Evaluasi: 'rate_review',
+    Evaluation: 'rate_review',
   }
   return icons[tab] || 'circle'
 }
@@ -2289,13 +2301,13 @@ function getWorkspaceTabFromSearch(search) {
   const normalized = tab.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')
   const tabMap = {
     overview: 'Overview',
-    sessions: 'Jadwal Sesi',
+    sessions: 'Session Schedule',
     'task-and-action-plan': 'Task & Action Plan',
     tasks: 'Task & Action Plan',
-    notes: 'Catatan Mentor',
+    notes: 'Mentor Notes',
     chat: 'Chat',
     files: 'File Sharing',
-    evaluation: 'Evaluasi',
+    evaluation: 'Evaluation',
   }
 
   return tabMap[normalized] || 'Overview'
@@ -2304,12 +2316,12 @@ function getWorkspaceTabFromSearch(search) {
 function buildWorkspaceTabSearch(tab) {
   const tabMap = {
     Overview: 'overview',
-    'Jadwal Sesi': 'sessions',
+    'Session Schedule': 'sessions',
     'Task & Action Plan': 'tasks',
-    'Catatan Mentor': 'notes',
+    'Mentor Notes': 'notes',
     Chat: 'chat',
     'File Sharing': 'files',
-    Evaluasi: 'evaluation',
+    Evaluation: 'evaluation',
   }
 
   const value = tabMap[tab] || 'overview'
@@ -2326,7 +2338,7 @@ function groupTasksByDeadline(tasks) {
   tasks.forEach((task) => {
     const deadline = parseTaskDeadline(task.rawDeadline || task.deadline)
     const key = deadline ? deadline.toISOString().slice(0, 10) : 'no-deadline'
-    const label = deadline ? formatDisplayDate(task.rawDeadline || task.deadline) : 'Tanpa deadline'
+    const label = deadline ? formatDisplayDate(task.rawDeadline || task.deadline) : 'No deadline'
     const sortKey = deadline ? deadline.getTime() : Number.POSITIVE_INFINITY
 
     if (!groups.has(key)) {
@@ -2340,14 +2352,14 @@ function groupTasksByDeadline(tasks) {
 }
 
 function getRemainingWorkspaceTime(endDate, status) {
-  if (status === 'Completed') return 'Selesai'
-  if (status === 'Cancelled') return 'Dibatalkan'
+  if (status === 'Completed') return 'Completed'
+  if (status === 'Cancelled') return 'Cancelled'
   if (!endDate) return '-'
   const diff = new Date(endDate).getTime() - new Date().setHours(0, 0, 0, 0)
   const days = Math.ceil(diff / 86400000)
   if (Number.isNaN(days)) return '-'
-  if (days <= 0) return 'Berakhir hari ini'
-  return `${days} hari lagi`
+  if (days <= 0) return 'Ends today'
+  return `${days} days left`
 }
 
 function getTaskSubmissionStatus(task, submittedAt = new Date()) {
@@ -2357,10 +2369,10 @@ function getTaskSubmissionStatus(task, submittedAt = new Date()) {
 }
 
 function getTaskSubmissionMeta(task, submission) {
-  if (!submission && task?.status === 'Done') return { className: 'submitted', label: 'Sudah mengumpulkan' }
-  if (!submission) return { className: 'not-submitted', label: 'Belum mengumpulkan' }
-  if (String(submission.submissionStatus).toLowerCase() === 'late') return { className: 'late', label: 'Terlambat mengumpulkan' }
-  return { className: 'submitted', label: 'Sudah mengumpulkan' }
+  if (!submission && task?.status === 'Done') return { className: 'submitted', label: 'Submitted' }
+  if (!submission) return { className: 'not-submitted', label: 'Not submitted' }
+  if (String(submission.submissionStatus).toLowerCase() === 'late') return { className: 'late', label: 'Submitted late' }
+  return { className: 'submitted', label: 'Submitted' }
 }
 
 function parseTaskDeadline(value) {
@@ -2410,17 +2422,14 @@ function UmkmTaskView({ userId }) {
   return (
     <div className="mentoring-subpage">
       <div className="mentoring-heading">
-        <div>
-          <span>Semua Mentor</span>
-          <p className="mentoring-heading-sub">Semua task dari mentor ditata per tenggat agar lebih mudah dipantau dan ditindaklanjuti.</p>
-        </div>
+        <div />
       </div>
 
       {error && <div className="mentoring-alert error">{error}</div>}
       {loading ? (
-        <div className="mentoring-empty-state"><span className="material-symbols-outlined">hourglass_top</span><p>Memuat task...</p></div>
+        <div className="mentoring-empty-state"><span className="material-symbols-outlined">hourglass_top</span><p>Loading tasks...</p></div>
       ) : tasks.length === 0 ? (
-        <div className="mentoring-empty-state"><span className="material-symbols-outlined">task_alt</span><p>Belum ada task dari mentor.</p></div>
+        <div className="mentoring-empty-state"><span className="material-symbols-outlined">task_alt</span><p>No tasks from mentors yet.</p></div>
       ) : (
         <div className="umkm-task-list">
           {groupedTasks.map((group) => (
@@ -2482,16 +2491,16 @@ function normalizeApiTask(task) {
 function normalizeApiUmkmWorkspace(workspace) {
   return {
     id: workspace.id,
-    mentorName: workspace.mentor?.name || 'Mentor UMKM',
-    mentorProfession: workspace.mentor?.profession || 'Mentor UMKM',
-    topic: workspace.topic || 'Mentoring bisnis',
+    mentorName: workspace.mentor?.name || 'MSME Mentor',
+    mentorProfession: workspace.mentor?.profession || 'MSME Mentor',
+    topic: workspace.topic || 'Business mentoring',
     status: normalizeMentoringStatus(workspace.status),
     startDate: workspace.startDate,
     endDate: workspace.endDate,
     period: buildWorkspacePeriod(workspace.startDate, workspace.endDate),
-    summary: workspace.acceptanceNote || 'Workspace mentoring aktif.',
+    summary: workspace.acceptanceNote || 'Active mentoring workspace.',
     goal: workspace.goal || '-',
-    mentorSummary: `${workspace.mentor?.name || 'Mentor'} mendampingi topik ${workspace.topic || 'mentoring bisnis'}.`,
+    mentorSummary: `${workspace.mentor?.name || 'Mentor'} is guiding the topic ${workspace.topic || 'business mentoring'}.`,
   }
 }
 
@@ -2540,7 +2549,7 @@ function normalizeChatMessage(message) {
   return {
     id: message.id,
     workspaceId: message.workspaceId || message.workspace_id,
-    sender: role === 'mentor' ? 'Mentor' : 'UMKM',
+    sender: role === 'mentor' ? 'Mentor' : 'MSME',
     text: message.message || message.text || '',
     time: formatDisplayDate(message.createdAt || message.created_at || new Date().toISOString()),
   }
@@ -2549,7 +2558,7 @@ function normalizeChatMessage(message) {
 function normalizeWorkspaceFile(file) {
   return {
     id: file.id,
-    title: file.title || file.fileName || file.file_name || 'Materi mentoring',
+    title: file.title || file.fileName || file.file_name || 'Mentoring material',
     description: file.description || '',
     fileName: file.fileName || file.file_name || 'file',
     fileUrl: buildApiAssetUrl(file.fileUrl || file.file_url || ''),
@@ -2567,7 +2576,7 @@ function buildApiAssetUrl(path) {
 
 function formatFileSize(size) {
   const value = Number(size || 0)
-  if (!value) return 'Ukuran tidak diketahui'
+  if (!value) return 'Unknown size'
   if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`
   return `${Math.max(1, Math.round(value / 1024))} KB`
 }
@@ -2589,7 +2598,7 @@ function normalizeApiProgress(item) {
 function normalizeApiNote(note) {
   return {
     id: note.id,
-    sessionTitle: note.session_title || note.sessionTitle || 'Catatan mentor',
+    sessionTitle: note.session_title || note.sessionTitle || 'Mentor note',
     sessionDate: note.session_date || note.sessionDate,
     date: note.created_at || note.createdAt,
     evaluation: note.evaluation,
@@ -2603,7 +2612,7 @@ function MentorRequestModal({ mentor, onClose, onSubmit, submitting }) {
     topic: '',
     business_problem: '',
     mentoring_goal: '',
-    duration_type: '1 sesi konsultasi',
+      duration_type: '1 consultation session',
     schedule_preference: '',
     additional_message: '',
   })
@@ -2615,9 +2624,9 @@ function MentorRequestModal({ mentor, onClose, onSubmit, submitting }) {
   function handleSubmit(event) {
     event.preventDefault()
     const notes = [
-      `Durasi Mentoring: ${form.duration_type}`,
-      `Preferensi Jadwal: ${form.schedule_preference}`,
-      form.additional_message ? `Pesan Tambahan: ${form.additional_message}` : '',
+      `Mentoring Duration: ${form.duration_type}`,
+      `Schedule Preference: ${form.schedule_preference}`,
+      form.additional_message ? `Additional Message: ${form.additional_message}` : '',
     ].filter(Boolean).join('\n')
 
     onSubmit({
@@ -2635,47 +2644,47 @@ function MentorRequestModal({ mentor, onClose, onSubmit, submitting }) {
       <form className="mentor-request-modal" onSubmit={handleSubmit}>
         <header>
           <div>
-            <h3>Request Mentoring dengan {mentor.name}</h3>
-            <p>{mentor.current_job || 'Mentor UMKM'}</p>
+            <h3>Request Mentoring with {mentor.name}</h3>
+            <p>{mentor.current_job || 'MSME Mentor'}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup">
+          <button type="button" onClick={onClose} aria-label="Close">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <label>
-          Topik Mentoring
-          <input value={form.topic} onChange={(event) => updateField('topic', event.target.value)} placeholder="Contoh: Strategi marketing digital" required />
+          Mentoring Topic
+          <input value={form.topic} onChange={(event) => updateField('topic', event.target.value)} placeholder="Example: Digital marketing strategy" required />
         </label>
         <label>
-          Masalah Bisnis
-          <textarea value={form.business_problem} onChange={(event) => updateField('business_problem', event.target.value)} placeholder="Ceritakan masalah bisnis yang Anda hadapi..." required />
+          Business Problem
+          <textarea value={form.business_problem} onChange={(event) => updateField('business_problem', event.target.value)} placeholder="Describe the business problem you are facing..." required />
         </label>
         <label>
-          Tujuan Mentoring
-          <textarea value={form.mentoring_goal} onChange={(event) => updateField('mentoring_goal', event.target.value)} placeholder="Apa yang ingin Anda capai setelah mentoring?" required />
+          Mentoring Goal
+          <textarea value={form.mentoring_goal} onChange={(event) => updateField('mentoring_goal', event.target.value)} placeholder="What do you want to achieve after mentoring?" required />
         </label>
         <label>
-          Durasi Mentoring
+          Mentoring Duration
           <select value={form.duration_type} onChange={(event) => updateField('duration_type', event.target.value)} required>
-            <option value="1 sesi konsultasi">1 sesi konsultasi</option>
-            <option value="1 bulan mentoring">1 bulan mentoring</option>
-            <option value="3 bulan mentoring">3 bulan mentoring</option>
+            <option value="1 consultation session">1 consultation session</option>
+            <option value="1 month mentoring">1 month mentoring</option>
+            <option value="3 months mentoring">3 months mentoring</option>
           </select>
         </label>
         <label>
-          Preferensi Jadwal
-          <input value={form.schedule_preference} onChange={(event) => updateField('schedule_preference', event.target.value)} placeholder="Contoh: Sabtu pagi atau Rabu malam" required />
+          Schedule Preference
+          <input value={form.schedule_preference} onChange={(event) => updateField('schedule_preference', event.target.value)} placeholder="Example: Saturday morning or Wednesday evening" required />
         </label>
         <label>
-          Pesan Tambahan
-          <textarea value={form.additional_message} onChange={(event) => updateField('additional_message', event.target.value)} placeholder="Tambahkan konteks lain yang perlu diketahui mentor..." />
+          Additional Message
+          <textarea value={form.additional_message} onChange={(event) => updateField('additional_message', event.target.value)} placeholder="Add any other context the mentor should know..." />
         </label>
 
         <footer>
-          <button type="button" onClick={onClose} disabled={submitting}>Batal</button>
+          <button type="button" onClick={onClose} disabled={submitting}>Cancel</button>
           <button type="submit" disabled={submitting}>
-            {submitting ? 'Mengirim...' : 'Kirim Request'}
+            {submitting ? 'Sending...' : 'Send Request'}
           </button>
         </footer>
       </form>
@@ -2697,6 +2706,9 @@ function getDefaultMentoringSchedule() {
 
 function getDurationMinutes(durationType) {
   const durationMap = {
+    '1 consultation session': 60,
+    '1 month mentoring': 60 * 4,
+    '3 months mentoring': 60 * 12,
     '1 sesi konsultasi': 60,
     '1 bulan mentoring': 60 * 4,
     '3 bulan mentoring': 60 * 12,
@@ -2715,15 +2727,15 @@ function RecommendationGroup({ actionLabel, title, icon, items, onRequest, onVie
             <h4>{title}</h4>
             <p>
               {type === 'funder'
-                ? 'Calon pendana yang selaras dengan sektor, kebutuhan modal, dan tujuan bisnis UMKM Anda.'
-                : 'Mentor yang paling sesuai dengan tantangan bisnis dan target pengembangan UMKM Anda.'}
+                ? 'Potential funders aligned with your MSME sector, funding needs, and business goals.'
+                : 'Mentors aligned with your business challenges and MSME development targets.'}
             </p>
           </div>
         </div>
-        <small>{items.length} rekomendasi</small>
+        <small>{items.length} recommendations</small>
       </div>
       {items.length === 0 ? (
-        <p className="ai-match-empty">Belum ada kandidat yang cukup cocok.</p>
+        <p className="ai-match-empty">No sufficiently suitable candidates yet.</p>
       ) : (
         <div className="ai-match-card-grid">
           {items.map((item, index) => (
@@ -2739,7 +2751,7 @@ function RecommendationGroup({ actionLabel, title, icon, items, onRequest, onVie
                 <div className="ai-match-card-title-row">
                   <div>
                     <h5>{item.name}</h5>
-                    <p>{type === 'funder' ? `Calon funder #${index + 1}` : `Calon mentor #${index + 1}`}</p>
+                    <p>{type === 'funder' ? `Potential funder #${index + 1}` : `Potential mentor #${index + 1}`}</p>
                   </div>
                   <span className="ai-match-type-badge">{type === 'funder' ? 'Funder' : 'Mentor'}</span>
                 </div>
@@ -2781,7 +2793,7 @@ function normalizeMentorProfile(mentor, apiBaseUrl) {
     ...mentor,
     photoUrl,
     initials: getInitials(mentor.name),
-    current_job: mentor.current_job || mentor.profession || 'Mentor UMKM',
+    current_job: mentor.current_job || mentor.profession || 'MSME Mentor',
     experience: mentor.experience || (mentor.experienceYears ? `${mentor.experienceYears} tahun pengalaman` : ''),
     about: mentor.about || mentor.bio || '',
     skills: Array.isArray(mentor.skills) ? mentor.skills : Array.isArray(mentor.expertise) ? mentor.expertise : [],
@@ -2850,8 +2862,8 @@ function normalizeApiMentoringRequest(request) {
     id: request.id,
     type: 'request',
     workspaceId: request.workspaceId,
-    mentorName: request.mentor?.name || 'Mentor UMKM',
-    mentorProfession: request.mentor?.profession || 'Mentor UMKM',
+    mentorName: request.mentor?.name || 'MSME Mentor',
+    mentorProfession: request.mentor?.profession || 'MSME Mentor',
     topic: request.topic || 'Request mentoring',
     duration: request.duration || '-',
     schedulePreference: request.preferredSchedule || '-',
@@ -2868,9 +2880,9 @@ function normalizeApiMentoringWorkspace(workspace) {
     id: workspace.requestId || workspace.id,
     type: 'workspace',
     workspaceId: workspace.id,
-    mentorName: workspace.mentor?.name || 'Mentor UMKM',
-    mentorProfession: workspace.mentor?.profession || 'Mentor UMKM',
-    topic: workspace.topic || 'Mentoring bisnis',
+    mentorName: workspace.mentor?.name || 'MSME Mentor',
+    mentorProfession: workspace.mentor?.profession || 'MSME Mentor',
+    topic: workspace.topic || 'Business mentoring',
     duration: buildWorkspacePeriod(workspace.startDate, workspace.endDate),
     schedulePreference: '-',
     status: normalizeMentoringStatus(workspace.status),
@@ -2882,6 +2894,39 @@ function normalizeApiMentoringWorkspace(workspace) {
 
 function getInitials(name = '') {
   return name.split(' ').filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase() || 'MT'
+}
+
+function normalizeForumPreviewPost(post, apiBaseUrl) {
+  const authorName = post.author?.name || 'MicroFun User'
+
+  return {
+    id: post.id,
+    author: authorName,
+    role: formatForumRole(post.author?.role),
+    time: formatDisplayDate(post.createdAt),
+    avatar: getForumPreviewAvatar(post.author?.profilePhoto, apiBaseUrl),
+    content: post.body || '',
+    replies: `${formatNumber(post.commentCount)} Comments`,
+    likes: `${formatNumber(post.likeCount)} Likes`,
+  }
+}
+
+function getForumPreviewAvatar(photo, apiBaseUrl) {
+  const value = String(photo || '').trim()
+  if (!value) return '/assets/logo.png'
+  if (value.startsWith('http') || value.startsWith('data:image/') || value.startsWith('/assets/')) return value
+  return `${apiBaseUrl}${value.startsWith('/') ? '' : '/'}${value}`
+}
+
+function formatForumRole(role) {
+  const labels = {
+    umkm_owner: 'MSME Owner',
+    funder: 'Funder',
+    mentor: 'Mentor',
+    admin: 'Admin',
+  }
+
+  return labels[role] || 'MicroFun User'
 }
 
 function getMentorAvailability(mentor) {
@@ -2922,26 +2967,26 @@ function buildUmkmWorkspaceData(mentoringId) {
 
   return {
     id: mentoringId,
-    mentorName: workspaceSnapshot?.mentorName || source.mentorName || source.mentor?.name || 'Mentor UMKM',
-    mentorProfession: workspaceSnapshot?.mentorProfession || source.mentorProfession || source.mentor?.current_job || 'Mentor UMKM',
-    topic: workspaceSnapshot?.topic || source.topic || 'Mentoring bisnis',
+    mentorName: workspaceSnapshot?.mentorName || source.mentorName || source.mentor?.name || 'MSME Mentor',
+    mentorProfession: workspaceSnapshot?.mentorProfession || source.mentorProfession || source.mentor?.current_job || 'MSME Mentor',
+    topic: workspaceSnapshot?.topic || source.topic || 'Business mentoring',
     status,
     period,
     nextSession: source.nextSession || (firstSession ? formatWorkspaceSessionLabel(firstSession) : ''),
     taskProgress: source.taskProgress || (status === 'Completed' ? 100 : 35),
-    mentorSummary: `${workspaceSnapshot?.mentorName || source.mentorName || 'Mentor'} membantu UMKM menyusun strategi yang lebih terarah berdasarkan topik mentoring ini.`,
-    summary: workspaceSnapshot?.acceptanceNote || 'Workspace ini berisi jadwal sesi, task, catatan mentor, progress bisnis, chat, file, dan evaluasi mentoring.',
-    goal: source.mentoringGoal || 'Meningkatkan eksekusi strategi bisnis dan memantau perkembangan UMKM secara berkala.',
-    lastBusinessProgress: 'Progress terakhir akan muncul dari update bisnis yang dikirim UMKM.',
+    mentorSummary: `${workspaceSnapshot?.mentorName || source.mentorName || 'Mentor'} helps the MSME build a more focused strategy based on this mentoring topic.`,
+    summary: workspaceSnapshot?.acceptanceNote || 'This workspace contains session schedules, tasks, mentor notes, business progress, chat, files, and mentoring evaluation.',
+    goal: source.mentoringGoal || 'Improve business strategy execution and monitor MSME progress regularly.',
+    lastBusinessProgress: 'The latest progress will appear after the MSME sends a business update.',
     sessions: firstSession ? [
       {
         id: 'first-session',
-        title: firstSession.title || 'Sesi pertama',
+        title: firstSession.title || 'First session',
         date: formatDisplayDate(firstSession.date),
         time: `${firstSession.startTime || '-'} - ${firstSession.endTime || '-'}`,
         platform: firstSession.platform || 'Google Meet',
         meetingLink: firstSession.meetingLink || '#',
-        agenda: firstSession.agenda || 'Agenda sesi pertama.',
+        agenda: firstSession.agenda || 'First session agenda.',
         status: 'Upcoming',
       },
       ...workspaceDummyContent.sessions.slice(1),
@@ -2955,13 +3000,13 @@ function buildUmkmWorkspaceData(mentoringId) {
 }
 
 function buildWorkspacePeriod(startDate, endDate) {
-  if (!startDate && !endDate) return 'Periode belum ditentukan'
+  if (!startDate && !endDate) return 'Period not specified yet'
   return `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`
 }
 
 function formatWorkspaceSessionLabel(session) {
   if (!session?.date) return ''
-  return `${session.title || 'Sesi mentoring'} - ${formatDisplayDate(session.date)}`
+  return `${session.title || 'Mentoring session'} - ${formatDisplayDate(session.date)}`
 }
 
 function calculateTaskProgress(tasks) {
@@ -2976,11 +3021,11 @@ function toDateInputValue(date) {
 function normalizeStoredMentoringRequest(request) {
   return {
     id: request.id || `stored-${Date.now()}`,
-    mentorName: request.mentor?.name || 'Mentor UMKM',
-    mentorProfession: request.mentor?.current_job || 'Mentor UMKM',
+    mentorName: request.mentor?.name || 'MSME Mentor',
+    mentorProfession: request.mentor?.current_job || 'MSME Mentor',
     topic: request.topic || 'Request mentoring',
-    duration: request.duration_type || '1 sesi konsultasi',
-    schedulePreference: request.schedule_preference || 'Belum ditentukan',
+    duration: request.duration_type || '1 consultation session',
+    schedulePreference: request.schedule_preference || 'Not specified yet',
     status: normalizeMentoringStatus(request.status),
     requestDate: request.createdAt || new Date().toISOString(),
     startDate: request.startDate,
@@ -3024,7 +3069,7 @@ function formatDisplayDate(value) {
   const date = value.length === 10 ? new Date(`${value}T00:00:00`) : new Date(value)
   if (Number.isNaN(date.getTime())) return value
 
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -3052,6 +3097,18 @@ function formatCompactNumber(value) {
 
 function getMentoringIdFromPath(pathname) {
   return pathname.split('/').filter(Boolean).at(-1) || 'new'
+}
+
+function getUmkmBusinessAvatar(user) {
+  const logo = user?.businessLogo || user?.logo || ''
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+
+  if (logo) {
+    if (logo.startsWith('http') || logo.startsWith('data:image/')) return logo
+    return `${apiBaseUrl}${logo.startsWith('/') ? '' : '/'}${logo}`
+  }
+
+  return '/assets/logo.png'
 }
 
 export default UmkmDashboardPage

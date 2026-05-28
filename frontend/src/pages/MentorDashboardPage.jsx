@@ -47,9 +47,9 @@ const mentorNavItems = [
     label: 'Mentoring',
     icon: 'video_chat',
     children: [
-      { label: 'Request Masuk', icon: 'inbox' },
-      { label: 'Mentee Saya', icon: 'groups' },
-      { label: 'Jadwal Sesi', icon: 'calendar_month' },
+      { label: 'Incoming Requests', icon: 'inbox' },
+      { label: 'My Mentees', icon: 'groups' },
+      { label: 'Session Schedule', icon: 'calendar_month' },
       { label: 'Task & Action Plan', icon: 'task_alt' },
     ],
   },
@@ -75,9 +75,9 @@ const defaultProfile = {
 
 const mentorTabRoutes = {
   Dashboard: '/dashboard/mentor',
-  'Request Masuk': '/dashboard/mentor',
-  'Mentee Saya': '/dashboard/mentor/mentees',
-  'Jadwal Sesi': '/dashboard/mentor',
+  'Incoming Requests': '/dashboard/mentor',
+  'My Mentees': '/dashboard/mentor/mentees',
+  'Session Schedule': '/dashboard/mentor',
   'Task & Action Plan': '/dashboard/mentor/mentoring/tasks',
   Messages: '/dashboard/mentor/messages',
   Forum: '/dashboard/mentor',
@@ -85,7 +85,7 @@ const mentorTabRoutes = {
 }
 
 const mentorRouteTabs = {
-  '/dashboard/mentor/mentees': 'Mentee Saya',
+  '/dashboard/mentor/mentees': 'My Mentees',
   '/dashboard/mentor/messages': 'Messages',
   '/dashboard/mentor/mentoring/tasks': 'Task & Action Plan',
 }
@@ -119,7 +119,7 @@ function MentorDashboardPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
     const payload = await response.json()
-    if (!response.ok) throw new Error(payload.message || 'Gagal memuat profil mentor.')
+    if (!response.ok) throw new Error(payload.message || 'Failed to load mentor profile.')
     setProfile({ ...defaultProfile, ...payload.profile })
   }, [])
 
@@ -166,6 +166,10 @@ function MentorDashboardPage() {
   }, [fetchMentorProfile, fetchMentoringData, navigate])
 
   const displayName = useMemo(() => user?.name || profile.name || 'Mentor', [profile.name, user])
+  const mentorAvatarUrl = useMemo(() => {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'
+    return getProfilePhotoUrl(profile.profile_photo || user?.profile_photo, apiBaseUrl)
+  }, [profile.profile_photo, user])
   const dashboardStats = useMemo(() => getMentorDashboardStats(requests, profile), [profile, requests])
 
   function handleLogout() {
@@ -197,7 +201,7 @@ function MentorDashboardPage() {
         body: JSON.stringify(nextProfile),
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal menyimpan profil mentor.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to save mentor profile.')
       const mentoringProfile = await upsertMentorProfile({
         name: nextProfile.name || user?.name || profile.name,
         profession: nextProfile.current_job,
@@ -239,7 +243,7 @@ function MentorDashboardPage() {
             } : undefined,
           })
       const nextStatus = status === 'Active' ? 'Active' : status === 'Accepted' ? 'Accepted' : 'Rejected'
-      setMessage(nextStatus === 'Rejected' ? 'Request mentoring berhasil ditolak.' : payload.message)
+      setMessage(nextStatus === 'Rejected' ? 'Mentoring request rejected successfully.' : payload.message)
       setRequests((current) => current.map((item) => item.id === request.id ? { ...item, status: nextStatus.toLowerCase(), ...metadata } : item))
       if (mentorProfileId) {
         const [incomingRequests, mentorWorkspaces] = await Promise.all([getMentorRequests(mentorProfileId), getMentorWorkspaces(mentorProfileId)])
@@ -259,7 +263,7 @@ function MentorDashboardPage() {
   }
 
   if (loading) {
-    return <main className="mentor-loading">Memuat dashboard mentor...</main>
+    return <main className="mentor-loading">Loading mentor dashboard...</main>
   }
 
   return (
@@ -279,7 +283,9 @@ function MentorDashboardPage() {
             <h1>{getMentorPageTitle(activeTab, displayName)}</h1>
             <p>{getMentorPageSubtitle(activeTab)}</p>
           </div>
-          <div className="mentor-avatar">{getInitials(displayName)}</div>
+          <div className="mentor-avatar">
+            {mentorAvatarUrl ? <img src={mentorAvatarUrl} alt={`${displayName} profile`} /> : <span>{getInitials(displayName)}</span>}
+          </div>
         </header>
 
         {message && <p className="mentor-alert success">{message}</p>}
@@ -293,22 +299,22 @@ function MentorDashboardPage() {
             profile={profile}
             requests={requests}
             stats={dashboardStats}
-            onOpenRequests={() => handleTabChange('Request Masuk')}
+            onOpenRequests={() => handleTabChange('Incoming Requests')}
           />
-        ) : activeTab === 'Request Masuk' ? (
+        ) : activeTab === 'Incoming Requests' ? (
           <MentorRequestsView requests={requests} onOpenAccept={(request) => openRequestModal(request, 'accept')} onOpenReject={(request) => openRequestModal(request, 'reject')} />
         ) : activeTab === 'Messages' ? (
           <MentorMessagesView workspaces={workspaces} />
         ) : activeTab === 'Forum' ? (
           <ForumPage currentUser={user} userLocation={user?.location || user?.address} />
-        ) : activeTab === 'Mentee Saya' ? (
+        ) : activeTab === 'My Mentees' ? (
           <MentorMenteesView requests={requests} workspaces={workspaces} />
         ) : activeTab === 'Workspace Mentor' ? (
           <MentorWorkspacePlaceholder mentoringId={getMentoringIdFromPath(location.pathname)} onBack={() => navigate('/dashboard/mentor/mentees')} />
         ) : isMentorSessionTab(activeTab) ? (
           <MentorSessionSubpage activeTab={activeTab} requests={requests} workspaces={workspaces} />
         ) : (
-          <MentorPlaceholderPage icon="construction" title={activeTab} copy="Halaman ini sedang dipersiapkan." />
+          <MentorPlaceholderPage icon="construction" title={activeTab} copy="This page is being prepared." />
         )}
 
         {selectedRequest && requestModalMode === 'accept' && (
@@ -384,7 +390,7 @@ function MentorProfileForm({ onSave, profile }) {
         {!isEditing && (
           <button type="button" className="mentor-edit-btn" onClick={() => setIsEditing(true)}>
             <span className="material-symbols-outlined">edit</span>
-            Edit Profil
+            Edit Profile
           </button>
         )}
       </div>
@@ -398,22 +404,22 @@ function MentorProfileForm({ onSave, profile }) {
         <div className="mentor-card-header">
           <span className="material-symbols-outlined">account_circle</span>
           <div>
-            <h2>Informasi Dasar</h2>
-            <p>Data identitas mentor yang terlihat oleh UMKM.</p>
+            <h2>Basic Information</h2>
+            <p>Mentor identity data visible to MSMEs.</p>
           </div>
         </div>
         <div className="mentor-profile-photo-row">
           <div className="mentor-profile-photo">
-            {photoPreview ? <img src={photoPreview} alt="Foto profil mentor" /> : <span>{getInitials(form.name)}</span>}
+            {photoPreview ? <img src={photoPreview} alt="Mentor profile photo" /> : <span>{getInitials(form.name)}</span>}
           </div>
           <label className="mentor-edit-btn">
             <span className="material-symbols-outlined">upload_file</span>
-            Upload Foto Profil
+            Upload Profile Photo
             <input type="file" accept="image/png,image/jpeg,image/gif" hidden disabled={!isEditing} onChange={handlePhotoChange} />
           </label>
         </div>
         <label>
-          Nama
+          Name
           <input disabled={!isEditing} value={form.name || ''} onChange={(event) => updateField('name', event.target.value)} />
         </label>
         <label>
@@ -421,25 +427,25 @@ function MentorProfileForm({ onSave, profile }) {
           <input value={form.email || ''} disabled />
         </label>
         <label>
-          Bidang Keahlian / Pekerjaan Saat Ini
-          <input disabled={!isEditing} value={form.current_job || ''} onChange={(event) => updateField('current_job', event.target.value)} placeholder="Contoh: Marketing strategist, Finance mentor" />
+          Expertise / Current Job
+          <input disabled={!isEditing} value={form.current_job || ''} onChange={(event) => updateField('current_job', event.target.value)} placeholder="Example: Marketing strategist, Finance mentor" />
         </label>
         <label>
-          Lokasi
+          Location
           <select disabled={!isEditing} value={form.location || ''} onChange={(event) => updateLocation(event.target.value)}>
-            <option value="">Pilih kota lokasi mentor</option>
+            <option value="">Select mentor city location</option>
             {WORLD_CITY_OPTIONS.map((city) => (
               <option key={city.label} value={city.label}>{city.label}</option>
             ))}
           </select>
         </label>
         <label>
-          Alamat Detail
-          <textarea disabled={!isEditing} value={form.address || ''} onChange={(event) => updateField('address', event.target.value)} placeholder="Contoh: Jl. Merdeka No. 12, lantai 2" />
+          Detailed Address
+          <textarea disabled={!isEditing} value={form.address || ''} onChange={(event) => updateField('address', event.target.value)} placeholder="Example: 12 Merdeka Street, 2nd floor" />
         </label>
         <label>
-          Bio Singkat
-          <textarea disabled={!isEditing} value={form.about || ''} onChange={(event) => updateField('about', event.target.value)} placeholder="Ceritakan fokus mentoring Anda..." />
+          Short Bio
+          <textarea disabled={!isEditing} value={form.about || ''} onChange={(event) => updateField('about', event.target.value)} placeholder="Describe your mentoring focus..." />
         </label>
       </section>
 
@@ -447,15 +453,15 @@ function MentorProfileForm({ onSave, profile }) {
         <div className="mentor-card-header">
           <span className="material-symbols-outlined">workspace_premium</span>
           <div>
-            <h2>Keahlian, Prestasi, Pengalaman</h2>
-            <p>Dipakai UMKM untuk memilih mentor yang paling sesuai.</p>
+            <h2>Expertise, Achievements, Experience</h2>
+            <p>Used by MSMEs to choose the most suitable mentor.</p>
           </div>
         </div>
         <label>
-          Bidang Keahlian
+          Expertise Areas
           <div className="mentor-skill-input">
-            <input disabled={!isEditing} value={skillInput} onChange={(event) => setSkillInput(event.target.value)} placeholder="Tambahkan skill" />
-            <button type="button" disabled={!isEditing} onClick={addSkill}>Tambah</button>
+            <input disabled={!isEditing} value={skillInput} onChange={(event) => setSkillInput(event.target.value)} placeholder="Add skill" />
+            <button type="button" disabled={!isEditing} onClick={addSkill}>Add</button>
           </div>
         </label>
         <div className="mentor-chip-row">
@@ -467,12 +473,12 @@ function MentorProfileForm({ onSave, profile }) {
           ))}
         </div>
         <label>
-          Prestasi
-          <textarea disabled={!isEditing} value={form.achievements || ''} onChange={(event) => updateField('achievements', event.target.value)} placeholder="Contoh: Membantu 20+ UMKM naik omzet, award, sertifikasi..." />
+          Achievements
+          <textarea disabled={!isEditing} value={form.achievements || ''} onChange={(event) => updateField('achievements', event.target.value)} placeholder="Example: helped 20+ MSMEs increase revenue, awards, certifications..." />
         </label>
         <label>
-          Pengalaman
-          <textarea disabled={!isEditing} value={form.experience || ''} onChange={(event) => updateField('experience', event.target.value)} placeholder="Jelaskan pengalaman profesional atau mentoring Anda..." />
+          Experience
+          <textarea disabled={!isEditing} value={form.experience || ''} onChange={(event) => updateField('experience', event.target.value)} placeholder="Describe your professional or mentoring experience..." />
         </label>
       </section>
 
@@ -483,9 +489,9 @@ function MentorProfileForm({ onSave, profile }) {
             setSkillInput('')
             setIsEditing(false)
           }}>
-            Batal
+            Cancel
           </button>
-          <button type="submit">Simpan Profil</button>
+          <button type="submit">Save Profile</button>
         </div>
       )}
       </form>
@@ -502,17 +508,6 @@ function MentorDashboardHome({ displayName, onOpenRequests, profile, requests, s
 
   return (
     <div className="mentor-home">
-      <section className="mentor-home-hero">
-        <div>
-          <h2>Elite Dashboard</h2>
-          <p>Welcome back, {displayName}. Pantau request, jadwal mentoring, dan perkembangan UMKM binaan Anda.</p>
-        </div>
-        <div className="mentor-date-chip">
-          <span className="material-symbols-outlined">event</span>
-          <span>{formatDateRange()}</span>
-        </div>
-      </section>
-
       <section className="mentor-summary-grid">
         <MentorSummaryCard icon="payments" label="Total Earnings" value={formatCurrency(stats.earnings)} trend="+8.4%" />
         <MentorSummaryCard icon="timer" label="Total Hours" value={`${stats.hours} hrs`} meta="This Month" />
@@ -528,7 +523,7 @@ function MentorDashboardHome({ displayName, onOpenRequests, profile, requests, s
               <button type="button" onClick={onOpenRequests}>View All Schedule</button>
             </div>
             {upcomingSessions.length === 0 ? (
-              <div className="mentor-mini-empty">Belum ada sesi mendatang.</div>
+              <div className="mentor-mini-empty">No upcoming sessions yet.</div>
             ) : (
               <div className="mentor-session-list">
                 {upcomingSessions.map((session) => (
@@ -559,7 +554,7 @@ function MentorDashboardHome({ displayName, onOpenRequests, profile, requests, s
               <span className="material-symbols-outlined">more_horiz</span>
             </div>
             {menteeProgress.length === 0 ? (
-              <div className="mentor-mini-empty">Belum ada UMKM binaan.</div>
+              <div className="mentor-mini-empty">No mentees yet.</div>
             ) : (
               <div className="mentor-progress-grid">
                 {menteeProgress.map((mentee, index) => {
@@ -570,7 +565,7 @@ function MentorDashboardHome({ displayName, onOpenRequests, profile, requests, s
                         <div className="mentor-progress-avatar">{getInitials(mentee.business_name || mentee.requester_name)}</div>
                         <div>
                           <strong>{mentee.requester_name}</strong>
-                          <span>{mentee.business_name || 'UMKM'}</span>
+                          <span>{mentee.business_name || 'MSME'}</span>
                         </div>
                       </div>
                       <div className="mentor-progress-summary">
@@ -593,8 +588,8 @@ function MentorDashboardHome({ displayName, onOpenRequests, profile, requests, s
             </div>
             <p>
               {stats.pending > 0
-                ? `Ada ${stats.pending} request mentoring baru. Prioritaskan request yang sesuai dengan keahlian ${profile.skills?.[0] || profile.current_job || 'utama'} Anda.`
-                : 'Profil mentoring Anda aktif. Lengkapi prestasi dan pengalaman agar UMKM lebih mudah menemukan kecocokan.'}
+                ? `There are ${stats.pending} new mentoring requests. Prioritize requests that match your ${profile.skills?.[0] || profile.current_job || 'primary'} expertise.`
+                : 'Your mentoring profile is active. Complete achievements and experience so MSMEs can find a better fit.'}
             </p>
             <button type="button" onClick={onOpenRequests}>Action Advice</button>
           </section>
@@ -602,14 +597,14 @@ function MentorDashboardHome({ displayName, onOpenRequests, profile, requests, s
           <section className="mentor-card mentor-home-panel">
             <h2>Recent Activity</h2>
             {recentActivities.length === 0 ? (
-              <div className="mentor-mini-empty">Aktivitas terbaru akan muncul di sini.</div>
+              <div className="mentor-mini-empty">Recent activity will appear here.</div>
             ) : (
               <div className="mentor-activity-list">
                 {recentActivities.map((activity) => (
                   <article key={`activity-${activity.id}`}>
                     <i />
                     <div>
-                      <p><strong>{activity.requester_name}</strong> mengirim request untuk topik <strong>{activity.topic}</strong>.</p>
+                      <p><strong>{activity.requester_name}</strong> sent a request for the topic <strong>{activity.topic}</strong>.</p>
                       <span>{formatRelativeDate(activity.created_at)}</span>
                     </div>
                   </article>
@@ -640,44 +635,44 @@ function MentorSummaryCard({ featured = false, icon, label, meta, trend, value }
 function MentorSessionSubpage({ activeTab, requests, workspaces }) {
   const acceptedRequests = requests.filter((request) => request.status === 'accepted' || request.status === 'completed')
 
-  if (activeTab === 'Jadwal Sesi') {
+  if (activeTab === 'Session Schedule') {
     return <MentorSessionScheduleView workspaces={workspaces} />
   }
 
-  if (activeTab === 'Mentee Saya') {
+  if (activeTab === 'My Mentees') {
     return (
       <div className="mentor-session-subpage">
         <MentorSubpageHeader
           eyebrow="Mentoring"
-          title="Mentee Saya"
-          subtitle="Lihat UMKM yang sudah diterima atau sedang aktif dalam program mentoring."
+          title="My Mentees"
+          subtitle="View MSMEs accepted or active in mentoring programs."
           actionIcon="groups"
-          actionLabel="Tambah Catatan"
+          actionLabel="Add Note"
         />
         <div className="mentor-notes-layout">
           <section className="mentor-note-editor">
             <label>
-              Pilih UMKM
+              Select MSME
               <select>
-                <option>{requests[0]?.business_name || requests[0]?.requester_name || 'Pilih UMKM'}</option>
+                <option>{requests[0]?.business_name || requests[0]?.requester_name || 'Select MSME'}</option>
               </select>
             </label>
             <label>
-              Evaluasi Kondisi UMKM
-              <textarea defaultValue="UMKM menunjukkan progres positif. Fokus berikutnya adalah konsistensi eksekusi action plan dan pengukuran hasil mingguan." />
+              MSME Condition Evaluation
+              <textarea defaultValue="The MSME shows positive progress. The next focus is consistent action plan execution and weekly result measurement." />
             </label>
             <label>
-              Rekomendasi Mentor
-              <textarea placeholder="Tulis rekomendasi strategi berikutnya..." />
+              Mentor Recommendation
+              <textarea placeholder="Write the next strategy recommendation..." />
             </label>
-            <button type="button">Simpan Catatan</button>
+            <button type="button">Save Note</button>
           </section>
           <aside className="mentor-note-history">
-            <h3>Catatan Terbaru</h3>
+            <h3>Latest Notes</h3>
             {requests.slice(0, 3).map((request) => (
               <article key={request.id}>
-                <strong>{request.business_name || request.requester_name || 'UMKM'}</strong>
-                <p>{request.business_problem || request.notes || 'Belum ada catatan mentoring.'}</p>
+                <strong>{request.business_name || request.requester_name || 'MSME'}</strong>
+                <p>{request.business_problem || request.notes || 'No mentoring notes yet.'}</p>
               </article>
             ))}
           </aside>
@@ -695,11 +690,11 @@ function MentorSessionSubpage({ activeTab, requests, workspaces }) {
       <MentorSubpageHeader
         eyebrow="Mentoring"
         title={activeTab}
-        subtitle="Fitur ini akan disambungkan ke data mentoring pada tahap berikutnya."
+        subtitle="This feature will be connected to mentoring data in the next stage."
         actionIcon="construction"
         actionLabel="Coming Soon"
       />
-      <MentorPlaceholderPage icon="construction" title={activeTab} copy="Detail halaman ini belum dibuat pada tahap ini." />
+      <MentorPlaceholderPage icon="construction" title={activeTab} copy="This page detail has not been built yet." />
     </div>
   )
 }
@@ -748,8 +743,8 @@ function MentorSessionScheduleView({ workspaces }) {
       <div className="mentor-session-board-header">
         <div>
           <span>Mentoring</span>
-          <h2>Jadwal Sesi</h2>
-          <p>Shortcut semua sesi mentoring dari seluruh workspace mentee, diurutkan dari tanggal terdekat.</p>
+          <h2>Session Schedule</h2>
+          <p>Shortcut to all mentoring sessions from every mentee workspace, sorted by nearest date.</p>
         </div>
         <div className="mentor-session-board-summary">
           <strong>{workspaceCount}</strong>
@@ -762,14 +757,14 @@ function MentorSessionScheduleView({ workspaces }) {
       {loading ? (
         <div className="mentor-session-empty">
           <span className="material-symbols-outlined">hourglass_top</span>
-          <h3>Memuat jadwal sesi...</h3>
+          <h3>Loading session schedule...</h3>
           <p>Mengambil seluruh sesi dari semua workspace mentee.</p>
         </div>
       ) : sessions.length === 0 ? (
         <div className="mentor-session-empty">
           <span className="material-symbols-outlined">calendar_month</span>
-          <h3>Belum ada jadwal sesi</h3>
-          <p>Sesi yang dibuat mentor akan tampil di sini sebagai shortcut.</p>
+          <h3>No session schedule yet</h3>
+          <p>Sessions created by mentors will appear here as shortcuts.</p>
         </div>
       ) : (
         <div className="mentor-session-board-list">
@@ -803,7 +798,7 @@ function MentorSessionScheduleView({ workspaces }) {
 
                     <div className="mentor-session-row-actions">
                       <button type="button" className="secondary" onClick={() => navigate(buildMentorWorkspaceUrl(session.workspaceId, 'sessions'))}>
-                        Detail Sesi
+                        Session Details
                       </button>
                     </div>
                   </article>
@@ -869,7 +864,7 @@ function MentorTaskActionPlanView({ workspaces }) {
         <div>
           <span>Mentoring</span>
           <h2>Task Mentee</h2>
-          <p>Lihat semua task dari seluruh workspace mentee, diurutkan per deadline agar progres lebih mudah dipantau.</p>
+          <p>View all tasks from every mentee workspace, sorted by deadline so progress is easier to monitor.</p>
         </div>
         <div className="mentor-task-board-summary">
           <strong>{workspaceCount}</strong>
@@ -882,23 +877,23 @@ function MentorTaskActionPlanView({ workspaces }) {
       {loading ? (
         <div className="mentor-session-empty">
           <span className="material-symbols-outlined">hourglass_top</span>
-          <h3>Memuat task mentee...</h3>
+          <h3>Loading mentee tasks...</h3>
           <p>Menarik task dari semua workspace aktif.</p>
         </div>
       ) : tasks.length === 0 ? (
         <div className="mentor-session-empty">
           <span className="material-symbols-outlined">task_alt</span>
-          <h3>Belum ada task dari mentee</h3>
-          <p>Task yang dibuat di workspace UMKM akan muncul di sini.</p>
+          <h3>No tasks from mentees yet</h3>
+          <p>Tasks created in MSME workspaces will appear here.</p>
         </div>
       ) : (
         <section className="mentor-task-list-panel mentor-task-board-panel">
           <header>
             <div>
-              <span>Daftar Task Mentee</span>
+              <span>Task List Mentee</span>
               <h3>{tasks.length} task dari {workspaceCount} workspace</h3>
             </div>
-            <strong>{tasks.filter((task) => task.status === 'Done').length}/{tasks.length} selesai</strong>
+            <strong>{tasks.filter((task) => task.status === 'Done').length}/{tasks.length} completed</strong>
           </header>
 
           <div className="mentor-task-list mentor-task-list-compact">
@@ -927,12 +922,12 @@ function MentorTaskActionPlanView({ workspaces }) {
                           {task.submission ? (
                             <>
                               <span className="material-symbols-outlined">task_alt</span>
-                              {task.submission.submissionStatus === 'Late' ? 'Terlambat mengumpulkan' : 'Sudah mengumpulkan'}
+                              {task.submission.submissionStatus === 'Late' ? 'Submitted late' : 'Submitted'}
                             </>
                           ) : (
                             <>
                               <span className="material-symbols-outlined">schedule</span>
-                              Belum mengumpulkan
+                              Not submitted
                             </>
                           )}
                         </div>
@@ -1000,9 +995,9 @@ function MentorMessagesView({ workspaces }) {
         const latestMessage = [...messages].reverse().find(Boolean) || null
         return {
           workspaceId: workspace.id,
-          workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.ownerName || 'UMKM',
-          ownerName: workspace.umkm?.name || workspace.ownerName || 'Pemilik UMKM',
-          topic: workspace.topic || 'Mentoring bisnis',
+          workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.ownerName || 'MSME',
+          ownerName: workspace.umkm?.name || workspace.ownerName || 'MSME Owner',
+          topic: workspace.topic || 'Business mentoring',
           status: workspace.status || 'Active',
           messages,
           latestMessage,
@@ -1065,7 +1060,7 @@ function MentorMessagesView({ workspaces }) {
         <div>
           <span>Mentoring</span>
           <h2>Messages</h2>
-          <p>Semua chat dari workspace mentor tampil di sini seperti inbox, jadi Anda bisa pindah antar percakapan tanpa membuka workspace satu per satu.</p>
+          <p>All chats from mentor workspaces appear here like an inbox, so you can move between conversations without opening each workspace one by one.</p>
         </div>
         <div className="mentor-message-board-summary">
           <strong>{threads.length}</strong>
@@ -1078,14 +1073,14 @@ function MentorMessagesView({ workspaces }) {
       {loading ? (
         <div className="mentor-session-empty">
           <span className="material-symbols-outlined">hourglass_top</span>
-          <h3>Memuat semua chat...</h3>
-          <p>Menggabungkan percakapan dari seluruh workspace mentor.</p>
+          <h3>Loading all chats...</h3>
+          <p>Combining conversations from all mentor workspaces.</p>
         </div>
       ) : threads.length === 0 ? (
         <div className="mentor-session-empty">
           <span className="material-symbols-outlined">chat</span>
-          <h3>Belum ada chat workspace</h3>
-          <p>Ketika ada percakapan di workspace UMKM, chat akan muncul di sini.</p>
+          <h3>No workspace chats yet</h3>
+          <p>When conversations happen in MSME workspaces, chats will appear here.</p>
         </div>
       ) : (
         <div className="mentor-message-board">
@@ -1107,7 +1102,7 @@ function MentorMessagesView({ workspaces }) {
                       <strong>{thread.workspaceLabel}</strong>
                       <small>{thread.status}</small>
                     </div>
-                    <p>{thread.latestMessage?.text || 'Belum ada pesan terbaru.'}</p>
+                    <p>{thread.latestMessage?.text || 'No latest message yet.'}</p>
                     <span>{thread.topic}</span>
                   </div>
                 </button>
@@ -1123,7 +1118,7 @@ function MentorMessagesView({ workspaces }) {
                 <p>{activeThread?.topic || '-'}</p>
               </div>
               <button type="button" className="secondary" onClick={() => activeThread && navigate(buildMentorWorkspaceUrl(activeThread.workspaceId, 'chat'))}>
-                Buka Workspace
+                Open Workspace
               </button>
             </div>
 
@@ -1137,7 +1132,7 @@ function MentorMessagesView({ workspaces }) {
               )) : (
                 <div className="mentor-session-empty">
                   <span className="material-symbols-outlined">chat_bubble</span>
-                  <h3>Belum ada pesan di workspace ini</h3>
+                  <h3>No messages in this workspace yet</h3>
                   <p>Mulai percakapan dari composer di bawah.</p>
                 </div>
               )}
@@ -1147,9 +1142,9 @@ function MentorMessagesView({ workspaces }) {
               <input
                 value={draftMessage}
                 onChange={(event) => setDraftMessage(event.target.value)}
-                placeholder="Tulis pesan untuk UMKM..."
+                placeholder="Write a message to the MSME..."
               />
-              <button type="submit" disabled={!activeThread}>Kirim</button>
+              <button type="submit" disabled={!activeThread}>Send</button>
             </form>
           </section>
         </div>
@@ -1203,10 +1198,10 @@ function MentorRequestsView({ onOpenAccept, onOpenReject, requests }) {
     <section className="mentor-requests-page">
       <div className="mentor-requests-header">
         <div>
-          <h2>Request Masuk</h2>
+          <h2>Incoming Requests</h2>
           <p>
-            Review dan kelola request bimbingan dari UMKM. Pilih request yang paling sesuai
-            dengan keahlian Anda.
+            Review and manage mentoring requests from MSMEs. Choose the most suitable request
+            based on your expertise.
           </p>
         </div>
         <span className="mentor-request-count-pill">
@@ -1218,7 +1213,7 @@ function MentorRequestsView({ onOpenAccept, onOpenReject, requests }) {
       {normalizedRequests.length === 0 ? (
         <div className="mentor-empty-state">
           <span className="material-symbols-outlined">inbox</span>
-          <p>Belum ada request mentoring dari UMKM.</p>
+          <p>No mentoring requests from MSMEs yet.</p>
         </div>
       ) : (
         <>
@@ -1245,35 +1240,35 @@ function MentorRequestsView({ onOpenAccept, onOpenReject, requests }) {
                     </div>
 
                     <dl className="mentor-incoming-details">
-                      <div><dt>Nama UMKM</dt><dd>{normalizedRequest.businessName}</dd></div>
-                      <div><dt>Nama Pemilik</dt><dd>{normalizedRequest.ownerName}</dd></div>
-                      <div><dt>Lokasi</dt><dd>{normalizedRequest.location}</dd></div>
-                      <div><dt>Bidang Usaha</dt><dd>{normalizedRequest.category}</dd></div>
-                      <div><dt>Topik Mentoring</dt><dd>{normalizedRequest.topic}</dd></div>
-                      <div><dt>Durasi Mentoring</dt><dd>{normalizedRequest.duration}</dd></div>
-                      <div><dt>Preferensi Jadwal</dt><dd>{normalizedRequest.schedulePreference}</dd></div>
-                      <div><dt>Tanggal Request</dt><dd>{formatDateOnly(normalizedRequest.requestDate)}</dd></div>
-                      <div><dt>Status Request</dt><dd>{statusMeta.label}</dd></div>
+                      <div><dt>MSME Name</dt><dd>{normalizedRequest.businessName}</dd></div>
+                      <div><dt>Owner Name</dt><dd>{normalizedRequest.ownerName}</dd></div>
+                      <div><dt>Location</dt><dd>{normalizedRequest.location}</dd></div>
+                      <div><dt>Business Field</dt><dd>{normalizedRequest.category}</dd></div>
+                      <div><dt>Mentoring Topic</dt><dd>{normalizedRequest.topic}</dd></div>
+                      <div><dt>Mentoring Duration</dt><dd>{normalizedRequest.duration}</dd></div>
+                      <div><dt>Schedule Preference</dt><dd>{normalizedRequest.schedulePreference}</dd></div>
+                      <div><dt>Request Date</dt><dd>{formatDateOnly(normalizedRequest.requestDate)}</dd></div>
+                      <div><dt>Request Status</dt><dd>{statusMeta.label}</dd></div>
                     </dl>
 
                     <div className="mentor-incoming-story">
-                      <InfoBlockMentor title="Masalah Bisnis" value={normalizedRequest.businessProblem} />
-                      <InfoBlockMentor title="Tujuan Mentoring" value={normalizedRequest.mentoringGoal} />
-                      <InfoBlockMentor title="Pesan Tambahan" value={normalizedRequest.additionalMessage} />
+                      <InfoBlockMentor title="Business Problem" value={normalizedRequest.businessProblem} />
+                      <InfoBlockMentor title="Mentoring Goal" value={normalizedRequest.mentoringGoal} />
+                      <InfoBlockMentor title="Additional Message" value={normalizedRequest.additionalMessage} />
                     </div>
                   </div>
 
                   <div className="mentor-incoming-actions">
                     <button type="button" className="outline" onClick={() => navigate(`/dashboard/mentor/requests/${request.id}`)}>
-                      Lihat Detail
+                      View Details
                     </button>
                     {normalizedRequest.status === 'Pending' ? (
                       <>
                         <button type="button" className="primary" onClick={() => onOpenAccept(request)}>
-                          Terima
+                          Accept
                         </button>
                         <button type="button" className="danger" onClick={() => onOpenReject(request)}>
-                          Tolak
+                          Reject
                         </button>
                       </>
                     ) : (
@@ -1293,8 +1288,8 @@ function MentorRequestsView({ onOpenAccept, onOpenReject, requests }) {
               <h3>AI Matching Insight</h3>
               <p>
                 {featuredRequest
-                  ? `Berdasarkan request masuk, ${featuredRequest.business_name || featuredRequest.requester_name || 'UMKM ini'} berpotensi cocok dengan keahlian mentor Anda pada topik ${featuredRequest.topic || 'pengembangan bisnis'}. Prioritaskan request dengan kebutuhan yang paling dekat dengan pengalaman dan bidang keahlian Anda.`
-                  : 'Belum ada request yang bisa dianalisis. Insight akan muncul saat UMKM mulai mengirim permintaan mentoring.'}
+                  ? `Based on incoming requests, ${featuredRequest.business_name || featuredRequest.requester_name || 'this MSME'} may match your mentor expertise for ${featuredRequest.topic || 'business development'}. Prioritize requests closest to your experience and expertise.`
+                  : 'No requests can be analyzed yet. Insights will appear when MSMEs start sending mentoring requests.'}
               </p>
             </div>
             <button type="button">Enable Auto-Prioritization</button>
@@ -1307,7 +1302,7 @@ function MentorRequestsView({ onOpenAccept, onOpenReject, requests }) {
 
 function MentorMenteesView({ requests, workspaces }) {
   const navigate = useNavigate()
-  const [activeFilter, setActiveFilter] = useState('Aktif')
+  const [activeFilter, setActiveFilter] = useState('Active')
   const mentees = useMemo(() => getMentorMenteeRecordsFromWorkspaces(workspaces, requests), [requests, workspaces])
   const tabs = useMemo(() => {
     return mentorMenteeTabs.map((tab) => ({
@@ -1325,10 +1320,10 @@ function MentorMenteesView({ requests, workspaces }) {
     <section className="mentor-mentees-page">
       <div className="mentor-mentees-header">
         <div>
-          <h2>Mentee Saya</h2>
-          <p>Daftar UMKM yang request mentoringnya sudah diterima, aktif, selesai, atau dibatalkan.</p>
+          <h2>My Mentees</h2>
+          <p>List of MSMEs whose mentoring requests have been accepted, active, completed, or cancelled.</p>
         </div>
-        <span>{mentees.length} UMKM</span>
+        <span>{mentees.length} MSME</span>
       </div>
 
       <div className="mentor-mentee-tabs" role="tablist" aria-label="Filter mentee mentor">
@@ -1343,7 +1338,7 @@ function MentorMenteesView({ requests, workspaces }) {
       {filteredMentees.length === 0 ? (
         <div className="mentor-empty-state">
           <span className="material-symbols-outlined">groups</span>
-          <p>Belum ada mentee pada kategori ini.</p>
+          <p>No mentees in this category yet.</p>
         </div>
       ) : (
         <div className="mentor-mentee-grid">
@@ -1359,17 +1354,17 @@ function MentorMenteesView({ requests, workspaces }) {
               </header>
 
               <dl className="mentor-mentee-details">
-                <div><dt>Lokasi</dt><dd>{mentee.location}</dd></div>
-                <div><dt>Bidang Usaha</dt><dd>{mentee.category}</dd></div>
-                <div><dt>Topik</dt><dd>{mentee.topic}</dd></div>
-                <div><dt>Periode</dt><dd>{mentee.period}</dd></div>
-                <div><dt>Sesi</dt><dd>{mentee.completedSessions} / {mentee.totalSessions}</dd></div>
+                <div><dt>Location</dt><dd>{mentee.location}</dd></div>
+                <div><dt>Business Field</dt><dd>{mentee.category}</dd></div>
+                <div><dt>Topic</dt><dd>{mentee.topic}</dd></div>
+                <div><dt>Period</dt><dd>{mentee.period}</dd></div>
+                <div><dt>Sessions</dt><dd>{mentee.completedSessions} / {mentee.totalSessions}</dd></div>
                 <div><dt>Task</dt><dd>{mentee.completedTasks} / {mentee.totalTasks}</dd></div>
               </dl>
 
               <div className="mentor-mentee-progress">
                 <div>
-                  <span>Progress terakhir</span>
+                  <span>Latest Progress</span>
                   <strong>{mentee.progress}%</strong>
                 </div>
                 <i><b style={{ width: `${mentee.progress}%` }} /></i>
@@ -1378,7 +1373,7 @@ function MentorMenteesView({ requests, workspaces }) {
 
               <button type="button" onClick={() => navigate(buildMentorWorkspaceUrl(mentee.id, 'tasks'))}>
                 <span className="material-symbols-outlined">workspaces</span>
-                Buka Workspace
+                Open Workspace
               </button>
             </article>
           ))}
@@ -1613,7 +1608,7 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
   }
 
   async function deleteTask(taskId) {
-    if (!window.confirm('Hapus task ini? UMKM tidak akan melihat task ini lagi.')) return
+    if (!window.confirm('Delete task ini? MSME tidak akan melihat task ini lagi.')) return
     try {
       await deleteMentoringTask(taskId)
       await reloadWorkspaceData()
@@ -1643,7 +1638,7 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
 
   async function addRecommendation(progressId) {
     try {
-      await updateProgressRecommendation(progressId, 'Fokus pada channel dengan order tertinggi dan ulangi eksperimen selama 7 hari.')
+      await updateProgressRecommendation(progressId, 'Focus on the channel with the highest orders and repeat the experiment for 7 days.')
       await reloadWorkspaceData()
     } catch (err) {
       setWorkspaceError(err.message)
@@ -1671,10 +1666,10 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
     setFileForm((current) => ({ ...current, [field]: value }))
   }
 
-  async function uploadMaterial(event) {
+  async function uploadMaterialsal(event) {
     event.preventDefault()
     if (!fileForm.file) {
-      setWorkspaceError('Pilih file materi terlebih dahulu.')
+      setWorkspaceError('Choose a material file first.')
       return
     }
 
@@ -1709,7 +1704,7 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
     }
   }
 
-  if (loading) return <section className="mentor-placeholder-page"><span className="material-symbols-outlined">hourglass_top</span><h2>Memuat workspace...</h2><p>Data mentoring sedang diambil dari server.</p></section>
+  if (loading) return <section className="mentor-placeholder-page"><span className="material-symbols-outlined">hourglass_top</span><h2>Loading workspace...</h2><p>Mentoring data is being fetched from the server.</p></section>
 
   return (
     <section className="mentor-workspace-page">
@@ -1747,7 +1742,7 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
             <em>{progress}%</em>
           </div>
           <div className="mentor-workspace-stat-card">
-            <span>Periode Program</span>
+            <span>Period Program</span>
             <strong>{workspace.period}</strong>
             <small>Remaining Time</small>
             <em>{getMentorRemainingWorkspaceTime(workspace.endDate, workspace.status)}</em>
@@ -1765,77 +1760,77 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
             <strong>{workspace.status}</strong>
           </div>
           <div className="mentor-overview-metrics">
-            <article><span>Sesi selesai</span><strong>{completedSessions}/{sessions.length}</strong><p>{nextSession ? `Next: ${nextSession.title}` : 'Belum ada sesi berikutnya'}</p></article>
-            <article><span>Task selesai</span><strong>{completedTasks}/{tasks.length}</strong><p>{submittedTasks} task sudah dikumpulkan UMKM</p></article>
-            <article><span>Materi</span><strong>{files.length}</strong><p>File sharing tersedia untuk UMKM</p></article>
-            <article><span>Catatan</span><strong>{notes.length}</strong><p>Catatan mentor tersimpan</p></article>
+            <article><span>Completed Sessions</span><strong>{completedSessions}/{sessions.length}</strong><p>{nextSession ? `Next: ${nextSession.title}` : 'No next session yet'}</p></article>
+            <article><span>Completed Tasks</span><strong>{completedTasks}/{tasks.length}</strong><p>{submittedTasks} tasks submitted by MSMEs</p></article>
+            <article><span>Materials</span><strong>{files.length}</strong><p>File sharing is available for MSMEs</p></article>
+            <article><span>Notes</span><strong>{notes.length}</strong><p>Notes mentor notes saved</p></article>
           </div>
           <div className="mentor-overview-columns">
             <article className="mentor-overview-panel">
-              <header><span className="material-symbols-outlined">flag</span><h3>Tujuan Mentoring</h3></header>
+              <header><span className="material-symbols-outlined">flag</span><h3>Mentoring Goal</h3></header>
               <p>{workspace.goal || '-'}</p>
             </article>
             <article className="mentor-overview-panel">
-              <header><span className="material-symbols-outlined">event_available</span><h3>Sesi Berikutnya</h3></header>
-              <p>{nextSession ? `${nextSession.title} • ${formatDateOnly(nextSession.date)} • ${nextSession.startTime || nextSession.time || '-'}` : 'Belum ada sesi berikutnya.'}</p>
+              <header><span className="material-symbols-outlined">event_available</span><h3>Next Session</h3></header>
+              <p>{nextSession ? `${nextSession.title} • ${formatDateOnly(nextSession.date)} • ${nextSession.startTime || nextSession.time || '-'}` : 'No next session yet.'}</p>
             </article>
             <article className="mentor-overview-panel wide">
-              <header><span className="material-symbols-outlined">assignment</span><h3>Task Aktif</h3></header>
+              <header><span className="material-symbols-outlined">assignment</span><h3>Active Tasks</h3></header>
               {activeTasks.length ? (
                 <ul>{activeTasks.slice(0, 4).map((task) => <li key={task.id}>{task.title}<span>{formatDateOnly(task.deadline)}</span></li>)}</ul>
-              ) : <p>Tidak ada task aktif saat ini.</p>}
+              ) : <p>No active tasks right now.</p>}
             </article>
           </div>
         </section>
       )}
 
-      {activeTab === 'Profil UMKM' && (
+      {activeTab === 'MSME Profile' && (
         <div className="mentor-workspace-grid">
           {workspace.profileItems.map((item) => <WorkspaceInfoCard key={item.label} title={item.label} value={item.value} />)}
         </div>
       )}
 
-      {activeTab === 'Jadwal Sesi' && (
+      {activeTab === 'Session Schedule' && (
         <div className="mentor-session-workspace">
           <form className="mentor-workspace-form mentor-session-form-wide" onSubmit={addSession}>
             <div className="mentor-session-form-head">
               <div>
                 <span>Schedule Builder</span>
-                <h3>Tambah Sesi</h3>
-                <p>Jadwalkan sesi mentoring dengan informasi yang jelas agar UMKM mudah mengikuti agenda.</p>
+                <h3>Add Session</h3>
+                <p>Schedule mentoring sessions with clear information so MSMEs can follow the agenda easily.</p>
               </div>
             </div>
             {isWorkspaceLocked && (
               <div className="mentor-session-lock-note">
                 <span className="material-symbols-outlined">lock</span>
-                <p>Workspace berstatus {workspace.status}, sehingga sesi baru tidak bisa ditambahkan. Tanggal sesi mendatang tetap tidak dapat disimpan selama workspace belum Active.</p>
+                <p>This workspace status is {workspace.status}, so new sessions cannot be added. Upcoming session dates cannot be saved until the workspace is Active.</p>
               </div>
             )}
-            <label>Judul sesi<input value={sessionForm.title} onChange={(event) => updateSessionForm('title', event.target.value)} required /></label>
+            <label>Session Title<input value={sessionForm.title} onChange={(event) => updateSessionForm('title', event.target.value)} required /></label>
             <div className="mentor-flow-grid">
-              <label>Tanggal<input type="date" value={sessionForm.date} onChange={(event) => updateSessionForm('date', event.target.value)} required /></label>
-              <label>Jam mulai<input type="time" value={sessionForm.startTime} onChange={(event) => updateSessionForm('startTime', event.target.value)} required /></label>
-              <label>Jam selesai<input type="time" value={sessionForm.endTime} onChange={(event) => updateSessionForm('endTime', event.target.value)} required /></label>
-              <label>Platform<select value={sessionForm.platform} onChange={(event) => updateSessionForm('platform', event.target.value)}><option>Google Meet</option><option>Zoom</option><option>Lainnya</option></select></label>
+              <label>Date<input type="date" value={sessionForm.date} onChange={(event) => updateSessionForm('date', event.target.value)} required /></label>
+              <label>Start Time<input type="time" value={sessionForm.startTime} onChange={(event) => updateSessionForm('startTime', event.target.value)} required /></label>
+              <label>End Time<input type="time" value={sessionForm.endTime} onChange={(event) => updateSessionForm('endTime', event.target.value)} required /></label>
+              <label>Platform<select value={sessionForm.platform} onChange={(event) => updateSessionForm('platform', event.target.value)}><option>Google Meet</option><option>Zoom</option><option>Other</option></select></label>
             </div>
-            <label>Link meeting<input value={sessionForm.meetingLink} onChange={(event) => updateSessionForm('meetingLink', event.target.value)} /></label>
+            <label>Meeting Link<input value={sessionForm.meetingLink} onChange={(event) => updateSessionForm('meetingLink', event.target.value)} /></label>
             <label>Agenda<textarea value={sessionForm.agenda} onChange={(event) => updateSessionForm('agenda', event.target.value)} /></label>
-            <button type="submit" disabled={isWorkspaceLocked}>Tambah Sesi</button>
+            <button type="submit" disabled={isWorkspaceLocked}>Add Session</button>
           </form>
           <section className="mentor-session-list-panel">
             <header>
               <div>
-                <span>Daftar Sesi</span>
-                <h3>{sessions.length} sesi mentoring</h3>
+                <span>Session List</span>
+                <h3>{sessions.length} mentoring sessions</h3>
               </div>
-              <strong>{sessions.filter((session) => session.status === 'Completed').length}/{sessions.length} selesai</strong>
+              <strong>{sessions.filter((session) => session.status === 'Completed').length}/{sessions.length} completed</strong>
             </header>
             <div className="mentor-session-list">
               {sessions.length === 0 ? (
                 <article className="mentor-session-empty">
                   <span className="material-symbols-outlined">event_busy</span>
-                  <h3>Belum ada sesi</h3>
-                  <p>Tambahkan sesi pertama agar jadwal mentoring terlihat oleh UMKM.</p>
+                  <h3>No sessions yet</h3>
+                  <p>Add the first session so the mentoring schedule is visible to the MSME.</p>
                 </article>
               ) : sessions.map((session) => (
                 <article key={session.id} className="mentor-session-card">
@@ -1845,7 +1840,7 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
                       <small>{session.platform || '-'}</small>
                     </div>
                     <h3>{session.title}</h3>
-                    <p>{session.agenda || 'Belum ada agenda sesi.'}</p>
+                    <p>{session.agenda || 'No session agenda yet.'}</p>
                     {session.cancellationReason && (
                       <div className="mentor-session-cancel-reason">
                         <span className="material-symbols-outlined">info</span>
@@ -1855,14 +1850,14 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
                   </div>
                   <aside className="mentor-session-card-side">
                     <div className="mentor-session-meta-grid">
-                      <div><span>Tanggal</span><strong>{formatDateOnly(session.date)}</strong></div>
-                      <div><span>Waktu</span><strong>{formatTimeRange(session)}</strong></div>
-                      <div><span>Meeting</span><strong>{session.meetingLink ? 'Link tersedia' : 'Belum ada link'}</strong></div>
+                      <div><span>Date</span><strong>{formatDateOnly(session.date)}</strong></div>
+                      <div><span>Time</span><strong>{formatTimeRange(session)}</strong></div>
+                      <div><span>Meeting</span><strong>{session.meetingLink ? 'Link available' : 'No link yet'}</strong></div>
                     </div>
                     <div className="mentor-session-actions">
                       <button type="button" onClick={() => editSession(session.id)}>Edit</button>
-                      <button type="button" className="danger" onClick={() => openCancelSession(session)} disabled={session.status === 'Cancelled' || session.status === 'Completed'}>Batalkan</button>
-                      <button type="button" className="secondary" onClick={() => updateSessionStatus(session.id, 'Completed')} disabled={session.status === 'Completed' || session.status === 'Cancelled'}>Selesai</button>
+                      <button type="button" className="danger" onClick={() => openCancelSession(session)} disabled={session.status === 'Cancelled' || session.status === 'Completed'}>Cancel</button>
+                      <button type="button" className="secondary" onClick={() => updateSessionStatus(session.id, 'Completed')} disabled={session.status === 'Completed' || session.status === 'Cancelled'}>Complete</button>
                     </div>
                   </aside>
                 </article>
@@ -1872,16 +1867,16 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
         </div>
       )}
 
-      {activeTab === 'Catatan Mentor' && (
+      {activeTab === 'Mentor Notes' && (
         <div className="mentor-workspace-two-col">
           <form className="mentor-workspace-form" onSubmit={addNote}>
-            <h3>Catatan Mentor</h3>
-            <label>Pilih sesi<select value={noteForm.sessionId} onChange={(event) => updateNoteForm('sessionId', event.target.value)}>{sessions.map((session) => <option key={session.id} value={session.id}>{session.title}</option>)}</select></label>
-            <label>Evaluasi kondisi UMKM<textarea value={noteForm.evaluation} onChange={(event) => updateNoteForm('evaluation', event.target.value)} required /></label>
-            <label>Kendala ditemukan<textarea value={noteForm.blocker} onChange={(event) => updateNoteForm('blocker', event.target.value)} /></label>
-            <label>Saran<textarea value={noteForm.advice} onChange={(event) => updateNoteForm('advice', event.target.value)} required /></label>
-            <label>Rekomendasi strategi berikutnya<textarea value={noteForm.nextRecommendation} onChange={(event) => updateNoteForm('nextRecommendation', event.target.value)} /></label>
-            <button type="submit">Simpan Catatan</button>
+            <h3>Mentor Notes</h3>
+            <label>Select Session<select value={noteForm.sessionId} onChange={(event) => updateNoteForm('sessionId', event.target.value)}>{sessions.map((session) => <option key={session.id} value={session.id}>{session.title}</option>)}</select></label>
+            <label>MSME Condition Evaluation<textarea value={noteForm.evaluation} onChange={(event) => updateNoteForm('evaluation', event.target.value)} required /></label>
+            <label>Blocker Found<textarea value={noteForm.blocker} onChange={(event) => updateNoteForm('blocker', event.target.value)} /></label>
+            <label>Advice<textarea value={noteForm.advice} onChange={(event) => updateNoteForm('advice', event.target.value)} required /></label>
+            <label>Next Strategy Recommendation<textarea value={noteForm.nextRecommendation} onChange={(event) => updateNoteForm('nextRecommendation', event.target.value)} /></label>
+            <button type="submit">Save Note</button>
           </form>
           <div className="mentor-workspace-list">
             {notes.map((note) => <article key={note.id}><h3>{note.sessionTitle}</h3><p>{note.evaluation}</p><small>{note.advice}</small></article>)}
@@ -1895,32 +1890,32 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
             <div className="mentor-task-form-head">
               <div>
                 <span>Action Plan</span>
-                <h3>{editingTaskId ? 'Edit Task' : 'Tambah Task'}</h3>
-                <p>{editingTaskId ? 'Perubahan task akan langsung terlihat di workspace UMKM.' : 'Buat task yang jelas, terukur, dan mudah dikumpulkan oleh UMKM.'}</p>
+                <h3>{editingTaskId ? 'Edit Task' : 'Add Task'}</h3>
+                <p>{editingTaskId ? 'Task changes will immediately appear in the MSME workspace.' : 'Create clear, measurable tasks that are easy for MSMEs to submit.'}</p>
               </div>
-              {editingTaskId && <button type="button" className="secondary" onClick={cancelTaskEdit}>Batal Edit</button>}
+              {editingTaskId && <button type="button" className="secondary" onClick={cancelTaskEdit}>Cancel Edit</button>}
             </div>
             <div className="mentor-task-form-grid">
-              <label>Judul task<input value={taskForm.title} onChange={(event) => updateTaskForm('title', event.target.value)} required /></label>
+              <label>Task Title<input value={taskForm.title} onChange={(event) => updateTaskForm('title', event.target.value)} required /></label>
               <label>Deadline<input type="date" value={taskForm.deadline} onChange={(event) => updateTaskForm('deadline', event.target.value)} required /></label>
             </div>
-            <label>Instruksi detail<textarea value={taskForm.instruction} onChange={(event) => updateTaskForm('instruction', event.target.value)} required /></label>
-            <button type="submit">{editingTaskId ? 'Simpan Perubahan' : 'Tambah Task'}</button>
+            <label>Detailed Instructions<textarea value={taskForm.instruction} onChange={(event) => updateTaskForm('instruction', event.target.value)} required /></label>
+            <button type="submit">{editingTaskId ? 'Save Changes' : 'Add Task'}</button>
           </form>
           <section className="mentor-task-list-panel">
             <header>
               <div>
-                <span>Daftar Task</span>
-                <h3>{tasks.length} task mentoring</h3>
+                <span>Task List</span>
+                <h3>{tasks.length} mentoring tasks</h3>
               </div>
-              <strong>{tasks.filter((task) => task.status === 'Done').length}/{tasks.length} selesai</strong>
+              <strong>{tasks.filter((task) => task.status === 'Done').length}/{tasks.length} completed</strong>
             </header>
             <div className="mentor-task-list mentor-task-list-compact">
               {tasks.length === 0 ? (
                 <article className="mentor-task-empty">
                   <span className="material-symbols-outlined">assignment</span>
-                  <h3>Belum ada task</h3>
-                  <p>Tambahkan task pertama agar UMKM punya action plan yang bisa dikerjakan.</p>
+                  <h3>No tasks yet</h3>
+                  <p>Add the first task so the MSME has an actionable plan.</p>
                 </article>
               ) : groupedTasks.map((group) => (
                 <section key={group.key} className="mentor-task-group">
@@ -1942,12 +1937,12 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
                             {task.submission ? (
                               <>
                                 <span className="material-symbols-outlined">task_alt</span>
-                                {task.submission.submissionStatus === 'Late' ? 'Terlambat mengumpulkan' : 'Sudah mengumpulkan'}
+                                {task.submission.submissionStatus === 'Late' ? 'Submitted late' : 'Submitted'}
                               </>
                             ) : (
                               <>
                                 <span className="material-symbols-outlined">schedule</span>
-                                Belum mengumpulkan
+                                Not submitted
                               </>
                             )}
                           </div>
@@ -1972,16 +1967,16 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
                           ) : null}
                           <div className="mentor-task-actions mentor-task-actions-compact">
                             <button type="button" onClick={() => editTask(task.id)}>Edit</button>
-                            <button type="button" className="danger" onClick={() => deleteTask(task.id)}>Hapus</button>
-                            <button type="button" className="secondary" onClick={() => commentTask(task.id)}>Komentari</button>
+                            <button type="button" className="danger" onClick={() => deleteTask(task.id)}>Delete</button>
+                            <button type="button" className="secondary" onClick={() => commentTask(task.id)}>Comment</button>
                           </div>
                         </aside>
                         {commentingTaskId === task.id && (
                           <div className="mentor-task-comment-editor">
-                            <label>Komentar untuk UMKM<textarea value={taskCommentDrafts[task.id] || ''} onChange={(event) => setTaskCommentDrafts((current) => ({ ...current, [task.id]: event.target.value }))} placeholder="Contoh: Bukti sudah baik, tambahkan ringkasan hasil implementasi pada submission berikutnya." /></label>
+                            <label>Comment for MSME<textarea value={taskCommentDrafts[task.id] || ''} onChange={(event) => setTaskCommentDrafts((current) => ({ ...current, [task.id]: event.target.value }))} placeholder="Example: The evidence is good, add a summary of implementation results in the next submission." /></label>
                             <div>
-                              <button type="button" onClick={() => saveTaskComment(task.id)}>Simpan Komentar</button>
-                              <button type="button" className="secondary" onClick={() => setCommentingTaskId(null)}>Batal</button>
+                              <button type="button" onClick={() => saveTaskComment(task.id)}>Save Comment</button>
+                              <button type="button" className="secondary" onClick={() => setCommentingTaskId(null)}>Cancel</button>
                             </div>
                           </div>
                         )}
@@ -1998,31 +1993,31 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
       {activeTab === 'Chat' && (
         <div className="mentor-workspace-chat">
           <div>{messages.map((message) => <article key={message.id} className={message.sender === 'Mentor' ? 'me' : ''}><strong>{message.sender}</strong><p>{message.text}</p><span>{message.time}</span></article>)}</div>
-          <form onSubmit={sendMessage}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Tulis pesan..." /><button type="submit">Kirim</button></form>
+          <form onSubmit={sendMessage}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Write a message..." /><button type="submit">Send</button></form>
         </div>
       )}
 
       {activeTab === 'File Sharing' && (
         <div className="mentor-file-sharing-workspace">
-          <form className="mentor-workspace-form mentor-file-upload-form mentor-file-upload-form-wide" onSubmit={uploadMaterial}>
+          <form className="mentor-workspace-form mentor-file-upload-form mentor-file-upload-form-wide" onSubmit={uploadMaterialsal}>
             <div className="mentor-file-sharing-head">
               <div>
                 <span>File Sharing</span>
-                <h3>Upload Materi</h3>
-                <p>Bagikan materi mentoring yang rapi, mudah diakses, dan siap dipakai oleh UMKM di workspace mereka.</p>
+                <h3>Upload Materialals</h3>
+                <p>Share neat, accessible mentoring materials ready for MSMEs to use in their workspaces.</p>
               </div>
               <div className="mentor-file-sharing-note">
                 <span className="material-symbols-outlined">folder_shared</span>
-                <p>Materi yang diunggah akan langsung tampil di daftar bawah untuk UMKM.</p>
+                <p>Uploaded materials will immediately appear in the list below for MSMEs.</p>
               </div>
             </div>
             <div className="mentor-file-sharing-grid">
-              <label>Judul materi<input value={fileForm.title} onChange={(event) => updateFileForm('title', event.target.value)} placeholder="Contoh: Template rencana konten" /></label>
-              <label>Catatan untuk UMKM<textarea value={fileForm.description} onChange={(event) => updateFileForm('description', event.target.value)} placeholder="Tambahkan konteks penggunaan materi ini..." /></label>
+              <label>Materialsal Title<input value={fileForm.title} onChange={(event) => updateFileForm('title', event.target.value)} placeholder="Example: Content plan template" /></label>
+              <label>Note for MSME<textarea value={fileForm.description} onChange={(event) => updateFileForm('description', event.target.value)} placeholder="Add usage context for this material..." /></label>
             </div>
             <label className="mentor-file-picker">
               <span className="material-symbols-outlined">upload_file</span>
-              {fileForm.fileName || 'Pilih file PDF, dokumen, gambar, atau catatan'}
+              {fileForm.fileName || 'Choose a PDF, document, image, or note file'}
               <input
                 type="file"
                 onChange={(event) => {
@@ -2033,21 +2028,21 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
                 }}
               />
             </label>
-            <button type="submit">Upload Materi</button>
+            <button type="submit">Upload Materialals</button>
           </form>
           <div className="mentor-workspace-list mentor-material-list mentor-material-list-below">
             <header className="mentor-material-list-header">
               <div>
-                <span>Daftar Materi</span>
-                <h3>{files.length} file tersedia</h3>
+                <span>Material Listals</span>
+                <h3>{files.length} files available</h3>
               </div>
-              <p>Semua materi yang diunggah tersusun di bawah form agar alur kerja lebih jelas.</p>
+              <p>All uploaded materials are listed below the form for a clearer workflow.</p>
             </header>
             {files.length === 0 ? (
               <article className="mentor-material-empty">
                 <span className="material-symbols-outlined">folder_open</span>
-                <h3>Belum ada materi</h3>
-                <p>Upload buku, PDF, template, atau catatan agar UMKM bisa mengaksesnya dari workspace mereka.</p>
+                <h3>No materials yet</h3>
+                <p>Upload books, PDFs, templates, or notes so MSMEs can access them from their workspace.</p>
               </article>
             ) : files.map((file) => (
               <article key={file.id} className="mentor-material-card">
@@ -2055,7 +2050,7 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
                 <div>
                   <h3>{file.title}</h3>
                   <p>{file.description || file.fileName}</p>
-                  <small>{file.fileName} • {file.fileSizeLabel} • Diunggah {file.createdAtLabel}</small>
+                  <small>{file.fileName} • {file.fileSizeLabel} • Uploaded {file.createdAtLabel}</small>
                 </div>
                 <a href={file.fileUrl} target="_blank" rel="noreferrer">Download</a>
               </article>
@@ -2064,15 +2059,15 @@ function MentorWorkspacePlaceholder({ mentoringId }) {
         </div>
       )}
 
-      {activeTab === 'Selesaikan Mentoring' && (
+      {activeTab === 'Complete Mentoring' && (
         <form className="mentor-workspace-form wide" onSubmit={completeMentoring}>
-          <h3>Selesaikan Mentoring</h3>
-          <label>Evaluasi akhir<textarea value={completionForm.finalEvaluation} onChange={(event) => updateCompletionField('finalEvaluation', event.target.value)} required /></label>
-          <label>Hasil mentoring<textarea value={completionForm.result} onChange={(event) => updateCompletionField('result', event.target.value)} required /></label>
-          <label>Perkembangan UMKM<textarea value={completionForm.businessGrowth} onChange={(event) => updateCompletionField('businessGrowth', event.target.value)} required /></label>
-          <label>Rekomendasi lanjutan<textarea value={completionForm.nextRecommendation} onChange={(event) => updateCompletionField('nextRecommendation', event.target.value)} /></label>
-          <label>Catatan penutup<textarea value={completionForm.closingNote} onChange={(event) => updateCompletionField('closingNote', event.target.value)} /></label>
-          <button type="submit">Selesaikan Mentoring</button>
+          <h3>Complete Mentoring</h3>
+          <label>Final Evaluation<textarea value={completionForm.finalEvaluation} onChange={(event) => updateCompletionField('finalEvaluation', event.target.value)} required /></label>
+          <label>Mentoring Result<textarea value={completionForm.result} onChange={(event) => updateCompletionField('result', event.target.value)} required /></label>
+          <label>MSME Progress<textarea value={completionForm.businessGrowth} onChange={(event) => updateCompletionField('businessGrowth', event.target.value)} required /></label>
+          <label>Next Recommendation<textarea value={completionForm.nextRecommendation} onChange={(event) => updateCompletionField('nextRecommendation', event.target.value)} /></label>
+          <label>Closing Note<textarea value={completionForm.closingNote} onChange={(event) => updateCompletionField('closingNote', event.target.value)} /></label>
+          <button type="submit">Complete Mentoring</button>
         </form>
       )}
       {editingSession && (
@@ -2103,28 +2098,28 @@ function SessionEditModal({ form, onClose, onSubmit, onUpdate }) {
       <form className="mentor-flow-modal mentor-session-modal" onSubmit={onSubmit}>
         <header>
           <div>
-            <span>Edit Sesi</span>
-            <h2>{form.title || 'Sesi mentoring'}</h2>
-            <p>Perubahan jadwal akan terlihat di workspace UMKM.</p>
+            <span>Edit Session</span>
+            <h2>{form.title || 'Mentoring session'}</h2>
+            <p>Schedule changes will appear in the MSME workspace.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup modal">
+          <button type="button" onClick={onClose} aria-label="Close modal">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
         <div className="mentor-flow-modal-body">
-          <label>Judul sesi<input value={form.title} onChange={(event) => onUpdate('title', event.target.value)} required /></label>
+          <label>Session Title<input value={form.title} onChange={(event) => onUpdate('title', event.target.value)} required /></label>
           <div className="mentor-flow-grid">
-            <label>Tanggal<input type="date" value={form.date} onChange={(event) => onUpdate('date', event.target.value)} required /></label>
-            <label>Jam mulai<input type="time" value={form.startTime} onChange={(event) => onUpdate('startTime', event.target.value)} required /></label>
-            <label>Jam selesai<input type="time" value={form.endTime} onChange={(event) => onUpdate('endTime', event.target.value)} required /></label>
-            <label>Platform<select value={form.platform} onChange={(event) => onUpdate('platform', event.target.value)}><option>Google Meet</option><option>Zoom</option><option>Lainnya</option></select></label>
+            <label>Date<input type="date" value={form.date} onChange={(event) => onUpdate('date', event.target.value)} required /></label>
+            <label>Start Time<input type="time" value={form.startTime} onChange={(event) => onUpdate('startTime', event.target.value)} required /></label>
+            <label>End Time<input type="time" value={form.endTime} onChange={(event) => onUpdate('endTime', event.target.value)} required /></label>
+            <label>Platform<select value={form.platform} onChange={(event) => onUpdate('platform', event.target.value)}><option>Google Meet</option><option>Zoom</option><option>Other</option></select></label>
           </div>
-          <label>Link meeting<input value={form.meetingLink} onChange={(event) => onUpdate('meetingLink', event.target.value)} /></label>
+          <label>Meeting Link<input value={form.meetingLink} onChange={(event) => onUpdate('meetingLink', event.target.value)} /></label>
           <label>Agenda<textarea value={form.agenda} onChange={(event) => onUpdate('agenda', event.target.value)} /></label>
         </div>
         <footer>
-          <button type="button" onClick={onClose}>Batal</button>
-          <button type="submit">Simpan Perubahan</button>
+          <button type="button" onClick={onClose}>Cancel</button>
+          <button type="submit">Save Changes</button>
         </footer>
       </form>
     </div>
@@ -2137,20 +2132,20 @@ function SessionCancelModal({ reason, session, onClose, onSubmit, onUpdate }) {
       <form className="mentor-flow-modal mentor-session-modal" onSubmit={onSubmit}>
         <header>
           <div>
-            <span>Batalkan Sesi</span>
+            <span>Cancel Sessions</span>
             <h2>{session.title}</h2>
-            <p>Alasan pembatalan akan tampil di workspace UMKM.</p>
+            <p>The cancellation reason will appear in the MSME workspace.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup modal">
+          <button type="button" onClick={onClose} aria-label="Close modal">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
         <div className="mentor-flow-modal-body">
-          <label>Alasan pembatalan<textarea value={reason} onChange={(event) => onUpdate(event.target.value)} placeholder="Contoh: Jadwal mentor berubah, sesi akan dijadwalkan ulang minggu depan." required /></label>
+          <label>Cancellation Reason<textarea value={reason} onChange={(event) => onUpdate(event.target.value)} placeholder="Example: The mentor schedule changed, the session will be rescheduled next week." required /></label>
         </div>
         <footer>
-          <button type="button" onClick={onClose}>Batal</button>
-          <button type="submit">Batalkan Sesi</button>
+          <button type="button" onClick={onClose}>Cancel</button>
+          <button type="submit">Cancel Sessions</button>
         </footer>
       </form>
     </div>
@@ -2190,54 +2185,54 @@ function AcceptMentoringModal({ onClose, onSubmit, request }) {
       <form className="mentor-flow-modal" onSubmit={handleSubmit}>
         <header>
           <div>
-            <span>Terima Request</span>
-            <h2>{request.business_name || request.requester_name || 'UMKM'}</h2>
-            <p>{request.topic || 'Request mentoring bisnis'}</p>
+            <span>Accept Request</span>
+            <h2>{request.business_name || request.requester_name || 'MSME'}</h2>
+            <p>{request.topic || 'Business mentoring request'}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup modal">
+          <button type="button" onClick={onClose} aria-label="Close modal">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <div className="mentor-flow-grid">
           <label>
-            Tanggal mulai mentoring
+            Date mulai mentoring
             <input type="date" value={form.startDate} onChange={(event) => updateField('startDate', event.target.value)} required />
           </label>
           <label>
-            Tanggal selesai mentoring
+            Date completed mentoring
             <input type="date" value={form.endDate} onChange={(event) => updateField('endDate', event.target.value)} required />
           </label>
         </div>
         <label>
-          Catatan penerimaan untuk UMKM
-          <textarea value={form.acceptanceNote} onChange={(event) => updateField('acceptanceNote', event.target.value)} placeholder="Tambahkan catatan awal, ekspektasi, atau persiapan untuk UMKM..." />
+          Acceptance Note for MSME
+          <textarea value={form.acceptanceNote} onChange={(event) => updateField('acceptanceNote', event.target.value)} placeholder="Add catatan awal, ekspektasi, atau persiapan untuk MSME..." />
         </label>
         <fieldset>
-          <legend>Apakah ingin langsung membuat sesi pertama?</legend>
+          <legend>Do you want to create the first session now?</legend>
           <div className="mentor-radio-row">
-            <label><input type="radio" checked={form.createFirstSession} onChange={() => updateField('createFirstSession', true)} /> Ya</label>
-            <label><input type="radio" checked={!form.createFirstSession} onChange={() => updateField('createFirstSession', false)} /> Tidak</label>
+            <label><input type="radio" checked={form.createFirstSession} onChange={() => updateField('createFirstSession', true)} /> Yes</label>
+            <label><input type="radio" checked={!form.createFirstSession} onChange={() => updateField('createFirstSession', false)} /> No</label>
           </div>
         </fieldset>
 
         {form.createFirstSession && (
           <div className="mentor-first-session-fields">
             <label>
-              Judul sesi pertama
+              Session Title pertama
               <input value={form.firstSessionTitle} onChange={(event) => updateField('firstSessionTitle', event.target.value)} required={form.createFirstSession} />
             </label>
             <div className="mentor-flow-grid">
               <label>
-                Tanggal sesi
+                Date sesi
                 <input type="date" value={form.firstSessionDate} onChange={(event) => updateField('firstSessionDate', event.target.value)} required={form.createFirstSession} />
               </label>
               <label>
-                Jam mulai
+                Start Time
                 <input type="time" value={form.firstSessionStartTime} onChange={(event) => updateField('firstSessionStartTime', event.target.value)} required={form.createFirstSession} />
               </label>
               <label>
-                Jam selesai
+                End Time
                 <input type="time" value={form.firstSessionEndTime} onChange={(event) => updateField('firstSessionEndTime', event.target.value)} required={form.createFirstSession} />
               </label>
               <label>
@@ -2245,24 +2240,24 @@ function AcceptMentoringModal({ onClose, onSubmit, request }) {
                 <select value={form.platform} onChange={(event) => updateField('platform', event.target.value)}>
                   <option>Google Meet</option>
                   <option>Zoom</option>
-                  <option>Lainnya</option>
+                  <option>Other</option>
                 </select>
               </label>
             </div>
             <label>
-              Link meeting
+              Meeting Link
               <input value={form.meetingLink} onChange={(event) => updateField('meetingLink', event.target.value)} placeholder="https://..." required={form.createFirstSession} />
             </label>
             <label>
-              Agenda sesi
-              <textarea value={form.firstSessionAgenda} onChange={(event) => updateField('firstSessionAgenda', event.target.value)} placeholder="Agenda dan target sesi pertama..." required={form.createFirstSession} />
+              Session Agenda
+              <textarea value={form.firstSessionAgenda} onChange={(event) => updateField('firstSessionAgenda', event.target.value)} placeholder="First session agenda and targets..." required={form.createFirstSession} />
             </label>
           </div>
         )}
 
         <footer>
-          <button type="button" className="secondary" onClick={onClose}>Batal</button>
-          <button type="submit">Terima Request</button>
+          <button type="button" className="secondary" onClick={onClose}>Cancel</button>
+          <button type="submit">Accept Request</button>
         </footer>
       </form>
     </div>
@@ -2271,10 +2266,10 @@ function AcceptMentoringModal({ onClose, onSubmit, request }) {
 
 function RejectMentoringModal({ onClose, onSubmit, request }) {
   const [form, setForm] = useState({
-    rejectionReason: 'Jadwal tidak cocok',
+    rejectionReason: 'Schedule does not match',
     customReason: '',
   })
-  const finalReason = form.rejectionReason === 'Alasan lainnya' ? form.customReason.trim() : form.rejectionReason
+  const finalReason = form.rejectionReason === 'Other reason' ? form.customReason.trim() : form.rejectionReason
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -2287,35 +2282,35 @@ function RejectMentoringModal({ onClose, onSubmit, request }) {
       <form className="mentor-flow-modal compact" onSubmit={handleSubmit}>
         <header>
           <div>
-            <span>Tolak Request</span>
-            <h2>{request.business_name || request.requester_name || 'UMKM'}</h2>
-            <p>{request.topic || 'Request mentoring bisnis'}</p>
+            <span>Reject Request</span>
+            <h2>{request.business_name || request.requester_name || 'MSME'}</h2>
+            <p>{request.topic || 'Business mentoring request'}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup modal">
+          <button type="button" onClick={onClose} aria-label="Close modal">
             <span className="material-symbols-outlined">close</span>
           </button>
         </header>
 
         <label>
-          Alasan penolakan
+          Rejection Reason
           <select value={form.rejectionReason} onChange={(event) => setForm((current) => ({ ...current, rejectionReason: event.target.value }))} required>
-            <option>Jadwal tidak cocok</option>
-            <option>Topik di luar bidang keahlian mentor</option>
-            <option>Kuota mentoring penuh</option>
-            <option>Informasi UMKM belum lengkap</option>
-            <option>Alasan lainnya</option>
+            <option>Schedule does not match</option>
+            <option>Topic outside mentor expertise</option>
+            <option>Mentoring quota is full</option>
+            <option>MSME information is incomplete</option>
+            <option>Other reason</option>
           </select>
         </label>
-        {form.rejectionReason === 'Alasan lainnya' && (
+        {form.rejectionReason === 'Other reason' && (
           <label>
-            Detail alasan
-            <textarea value={form.customReason} onChange={(event) => setForm((current) => ({ ...current, customReason: event.target.value }))} placeholder="Tuliskan alasan penolakan..." required />
+            Reason Details
+            <textarea value={form.customReason} onChange={(event) => setForm((current) => ({ ...current, customReason: event.target.value }))} placeholder="Write the rejection reason..." required />
           </label>
         )}
 
         <footer>
-          <button type="button" className="secondary" onClick={onClose}>Batal</button>
-          <button type="submit" disabled={!finalReason}>Tolak Request</button>
+          <button type="button" className="secondary" onClick={onClose}>Cancel</button>
+          <button type="submit" disabled={!finalReason}>Reject Request</button>
         </footer>
       </form>
     </div>
@@ -2356,10 +2351,10 @@ const mentorRequestDummyData = [
 ]
 
 const mentorMenteeTabs = [
-  { label: 'Aktif', statuses: ['Accepted', 'Active'] },
-  { label: 'Selesai', statuses: ['Completed'] },
-  { label: 'Dibatalkan', statuses: ['Cancelled'] },
-  { label: 'Semua', statuses: ['all'] },
+  { label: 'Active', statuses: ['Accepted', 'Active'] },
+  { label: 'Completed', statuses: ['Completed'] },
+  { label: 'Cancelled', statuses: ['Cancelled'] },
+  { label: 'All', statuses: ['all'] },
 ]
 
 const mentorMenteeFallbackData = [
@@ -2377,7 +2372,7 @@ const mentorMenteeFallbackData = [
     completedTasks: 2,
     totalTasks: 5,
     progress: 42,
-    lastProgress: 'Konten minggu pertama sudah disusun, menunggu evaluasi performa awal.',
+    lastProgress: 'The first week content has been prepared and is awaiting initial performance evaluation.',
   },
   {
     id: 'mentee-fallback-completed',
@@ -2393,7 +2388,7 @@ const mentorMenteeFallbackData = [
     completedTasks: 6,
     totalTasks: 6,
     progress: 100,
-    lastProgress: 'Program selesai. UMKM sudah memiliki arah brand dan prioritas eksekusi.',
+    lastProgress: 'Program completed. MSME sudah memiliki arah brand dan prioritas eksekusi.',
   },
   {
     id: 'mentee-fallback-cancelled',
@@ -2403,7 +2398,7 @@ const mentorMenteeFallbackData = [
     category: 'Agribusiness',
     topic: 'Validasi channel distribusi',
     status: 'Cancelled',
-    period: 'Dibatalkan sebelum sesi pertama',
+    period: 'Cancelled before the first session',
     completedSessions: 0,
     totalSessions: 1,
     completedTasks: 0,
@@ -2415,25 +2410,25 @@ const mentorMenteeFallbackData = [
 
 const mentorWorkspaceTabs = [
   'Overview',
-  'Profil UMKM',
-  'Jadwal Sesi',
-  'Catatan Mentor',
+  'MSME Profile',
+  'Session Schedule',
+  'Mentor Notes',
   'Task & Action Plan',
   'Chat',
   'File Sharing',
-  'Selesaikan Mentoring',
+  'Complete Mentoring',
 ]
 
 function getMentorWorkspaceTabIcon(tab) {
   const icons = {
     Overview: 'space_dashboard',
-    'Profil UMKM': 'storefront',
-    'Jadwal Sesi': 'calendar_month',
-    'Catatan Mentor': 'edit_note',
+    'MSME Profile': 'storefront',
+    'Session Schedule': 'calendar_month',
+    'Mentor Notes': 'edit_note',
     'Task & Action Plan': 'assignment_turned_in',
     Chat: 'chat_bubble',
     'File Sharing': 'attach_file',
-    'Selesaikan Mentoring': 'verified',
+    'Complete Mentoring': 'verified',
   }
   return icons[tab] || 'circle'
 }
@@ -2477,11 +2472,11 @@ function normalizeIncomingMentorRequest(request) {
 
   return {
     id: request.id,
-    businessName: umkm.businessName || request.business_name || request.businessName || request.requester_name || 'UMKM',
-    ownerName: umkm.ownerName || umkm.name || request.requester_name || request.ownerName || 'Pemilik UMKM',
-    location: umkm.location || request.location || 'Belum diisi',
-    category: umkm.category || request.other_category || request.category || 'UMKM',
-    topic: request.topic || 'Mentoring bisnis',
+    businessName: umkm.businessName || request.business_name || request.businessName || request.requester_name || 'MSME',
+    ownerName: umkm.ownerName || umkm.name || request.requester_name || request.ownerName || 'MSME Owner',
+    location: umkm.location || request.location || 'Not filled',
+    category: umkm.category || request.other_category || request.category || 'MSME',
+    topic: request.topic || 'Business mentoring',
     businessProblem: request.business_problem || request.businessProblem || request.notes || '-',
     mentoringGoal: request.mentoring_goal || request.mentoringGoal || '-',
     duration: request.duration || request.duration_type || parsedNotes.duration || formatDurationMinutes(request.duration_minutes),
@@ -2497,11 +2492,11 @@ function normalizeIncomingMentorRequest(request) {
 function getMentorMenteeRecordsFromWorkspaces(workspaces, requests) {
   const workspaceRecords = (workspaces || []).map((workspace, index) => ({
     id: workspace.id,
-    businessName: workspace.umkm?.businessName || workspace.umkm?.name || 'UMKM',
-    ownerName: workspace.umkm?.name || 'Pemilik UMKM',
-    location: workspace.umkm?.location || 'Belum diisi',
-    category: workspace.umkm?.category || 'UMKM',
-    topic: workspace.topic || 'Mentoring bisnis',
+    businessName: workspace.umkm?.businessName || workspace.umkm?.name || 'MSME',
+    ownerName: workspace.umkm?.name || 'MSME Owner',
+    location: workspace.umkm?.location || 'Not filled',
+    category: workspace.umkm?.category || 'MSME',
+    topic: workspace.topic || 'Business mentoring',
     status: normalizeMentorRequestStatus(workspace.status),
     startDate: workspace.startDate,
     endDate: workspace.endDate,
@@ -2511,7 +2506,7 @@ function getMentorMenteeRecordsFromWorkspaces(workspaces, requests) {
     completedTasks: 0,
     totalTasks: 0,
     progress: workspace.status === 'Completed' ? 100 : 45 + (index * 10) % 40,
-    lastProgress: workspace.acceptanceNote || 'Workspace aktif. Progress akan muncul setelah UMKM mengirim update.',
+    lastProgress: workspace.acceptanceNote || 'Workspace is active. Progress will appear after the MSME sends an update.',
   }))
   if (workspaceRecords.length > 0) return workspaceRecords
   return getMentorMenteeRecords(requests)
@@ -2523,9 +2518,9 @@ function parseMentoringNotes(notes = '') {
     const [label, ...rest] = line.split(':')
     const value = rest.join(':').trim()
     if (!value) return
-    if (label.trim() === 'Durasi Mentoring') result.duration = value
-    if (label.trim() === 'Preferensi Jadwal') result.schedulePreference = value
-    if (label.trim() === 'Pesan Tambahan') result.additionalMessage = value
+    if (label.trim() === 'Mentoring Duration') result.duration = value
+    if (label.trim() === 'Schedule Preference') result.schedulePreference = value
+    if (label.trim() === 'Additional Message') result.additionalMessage = value
   })
   return result
 }
@@ -2567,25 +2562,25 @@ function normalizeApiMentorWorkspace(workspace) {
   const umkm = workspace.umkm || {}
   return {
     id: workspace.id,
-    businessName: umkm.businessName || umkm.name || 'UMKM',
-    ownerName: umkm.name || 'Pemilik UMKM',
-    topic: workspace.topic || 'Mentoring bisnis',
+    businessName: umkm.businessName || umkm.name || 'MSME',
+    ownerName: umkm.name || 'MSME Owner',
+    topic: workspace.topic || 'Business mentoring',
     status: normalizeMentorRequestStatus(workspace.status),
     period: buildMentoringPeriod(workspace.startDate, workspace.endDate, workspace.status),
     goal: workspace.goal || '-',
-    businessSummary: umkm.description || `${umkm.businessName || umkm.name || 'UMKM'} sedang mengikuti mentoring.`,
-    lastProgress: workspace.acceptanceNote || 'Belum ada progress terbaru.',
+    businessSummary: umkm.description || `${umkm.businessName || umkm.name || 'MSME'} sedang mengikuti mentoring.`,
+    lastProgress: workspace.acceptanceNote || 'No recent progress yet.',
     profileItems: [
-      ['Nama bisnis', umkm.businessName || umkm.name || 'UMKM'],
-      ['Nama pemilik', umkm.name || 'Pemilik UMKM'],
-      ['Lokasi', umkm.location || 'Belum diisi'],
-      ['Kategori usaha', umkm.category || 'UMKM'],
-      ['Deskripsi bisnis', umkm.description || '-'],
-      ['Produk utama', '-'],
-      ['Target pasar', '-'],
+      ['Business Name', umkm.businessName || umkm.name || 'MSME'],
+      ['Owner Name', umkm.name || 'MSME Owner'],
+      ['Location', umkm.location || 'Not filled'],
+      ['Business Category', umkm.category || 'MSME'],
+      ['Business Description', umkm.description || '-'],
+      ['Main Product', '-'],
+      ['Target Market', '-'],
       ['Media sosial', '-'],
       ['Omzet saat ini', '-'],
-      ['Kendala utama', '-'],
+      ['Main Challenge', '-'],
       ['Tujuan mentoring', workspace.goal || '-'],
     ].map(([label, value]) => ({ label, value })),
   }
@@ -2618,8 +2613,8 @@ function normalizeMentorAggregatedSession(session, workspace) {
     ...normalizedSession,
     id: `${workspace.id}-${normalizedSession.id}`,
     workspaceId: workspace.id,
-    workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.umkm?.name || workspace.ownerName || 'UMKM',
-    ownerName: workspace.umkm?.name || workspace.ownerName || 'Pemilik UMKM',
+    workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.umkm?.name || workspace.ownerName || 'MSME',
+    ownerName: workspace.umkm?.name || workspace.ownerName || 'MSME Owner',
     timeLabel,
     sortKey,
   }
@@ -2631,9 +2626,9 @@ function normalizeMentorAggregatedMessage(message, workspace) {
   return {
     id: `${workspace.id}-${message.id}`,
     workspaceId: workspace.id,
-    workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.umkm?.name || workspace.ownerName || 'UMKM',
-    ownerName: workspace.umkm?.name || workspace.ownerName || 'Pemilik UMKM',
-    sender: senderRole === 'mentor' ? 'Mentor' : 'UMKM',
+    workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.umkm?.name || workspace.ownerName || 'MSME',
+    ownerName: workspace.umkm?.name || workspace.ownerName || 'MSME Owner',
+    sender: senderRole === 'mentor' ? 'Mentor' : 'MSME',
     text: message.message || message.text || '',
     time: formatDateOnly(createdAt),
     sortKey: new Date(createdAt).getTime(),
@@ -2660,8 +2655,8 @@ function normalizeMentorAggregatedTask(task, workspace) {
     ...normalizedTask,
     id: `${workspace.id}-${normalizedTask.id}`,
     workspaceId: workspace.id,
-    workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.umkm?.name || workspace.ownerName || 'UMKM',
-    ownerName: workspace.umkm?.name || workspace.ownerName || 'Pemilik UMKM',
+    workspaceLabel: workspace.umkm?.businessName || workspace.businessName || workspace.umkm?.name || workspace.ownerName || 'MSME',
+    ownerName: workspace.umkm?.name || workspace.ownerName || 'MSME Owner',
     deadlineLabel: formatDateOnly(normalizedTask.deadline),
     priority: normalizedTask.priority || 'Medium',
     rawDeadline: normalizedTask.deadline,
@@ -2685,7 +2680,7 @@ function normalizeMentorChatMessage(message) {
   return {
     id: message.id,
     workspaceId: message.workspaceId || message.workspace_id,
-    sender: role === 'mentor' ? 'Mentor' : 'UMKM',
+    sender: role === 'mentor' ? 'Mentor' : 'MSME',
     text: message.message || message.text || '',
     time: formatDateOnly(message.createdAt || message.created_at || new Date().toISOString()),
   }
@@ -2694,7 +2689,7 @@ function normalizeMentorChatMessage(message) {
 function normalizeMentorWorkspaceFile(file) {
   return {
     id: file.id,
-    title: file.title || file.fileName || file.file_name || 'Materi mentoring',
+    title: file.title || file.fileName || file.file_name || 'Materials mentoring',
     description: file.description || '',
     fileName: file.fileName || file.file_name || 'file',
     fileUrl: buildMentorAssetUrl(file.fileUrl || file.file_url || ''),
@@ -2730,21 +2725,21 @@ function formatTimeRange(session) {
 }
 
 function getMentorRemainingWorkspaceTime(endDate, status) {
-  if (status === 'Completed') return 'Selesai'
-  if (status === 'Cancelled') return 'Dibatalkan'
+  if (status === 'Completed') return 'Complete'
+  if (status === 'Cancelled') return 'Cancelled'
   if (!endDate) return '-'
   const diff = new Date(endDate).getTime() - new Date().setHours(0, 0, 0, 0)
   const days = Math.ceil(diff / 86400000)
   if (Number.isNaN(days)) return '-'
-  if (days <= 0) return 'Berakhir hari ini'
-  return `${days} hari lagi`
+  if (days <= 0) return 'Ends today'
+  return `${days} days left`
 }
 
 function normalizeMentorApiNote(note) {
   return {
     id: note.id,
     sessionId: note.session_id || note.sessionId,
-    sessionTitle: note.session_title || note.sessionTitle || 'Catatan mentor',
+    sessionTitle: note.session_title || note.sessionTitle || 'Notes mentor',
     date: note.created_at || note.createdAt,
     evaluation: note.evaluation,
     blocker: note.obstacle_found || note.obstacleFound,
@@ -2813,9 +2808,9 @@ function buildMentorWorkspaceData(mentoringId) {
     .map(normalizeIncomingMentorRequest)
     .find((item) => String(item.id) === String(mentoringId))
   const fallback = mentorMenteeFallbackData.find((item) => String(item.id) === String(mentoringId))
-  const businessName = snapshot?.businessName || request?.businessName || fallback?.businessName || 'UMKM'
-  const ownerName = snapshot?.ownerName || request?.ownerName || fallback?.ownerName || 'Pemilik UMKM'
-  const topic = snapshot?.topic || request?.topic || fallback?.topic || 'Mentoring bisnis'
+  const businessName = snapshot?.businessName || request?.businessName || fallback?.businessName || 'MSME'
+  const ownerName = snapshot?.ownerName || request?.ownerName || fallback?.ownerName || 'MSME Owner'
+  const topic = snapshot?.topic || request?.topic || fallback?.topic || 'Business mentoring'
   const status = normalizeMentorRequestStatus(snapshot?.status || request?.status || fallback?.status || 'Active')
   const firstSession = snapshot?.firstSession
 
@@ -2827,30 +2822,30 @@ function buildMentorWorkspaceData(mentoringId) {
     status,
     period: buildMentoringPeriod(snapshot?.startDate, snapshot?.endDate, status),
     businessSummary: `${businessName} sedang mengikuti mentoring untuk memperkuat strategi ${topic.toLowerCase()}.`,
-    goal: request?.mentoringGoal || 'Meningkatkan kesiapan bisnis, eksekusi strategi, dan monitoring progres UMKM.',
-    lastProgress: fallback?.lastProgress || 'UMKM sudah mengirim progress awal untuk ditinjau mentor.',
+    goal: request?.mentoringGoal || 'Improve business readiness, strategy execution, and MSME progress monitoring.',
+    lastProgress: fallback?.lastProgress || 'The MSME has sent initial progress for mentor review.',
     profileItems: [
-      ['Nama bisnis', businessName],
-      ['Nama pemilik', ownerName],
-      ['Lokasi', request?.location || fallback?.location || 'Belum diisi'],
-      ['Kategori usaha', request?.category || fallback?.category || 'UMKM'],
-      ['Deskripsi bisnis', 'UMKM lokal dengan potensi pertumbuhan melalui pemasaran digital dan operasional yang lebih terukur.'],
-      ['Produk utama', 'Produk unggulan UMKM dan paket promosi'],
-      ['Target pasar', 'Pelanggan retail, reseller, dan komunitas lokal'],
+      ['Business Name', businessName],
+      ['Owner Name', ownerName],
+      ['Location', request?.location || fallback?.location || 'Not filled'],
+      ['Business Category', request?.category || fallback?.category || 'MSME'],
+      ['Business Description', 'Local MSME with growth potential through digital marketing and more measurable operations.'],
+      ['Main Product', 'MSME featured products and promotional packages'],
+      ['Target Market', 'Retail customers, resellers, and local communities'],
       ['Media sosial', '@microfun_umkm'],
       ['Omzet saat ini', 'Rp 7.800.000 / bulan'],
-      ['Kendala utama', request?.businessProblem || 'Konsistensi eksekusi dan pengukuran hasil.'],
+      ['Main Challenge', request?.businessProblem || 'Execution consistency and result measurement.'],
       ['Tujuan mentoring', request?.mentoringGoal || 'Menyusun rencana kerja yang praktis dan terukur.'],
     ].map(([label, value]) => ({ label, value })),
     sessions: firstSession ? [{
       id: 'first-session',
-      title: firstSession.title || 'Sesi pertama',
+      title: firstSession.title || 'First session',
       date: firstSession.date,
       startTime: firstSession.startTime,
       endTime: firstSession.endTime,
       platform: firstSession.platform || 'Google Meet',
       meetingLink: firstSession.meetingLink || '#',
-      agenda: firstSession.agenda || 'Agenda sesi pertama.',
+      agenda: firstSession.agenda || 'Session Agenda pertama.',
       status: 'Upcoming',
     }] : [{
       id: 'session-default',
@@ -2865,17 +2860,17 @@ function buildMentorWorkspaceData(mentoringId) {
     }],
     tasks: [
       { id: 'task-default-1', title: 'Audit strategi berjalan', instruction: 'Catat channel penjualan, konten, dan hambatan operasional.', deadline: '2026-06-02', priority: 'Tinggi', status: 'In Progress', comment: '' },
-      { id: 'task-default-2', title: 'Susun eksperimen 7 hari', instruction: 'Buat satu eksperimen promosi dan ukur hasilnya.', deadline: '2026-06-07', priority: 'Sedang', status: 'Pending', comment: '' },
+      { id: 'task-default-2', title: 'Create a 7-day experiment', instruction: 'Create one promotion experiment and measure the results.', deadline: '2026-06-07', priority: 'Medium', status: 'Pending', comment: '' },
     ],
     notes: [
-      { id: 'note-default', sessionTitle: 'Kickoff mentoring', date: '2026-05-29', evaluation: 'UMKM siap mulai program mentoring.', advice: 'Mulai dari baseline data dan target sederhana.', nextRecommendation: 'Kirim progress mingguan.' },
+      { id: 'note-default', sessionTitle: 'Kickoff mentoring', date: '2026-05-29', evaluation: 'The MSME is ready to start the mentoring program.', advice: 'Start from baseline data and simple targets.', nextRecommendation: 'Send weekly progress.' },
     ],
     progressList: [
       { id: 'progress-default', updateDate: '2026-05-25', revenue: 'Rp 7.800.000', orders: '96', followers: '3.840', engagement: '5.8%', blocker: 'Posting belum konsisten.', implementationResult: 'Konten edukasi mulai menghasilkan pesan masuk.', question: 'Bagaimana menentukan CTA terbaik?' },
     ],
     messages: [
-      { id: 'message-default-1', sender: 'UMKM', text: 'Saya sudah kirim progress minggu ini.', time: 'Hari ini' },
-      { id: 'message-default-2', sender: 'Mentor', text: 'Baik, saya review dan beri rekomendasi di tab Progress.', time: 'Baru saja' },
+      { id: 'message-default-1', sender: 'MSME', text: 'I have sent this week progress.', time: 'Today' },
+      { id: 'message-default-2', sender: 'Mentor', text: 'Sure, I will review it and provide recommendations in the Progress tab.', time: 'Just now' },
     ],
     files: [
       { id: 'file-default-1', name: 'Template Action Plan.xlsx', meta: 'Mentor • 240 KB' },
@@ -2919,11 +2914,11 @@ function normalizeWorkspaceMenteeRecord(workspace) {
 
   return {
     id: workspace.id,
-    businessName: workspace.businessName || 'UMKM',
-    ownerName: workspace.ownerName || 'Pemilik UMKM',
-    location: workspace.location || 'Belum diisi',
-    category: workspace.category || 'UMKM',
-    topic: workspace.topic || 'Mentoring bisnis',
+    businessName: workspace.businessName || 'MSME',
+    ownerName: workspace.ownerName || 'MSME Owner',
+    location: workspace.location || 'Not filled',
+    category: workspace.category || 'MSME',
+    topic: workspace.topic || 'Business mentoring',
     status,
     period: buildMentoringPeriod(workspace.startDate, workspace.endDate, status),
     completedSessions: workspace.firstSession ? 1 : 0,
@@ -2936,16 +2931,16 @@ function normalizeWorkspaceMenteeRecord(workspace) {
 }
 
 function buildMentoringPeriod(startDate, endDate, status) {
-  if (status === 'Cancelled' && !startDate) return 'Dibatalkan sebelum sesi pertama'
-  if (!startDate && !endDate) return 'Periode belum ditentukan'
+  if (status === 'Cancelled' && !startDate) return 'Cancelled before the first session'
+  if (!startDate && !endDate) return 'Period belum ditentukan'
   return `${formatDateOnly(startDate)} - ${formatDateOnly(endDate)}`
 }
 
 function getLastProgressCopy(status, progress) {
-  if (status === 'Completed') return 'Program selesai dan arsip mentoring siap dibuka.'
+  if (status === 'Completed') return 'Program completed dan arsip mentoring siap dibuka.'
   if (status === 'Cancelled') return 'Program dibatalkan sebelum seluruh rencana berjalan.'
-  if (progress >= 70) return 'UMKM sudah menyelesaikan sebagian besar sesi dan task prioritas.'
-  if (progress >= 35) return 'Mentoring berjalan, beberapa task awal sudah mulai dieksekusi.'
+  if (progress >= 70) return 'The MSME has completed most sessions and priority tasks.'
+  if (progress >= 35) return 'Mentoring is ongoing, and several initial tasks have started execution.'
   return 'Program baru dimulai, menunggu progress sesi dan task berikutnya.'
 }
 
@@ -2960,7 +2955,7 @@ function syncMentoringStatusForUmkm(request, status, metadata, profile) {
     mentor: {
       id: profile.id,
       name: profile.name || 'Mentor',
-      current_job: profile.current_job || 'Mentor UMKM',
+      current_job: profile.current_job || 'MSME Mentor',
     },
     topic: normalized.topic,
     duration_type: normalized.duration,
@@ -2990,7 +2985,7 @@ function createMentoringWorkspaceSnapshot(request, status, metadata, profile) {
     id: request.id,
     status,
     mentorName: profile.name || 'Mentor',
-    mentorProfession: profile.current_job || 'Mentor UMKM',
+    mentorProfession: profile.current_job || 'MSME Mentor',
     businessName: normalized.businessName,
     ownerName: normalized.ownerName,
     topic: normalized.topic,
@@ -3056,15 +3051,15 @@ function getWorkspaceTabFromSearch(search) {
   const normalized = tab.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')
   const tabMap = {
     overview: 'Overview',
-    profile: 'Profil UMKM',
-    session: 'Jadwal Sesi',
-    sessions: 'Jadwal Sesi',
+    profile: 'MSME Profile',
+    session: 'Session Schedule',
+    sessions: 'Session Schedule',
     'task-and-action-plan': 'Task & Action Plan',
     tasks: 'Task & Action Plan',
-    notes: 'Catatan Mentor',
+    notes: 'Mentor Notes',
     chat: 'Chat',
     files: 'File Sharing',
-    evaluation: 'Selesaikan Mentoring',
+    evaluation: 'Complete Mentoring',
   }
 
   return tabMap[normalized] || 'Overview'
@@ -3073,13 +3068,13 @@ function getWorkspaceTabFromSearch(search) {
 function buildWorkspaceTabSearch(tab) {
   const tabMap = {
     Overview: 'overview',
-    'Profil UMKM': 'profile',
-    'Jadwal Sesi': 'sessions',
+    'MSME Profile': 'profile',
+    'Session Schedule': 'sessions',
     'Task & Action Plan': 'tasks',
-    'Catatan Mentor': 'notes',
+    'Mentor Notes': 'notes',
     Chat: 'chat',
     'File Sharing': 'files',
-    'Selesaikan Mentoring': 'evaluation',
+    'Complete Mentoring': 'evaluation',
   }
 
   const value = tabMap[tab] || 'overview'
@@ -3096,7 +3091,7 @@ function groupMentorTasksByDeadline(tasks) {
   tasks.forEach((task) => {
     const deadline = parseDateOnly(task.deadline)
     const key = deadline ? deadline.toISOString().slice(0, 10) : 'no-deadline'
-    const label = deadline ? formatDateOnly(task.deadline) : 'Tanpa deadline'
+    const label = deadline ? formatDateOnly(task.deadline) : 'No deadline'
     const sortKey = deadline ? deadline.getTime() : Number.POSITIVE_INFINITY
 
     if (!groups.has(key)) {
@@ -3115,7 +3110,7 @@ function groupMentorSessionsByDate(sessions) {
   sessions.forEach((session) => {
     const sessionDate = parseDateOnly(session.date)
     const key = sessionDate ? sessionDate.toISOString().slice(0, 10) : 'no-date'
-    const label = sessionDate ? formatDateOnly(session.date) : 'Tanpa tanggal'
+    const label = sessionDate ? formatDateOnly(session.date) : 'No date'
     const sortKey = sessionDate ? sessionDate.getTime() : Number.POSITIVE_INFINITY
 
     if (!groups.has(key)) {
@@ -3148,7 +3143,7 @@ function formatFirstSessionLabel(metadata) {
   if (!metadata.firstSessionDate || !metadata.firstSessionStartTime) return ''
   const date = new Date(`${metadata.firstSessionDate}T${metadata.firstSessionStartTime}`)
   if (Number.isNaN(date.getTime())) return `${metadata.firstSessionDate} ${metadata.firstSessionStartTime}`
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     day: '2-digit',
     month: 'long',
@@ -3195,27 +3190,27 @@ function getMentorDashboardStats(requests, profile) {
 function getMentorPageTitle(activeTab, displayName) {
   if (activeTab === 'Profile') return 'Profile'
   if (activeTab === 'Forum') return 'Forum'
-  if (activeTab === 'Request Masuk' || activeTab === 'Mentee Saya' || activeTab === 'Jadwal Sesi' || activeTab === 'Task & Action Plan' || activeTab === 'Messages') return 'Mentoring'
+  if (activeTab === 'Incoming Requests' || activeTab === 'My Mentees' || activeTab === 'Session Schedule' || activeTab === 'Task & Action Plan' || activeTab === 'Messages') return 'Mentoring'
   if (activeTab === 'Workspace Mentor') return 'Workspace Mentor'
   if (isMentorSessionTab(activeTab)) return activeTab
-  return `Halo, ${displayName}`
+  return `Hello, ${displayName}`
 }
 
 function getMentorPageSubtitle(activeTab) {
-  if (activeTab === 'Profile') return 'Lengkapi lokasi, alamat, foto profil, keahlian, prestasi, dan pengalaman Anda.'
+  if (activeTab === 'Profile') return 'Complete your location, address, profile photo, expertise, achievements, and experience.'
   if (activeTab === 'Forum') return 'Share knowledge, discuss challenges, and build networks across MicroFun.'
-  if (activeTab === 'Request Masuk') return 'Review dan kelola request bimbingan dari UMKM. Pilih request yang paling sesuai dengan keahlian Anda.'
-  if (activeTab === 'Mentee Saya') return 'Daftar UMKM yang request mentoringnya sudah diterima, aktif, selesai, atau dibatalkan.'
-  if (activeTab === 'Workspace Mentor') return 'Workspace detail akan dibuat pada tahap berikutnya.'
-  if (activeTab === 'Messages') return 'Kelola chat dari semua workspace mentee tanpa harus masuk ke workspace satu per satu.'
-  if (activeTab === 'Task & Action Plan') return 'Lihat semua task dari seluruh workspace mentee, diurutkan per deadline agar progres lebih mudah dipantau.'
-  if (activeTab === 'Jadwal Sesi') return 'Shortcut semua sesi mentoring dari seluruh workspace mentee, diurutkan dari tanggal terdekat.'
-  if (isMentorSessionTab(activeTab)) return 'Kelola proses mentoring aktif bersama UMKM.'
-  return 'Ringkasan performa mentoring, jadwal, dan aktivitas terbaru.'
+  if (activeTab === 'Incoming Requests') return 'Review and manage mentoring requests from MSMEs. Choose the most suitable request based on your expertise.'
+  if (activeTab === 'My Mentees') return 'List of MSMEs whose mentoring requests have been accepted, active, completed, or cancelled.'
+  if (activeTab === 'Workspace Mentor') return 'Workspace details will be built in the next stage.'
+  if (activeTab === 'Messages') return 'Manage chats from all mentee workspaces without opening each workspace one by one.'
+  if (activeTab === 'Task & Action Plan') return 'View all tasks from every mentee workspace, sorted by deadline so progress is easier to monitor.'
+  if (activeTab === 'Session Schedule') return 'Shortcut to all mentoring sessions from every mentee workspace, sorted by nearest date.'
+  if (isMentorSessionTab(activeTab)) return 'Manage active mentoring processes with MSMEs.'
+  return 'Summary of mentoring performance, schedule, and recent activity.'
 }
 
 function isMentorSessionTab(activeTab) {
-  return ['Jadwal Sesi', 'Task & Action Plan'].includes(activeTab)
+  return ['Session Schedule', 'Task & Action Plan'].includes(activeTab)
 }
 
 function deriveMenteeProgress(mentee, index) {
@@ -3227,7 +3222,7 @@ function deriveMenteeProgress(mentee, index) {
 
 function formatDateTime(value) {
   if (!value) return '-'
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
@@ -3237,7 +3232,7 @@ function formatDateOnly(value) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(date)
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date)
 }
 
 function formatDateRange() {
@@ -3245,7 +3240,7 @@ function formatDateRange() {
   const next = new Date()
   next.setDate(now.getDate() + 7)
 
-  const formatter = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short' })
+  const formatter = new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short' })
   return `${formatter.format(now)} - ${formatter.format(next)}`
 }
 
@@ -3261,19 +3256,19 @@ function formatDay(value) {
 
 function formatTime(value) {
   if (!value) return '-'
-  return new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+  return new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
 function formatRelativeDate(value) {
-  if (!value) return 'Baru saja'
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(value))
+  if (!value) return 'Just now'
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(value))
 }
 
 function formatRequestAge(value) {
-  if (!value) return 'Baru saja'
+  if (!value) return 'Just now'
 
   const targetDate = new Date(value)
-  if (Number.isNaN(targetDate.getTime())) return 'Baru saja'
+  if (Number.isNaN(targetDate.getTime())) return 'Just now'
 
   const diffMs = Date.now() - targetDate.getTime()
   const diffMinutes = Math.max(0, Math.floor(diffMs / 60000))
@@ -3285,7 +3280,7 @@ function formatRequestAge(value) {
   const diffDays = Math.floor(diffHours / 24)
   if (diffDays < 7) return `${diffDays}d ago`
 
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(targetDate)
+  return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(targetDate)
 }
 
 function formatCurrency(value) {

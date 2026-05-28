@@ -40,7 +40,7 @@ function DashboardSidebar({
     <aside className="dashboard-sidebar">
       <div>
         <div className="sidebar-brand">
-          <h1>MicroFun</h1>
+          <img src="/assets/microfun%20logo.png" alt="MicroFun" />
           <p>{brandSubtitle}</p>
         </div>
 

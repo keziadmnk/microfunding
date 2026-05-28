@@ -317,6 +317,13 @@
   font-weight: 700;
 }
 
+.dashboard-muted-copy {
+  margin: 0;
+  color: #73787c;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .dashboard-hero-card {
   display: flex;
   gap: 1.5rem;
@@ -2434,7 +2441,7 @@
   gap: 0.42rem;
   color: #122937;
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .umkm-funder-modal input,
@@ -2446,6 +2453,7 @@
   color: #122937;
   padding: 0.8rem 0.9rem;
   font: inherit;
+  font-weight: 400;
 }
 
 .umkm-funder-modal textarea {
@@ -2456,7 +2464,7 @@
 .umkm-funder-modal small {
   color: #74787c;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .umkm-funder-modal footer {
@@ -4772,6 +4780,7 @@
 .workspace-panel .mentoring-info-pair span {
   color: #925e25;
   font-size: 0.6rem;
+  font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -4779,7 +4788,7 @@
 .workspace-panel .mentoring-info-pair strong {
   margin-top: 0.25rem;
   color: #43474b;
-  font-weight: 700;
+  font-weight: 400;
   font-size: 0.8rem;
   line-height: 1.48;
   white-space: normal;

@@ -90,7 +90,7 @@ function LoginPage() {
           <form onSubmit={handleSubmit} className="login-form" noValidate>
             <div className="field">
               <label htmlFor="email">Business Email</label>
-              <div className="input-wrap">
+              <div className="input-wrap with-icon">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   mail
                 </span>
@@ -114,7 +114,7 @@ function LoginPage() {
                   Forgot password?
                 </button>
               </div>
-              <div className="input-wrap">
+              <div className="input-wrap with-icon with-action">
                 <span className="material-symbols-outlined" aria-hidden="true">
                   lock
                 </span>

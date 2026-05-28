@@ -226,6 +226,8 @@ async function me(req, res) {
       u.profile_photo,
       u.created_at,
       u.updated_at,
+      b.name AS businessName,
+      b.logo AS businessLogo,
       COALESCE(o.verified, 0) AS ownerVerified,
       COALESCE(b.verified, 0) AS businessVerified
     FROM users u

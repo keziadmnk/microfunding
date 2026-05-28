@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { register } from '../services/authService'
 import { WORLD_CITY_OPTIONS, findCityByLabel } from '../components/dashboard/locationOptions'
@@ -58,6 +58,7 @@ const roleCards = [
 
 function RegisterPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
   const [selectedRole, setSelectedRole] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -85,7 +86,31 @@ function RegisterPage() {
     legalDocuments: [],
   })
 
+  useEffect(() => {
+    const roleParam = searchParams.get('role')
+    if (roleParam === 'msme' || roleParam === 'umkm') {
+      setSelectedRole('msme')
+      setStep(2)
+    }
+  }, [searchParams])
+
   const canContinue = useMemo(() => Boolean(selectedRole), [selectedRole])
+  const totalSteps = selectedRole === 'msme' ? 3 : 2
+  const pageTitle = step === 1
+    ? 'Select your role'
+    : step === 2
+      ? 'Create your account'
+      : 'Complete MSME Profile'
+  const canContinueAccount = useMemo(() => (
+    Boolean(
+      form.email.trim() &&
+      form.name.trim() &&
+      form.password &&
+      form.confirmPassword &&
+      form.agreeTerms &&
+      !isLoading
+    )
+  ), [form, isLoading])
   const canSubmit = useMemo(() => {
     return (
       form.name.trim() &&
@@ -94,7 +119,6 @@ function RegisterPage() {
       form.confirmPassword &&
       form.agreeTerms &&
       (selectedRole !== 'msme' || (
-        form.businessName.trim() &&
         form.category &&
         (form.category !== 'lainnya' || form.otherCategory.trim()) &&
         form.location.trim() &&
@@ -131,6 +155,23 @@ function RegisterPage() {
     }))
   }
 
+  function handleAccountContinue(event) {
+    event.preventDefault()
+    setError('')
+
+    if (!canContinueAccount) {
+      setError(`Please complete Email, ${selectedRole === 'msme' ? 'MSME Name' : 'Full Name'}, Password, Confirm Password, and terms first.`)
+      return
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError('Password confirmation does not match.')
+      return
+    }
+
+    setStep(3)
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
@@ -146,8 +187,8 @@ function RegisterPage() {
     }
 
     if (selectedRole === 'msme') {
-      if (!form.businessName.trim() || !form.category || !form.location.trim() || !form.description.trim()) {
-        setError('Nama UMKM, kategori, lokasi, dan deskripsi UMKM wajib diisi.')
+      if (!form.category || !form.location.trim() || !form.description.trim()) {
+        setError('Kategori, lokasi, dan deskripsi UMKM wajib diisi.')
         return
       }
 
@@ -178,7 +219,7 @@ function RegisterPage() {
         role: selectedRole,
         rememberMe: true,
         umkmProfile: selectedRole === 'msme' ? {
-          businessName: form.businessName.trim(),
+          businessName: form.businessName.trim() || form.name.trim(),
           category: form.category,
           otherCategory: form.otherCategory.trim(),
           location: form.location,
@@ -233,10 +274,11 @@ function RegisterPage() {
 
           <div className="register-header">
             <span className="eyebrow">Registration</span>
-            <h2>{step === 1 ? 'Select your role' : 'Create your account'}</h2>
+            <h2>{pageTitle}</h2>
             <div className="step-bars" aria-hidden="true">
-              <span className={step >= 1 ? 'active' : ''} />
-              <span className={step >= 2 ? 'active' : ''} />
+              {Array.from({ length: totalSteps }, (_, index) => (
+                <span key={index} className={step >= index + 1 ? 'active' : ''} />
+              ))}
             </div>
           </div>
 
@@ -280,35 +322,39 @@ function RegisterPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="register-form" noValidate>
-              <div className="field">
-                <label htmlFor="name">Full Name</label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="John Doe"
-                  autoComplete="name"
-                  required
-                />
-              </div>
+              {step === 2 && (
+                <>
+                  <div className="field">
+                    <label htmlFor="email">Work Email</label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="name@company.com"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
 
-              <div className="field">
-                <label htmlFor="email">Work Email</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="name@company.com"
-                  autoComplete="email"
-                  required
-                />
-              </div>
+                  <div className="field">
+                    <label htmlFor="name">{selectedRole === 'msme' ? 'MSME Name' : 'Full Name'}</label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder="John Doe"
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
+                </>
+              )}
 
-              {selectedRole === 'msme' && (
+              {selectedRole === 'msme' && step === 3 && (
                 <section className="register-umkm-section">
                   <div className="register-section-heading">
                     <span className="material-symbols-outlined">storefront</span>
@@ -316,30 +362,6 @@ function RegisterPage() {
                       <h3>Profil Dasar UMKM</h3>
                       <p>Data ini akan masuk ke dashboard UMKM dan menunggu verifikasi admin.</p>
                     </div>
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="businessName">Nama UMKM *</label>
-                    <input
-                      id="businessName"
-                      name="businessName"
-                      type="text"
-                      value={form.businessName}
-                      onChange={handleChange}
-                      placeholder="Kezia"
-                      required
-                    />
-                  </div>
-
-                  <div className="field">
-                    <label htmlFor="accountEmailPreview">Email Akun *</label>
-                    <input
-                      id="accountEmailPreview"
-                      type="email"
-                      value={form.email}
-                      placeholder="keziadamanik20@gmail.com"
-                      readOnly
-                    />
                   </div>
 
                   <div className="register-field-grid">
@@ -484,6 +506,8 @@ function RegisterPage() {
                 </section>
               )}
 
+              {step === 2 && (
+                <>
               <div className="field">
                 <label htmlFor="password">Password</label>
                 <div className="input-shell">
@@ -548,25 +572,50 @@ function RegisterPage() {
                   I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
                 </span>
               </label>
+                </>
+              )}
 
               {error && <p className="error-text">{error}</p>}
 
-              <button className="submit-btn" type="submit" disabled={!canSubmit}>
-                <span>{isLoading ? 'Creating account...' : 'Create Account'}</span>
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  arrow_forward
-                </span>
-              </button>
+              {step === 2 ? (
+                <button
+                  className="submit-btn"
+                  type={selectedRole === 'msme' ? 'button' : 'submit'}
+                  disabled={selectedRole === 'msme' ? !canContinueAccount : !canSubmit}
+                  onClick={selectedRole === 'msme' ? handleAccountContinue : undefined}
+                >
+                  <span>
+                    {selectedRole === 'msme'
+                      ? 'Continue to MSME Profile'
+                      : isLoading
+                        ? 'Creating account...'
+                        : 'Create Account'}
+                  </span>
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    arrow_forward
+                  </span>
+                </button>
+              ) : (
+                <button className="submit-btn" type="submit" disabled={!canSubmit}>
+                  <span>{isLoading ? 'Creating account...' : 'Create Account'}</span>
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    arrow_forward
+                  </span>
+                </button>
+              )}
 
               <button
                 type="button"
                 className="back-btn"
-                onClick={() => setStep(1)}
+                onClick={() => {
+                  setError('')
+                  setStep(step === 3 ? 2 : 1)
+                }}
               >
                 <span className="material-symbols-outlined" aria-hidden="true">
                   arrow_back
                 </span>
-                Back to role selection
+                {step === 3 ? 'Back to account details' : 'Back to role selection'}
               </button>
             </form>
           )}

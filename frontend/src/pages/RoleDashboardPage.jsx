@@ -108,7 +108,7 @@ function RoleDashboardPage({ role }) {
       <aside className="role-dash-sidebar">
         <div>
           <div className="role-dash-brand">
-            <h1>MicroFun</h1>
+            <img src="/assets/microfun%20logo.png" alt="MicroFun" />
             <p>Empowering Growth</p>
           </div>
           <div className="role-dash-role-badge">

@@ -84,11 +84,11 @@ async function funderAiRecommendations(req, res) {
   const userRole = req.user?.role;
 
   if (userRole !== "funder") {
-    return res.status(403).json({ message: "Hanya Funder yang dapat menggunakan rekomendasi AI." });
+    return res.status(403).json({ message: "Only Funders can use AI recommendations." });
   }
 
   if (!getGeminiApiKey()) {
-    return res.status(500).json({ message: "GEMINI_API_KEY belum dikonfigurasi di backend." });
+    return res.status(500).json({ message: "GEMINI_API_KEY is not configured in the backend." });
   }
 
   const { target = "", supportType = "" } = req.body || {};
@@ -104,14 +104,14 @@ async function funderAiRecommendations(req, res) {
     const parsed = parseAiJson(aiResponse.answer);
 
     return res.json({
-      summary: parsed.summary || "AI berhasil menganalisis UMKM yang paling sesuai.",
+      summary: parsed.summary || "AI successfully analyzed the most suitable MSMEs.",
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       model: aiResponse.model,
     });
   } catch (error) {
     console.error("Error in funderAiRecommendations:", error);
     return res.status(error.statusCode || 500).json({
-      message: error.publicMessage || "Gagal membuat rekomendasi UMKM.",
+      message: error.publicMessage || "Failed to generate MSME recommendations.",
       error: error.message,
     });
   }
@@ -337,43 +337,44 @@ Pilih maksimal 3 funder dan 3 mentor.`;
 }
 
 function buildFunderRecommendationPrompt(funderProfile, umkms, target, supportType) {
-  return `Anda adalah AI Discovery Engine MicroFun untuk funder.
-Tugas: rekomendasikan UMKM paling sesuai berdasarkan profil funder, minat investasi, budget, input target/harapan, jenis bantuan yang ingin diberikan, dan profil UMKM.
-Analisis harus nyambung. Contoh: jika funder minat di F&B/Kuliner, UMKM F&B harus diprioritaskan. Jika budget funder 10-15 juta, jelaskan apakah target pendanaan UMKM sesuai atau butuh partial funding.
-Jangan rekomendasikan UMKM yang tidak ada di daftar.
-Berikan output JSON valid saja, tanpa markdown.
+  return `You are MicroFun AI Discovery Engine for funders.
+Task: recommend the most suitable MSMEs based on the funder profile, investment interests, budget, target/expectation input, support type, and MSME profiles.
+The analysis must be coherent. Example: if the funder is interested in F&B/Culinary, prioritize F&B MSMEs. If the funder budget is 10-15 million, explain whether the MSME funding target fits or needs partial funding.
+Do not recommend MSMEs that are not in the candidate list.
+Write all generated JSON text values in English. Keep database names, categories, and locations unchanged.
+Return valid JSON only, without markdown.
 
-Profil funder:
+Funder profile:
 ${JSON.stringify(funderProfile, null, 2)}
 
-Input target/harapan funder:
+Funder target/expectation input:
 ${target || "-"}
 
-Jenis bantuan yang ingin diberikan:
+Support type the funder wants to provide:
 ${supportType || "-"}
 
-Kandidat UMKM:
+MSME candidates:
 ${JSON.stringify(umkms, null, 2)}
 
 Format JSON:
 {
-  "summary": "ringkasan singkat analisis",
+  "summary": "short analysis summary in English",
   "recommendations": [
     {
       "id": 1,
-      "name": "nama UMKM",
-      "category": "kategori",
-      "location": "lokasi",
+      "name": "MSME name from database",
+      "category": "category from database",
+      "location": "location from database",
       "fundingTarget": 10000000,
       "matchScore": 91,
-      "reason": "alasan cocok yang spesifik dengan profil funder dan input target",
-      "supportFit": "bantuan funder yang paling relevan",
-      "nextStep": "aksi lanjutan yang disarankan"
+      "reason": "specific fit reason in English based on the funder profile and target input",
+      "supportFit": "most relevant funder support in English",
+      "nextStep": "recommended next action in English"
     }
   ]
 }
 
-Pilih maksimal 6 UMKM.`;
+Choose a maximum of 6 MSMEs.`;
 }
 
 async function callGeminiGenerateContent(prompt, options = {}) {

@@ -1,4 +1,4 @@
-function DashboardSection({ title, actionLabel, children, className = '', span = 'auto' }) {
+function DashboardSection({ title, actionLabel, onAction, children, className = '', span = 'auto' }) {
   const spanClass = span === 'full' ? 'span-full' : span === 'wide' ? 'span-wide' : ''
 
   return (
@@ -6,7 +6,7 @@ function DashboardSection({ title, actionLabel, children, className = '', span =
       {(title || actionLabel) && (
         <div className="dashboard-card-header">
           {title ? <h3>{title}</h3> : <span />}
-          {actionLabel ? <button type="button">{actionLabel}</button> : null}
+          {actionLabel ? <button type="button" onClick={onAction}>{actionLabel}</button> : null}
         </div>
       )}
       {children}

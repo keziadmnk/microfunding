@@ -50,7 +50,7 @@ function FundNowPage() {
 
         if (requestResponse) {
           const requestPayload = await requestResponse.json()
-          if (!requestResponse.ok) throw new Error(requestPayload.message || 'Gagal memuat request funding.')
+          if (!requestResponse.ok) throw new Error(requestPayload.message || 'Failed to load funding request.')
           setFundingRequest(requestPayload.data)
           setAmount(Number(requestPayload.data?.amount || 1000000))
           setBusiness(normalizeBusiness({
@@ -65,7 +65,7 @@ function FundNowPage() {
           headers: { Authorization: `Bearer ${token}` },
         })
         const payload = await response.json()
-        if (!response.ok) throw new Error(payload.message || 'Gagal memuat detail UMKM.')
+        if (!response.ok) throw new Error(payload.message || 'Failed to load MSME details.')
 
         setBusiness(normalizeBusiness(payload.data, apiBaseUrl))
       } catch (err) {
@@ -140,13 +140,13 @@ function FundNowPage() {
         },
         body: JSON.stringify({
           amount: Number(amount),
-          description: `Metode pembayaran: ${paymentMethod}`,
+          description: `Payment method: ${paymentMethod}`,
         }),
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal menyimpan pendanaan.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to save funding.')
 
-      setSuccess(payload.message || 'Pendanaan berhasil dibuat.')
+      setSuccess('Funding has been recorded successfully.')
       setPaymentCreated(true)
       setShowSuccessModal(true)
     } catch (err) {
@@ -161,7 +161,7 @@ function FundNowPage() {
     return (
       <main className="fund-now-state">
         <span className="material-symbols-outlined funder-spinner-small">hourglass_empty</span>
-        <p>Memuat halaman pendanaan...</p>
+        <p>Loading funding page...</p>
       </main>
     )
   }
@@ -170,8 +170,8 @@ function FundNowPage() {
     return (
       <main className="fund-now-state">
         <span className="material-symbols-outlined">error</span>
-        <p>{error || 'Data UMKM tidak ditemukan.'}</p>
-        <Link to="/dashboard/funder">Kembali ke Dashboard</Link>
+        <p>{error || 'MSME data was not found.'}</p>
+        <Link to="/dashboard/funder">Back to Dashboard</Link>
       </main>
     )
   }
@@ -182,52 +182,52 @@ function FundNowPage() {
         <section className="payment-confirmation-card">
           <header>
             <div>
-              <h1>Selesaikan Transfer Bank Anda</h1>
-              <p>Silakan tunggu simulasi pembayaran. Sistem akan memverifikasi otomatis dalam beberapa detik.</p>
+              <h1>Complete Your Bank Transfer</h1>
+              <p>Please wait for the payment simulation. The system will verify it automatically in a few seconds.</p>
             </div>
             <span className="payment-status-badge">
               <i />
-              Menunggu Pembayaran
+              Waiting for Payment
             </span>
           </header>
 
           <div className="payment-confirmation-body">
             <div className="payment-countdown-box">
-              <p>Selesaikan Pembayaran Dalam</p>
+              <p>Complete Payment Within</p>
               <div>
-                <TimeUnit value="00" label="Jam" />
+                <TimeUnit value="00" label="Hours" />
                 <b>:</b>
-                <TimeUnit value="00" label="Menit" />
+                <TimeUnit value="00" label="Minutes" />
                 <b>:</b>
-                <TimeUnit value={String(countdown).padStart(2, '0')} label="Detik" />
+                <TimeUnit value={String(countdown).padStart(2, '0')} label="Seconds" />
               </div>
             </div>
 
             <div className="payment-detail-grid">
-              <PaymentDetail label="Kode Transaksi" value={transactionCode} />
-              <PaymentDetail label="Jumlah yang Harus Ditransfer" value={formatCurrency(total)} accent />
+              <PaymentDetail label="Transaction Code" value={transactionCode} />
+              <PaymentDetail label="Amount to Transfer" value={formatCurrency(total)} accent />
             </div>
 
             <div className="payment-bank-card">
               <div className="payment-bank-head">
                 <div>{paymentInfo.shortName}</div>
                 <section>
-                  <p>Tujuan Transfer</p>
+                  <p>Transfer Destination</p>
                   <strong>{paymentInfo.name}</strong>
                 </section>
               </div>
               <div className="payment-bank-rows">
-                <PaymentBankRow label="Nomor Virtual Account" value={paymentInfo.accountNumber} />
-                <PaymentBankRow label="Nama Pemilik Rekening" value="MicroFun Escrow Demo" />
+                <PaymentBankRow label="Virtual Account Number" value={paymentInfo.accountNumber} />
+                <PaymentBankRow label="Account Holder Name" value="MicroFun Escrow Demo" />
                 <PaymentBankRow label="Campaign" value={business.name} />
               </div>
             </div>
           </div>
 
           <footer>
-            <button type="button" onClick={() => setStep('checkout')}>Kembali</button>
+            <button type="button" onClick={() => setStep('checkout')}>Back</button>
             <button type="button" onClick={handleAutoSuccess} disabled={submitting}>
-              {submitting ? 'Mengecek...' : 'Cek Status Pembayaran'}
+              {submitting ? 'Checking...' : 'Check Payment Status'}
             </button>
           </footer>
         </section>
@@ -264,11 +264,11 @@ function FundNowPage() {
                   <span>{business.category}</span>
                   <p>
                     <span className="material-symbols-outlined">location_on</span>
-                    {business.location || 'Lokasi belum diisi'}
+                    {business.location || 'Location not filled'}
                   </p>
                 </div>
                 <h1>{business.name}</h1>
-                <p>{business.description || 'UMKM ini belum menambahkan deskripsi bisnis.'}</p>
+                <p>{business.description || 'This MSME has not added a business description yet.'}</p>
               </div>
             </div>
           </section>
@@ -276,7 +276,7 @@ function FundNowPage() {
           <section className="fund-now-progress-card">
             <div className="fund-now-progress-head">
               <div>
-                <p>Total Didanai</p>
+                <p>Total Funded</p>
                 <h3>
                   {formatCurrency(business.fundedAmount)}
                   <span> / {formatCurrency(business.fundingTarget)}</span>
@@ -289,50 +289,50 @@ function FundNowPage() {
             </div>
             <div className="fund-now-progress-stats">
               <div>
-                <span>Sisa</span>
+                <span>Remaining</span>
                 <strong>{formatCurrency(remaining)}</strong>
               </div>
               <div>
                 <span>Status</span>
-                <strong>{business.verified ? 'Terverifikasi' : 'Menunggu Verifikasi'}</strong>
+                <strong>{business.verified ? 'Verified' : 'Awaiting Verification'}</strong>
               </div>
             </div>
           </section>
 
           <section className="fund-now-impact">
-            <h2>Rencana Pendanaan</h2>
+            <h2>Funding Plan</h2>
             <article>
               <span className="material-symbols-outlined">factory</span>
               <div>
-                <strong>Penggunaan Dana</strong>
-                <p>{business.fundingPurpose || 'UMKM ini belum menuliskan rencana penggunaan dana.'}</p>
+                <strong>Use of Funds</strong>
+                <p>{business.fundingPurpose || 'This MSME has not written a fund usage plan yet.'}</p>
               </div>
             </article>
             <article>
               <span className="material-symbols-outlined">trending_up</span>
               <div>
-                <strong>Target Bisnis</strong>
-                <p>{business.businessGoals || 'UMKM ini belum menuliskan target bisnis.'}</p>
+                <strong>Business Goals</strong>
+                <p>{business.businessGoals || 'This MSME has not written business goals yet.'}</p>
               </div>
             </article>
           </section>
         </section>
 
         <aside className="fund-now-checkout">
-          <h2>Detail Investasi</h2>
+          <h2>Investment Details</h2>
 
           {error && <p className="fund-now-alert error">{error}</p>}
           {success && <p className="fund-now-alert success">{success}</p>}
 
           {fundingRequest && (
             <div className="fund-now-request-note">
-              <span>Request UMKM</span>
-              <p>{fundingRequest.requestDescription || 'UMKM tidak menambahkan deskripsi permohonan.'}</p>
+              <span>MSME Request</span>
+              <p>{fundingRequest.requestDescription || 'The MSME did not add a request description.'}</p>
             </div>
           )}
 
           <div className="fund-now-field">
-            <label htmlFor="fund-amount">Jumlah Kontribusi (IDR)</label>
+            <label htmlFor="fund-amount">Contribution Amount (IDR)</label>
             <div className="fund-now-amount-input">
               <span>Rp</span>
               <input
@@ -358,7 +358,7 @@ function FundNowPage() {
           </div>
 
           <div className="fund-now-field">
-            <label>Metode Pembayaran</label>
+            <label>Payment Method</label>
             <PaymentGroup title="Virtual Account">
               <PaymentChip checked={paymentMethod === 'bca'} label="BCA" onChange={() => setPaymentMethod('bca')} />
               <PaymentChip checked={paymentMethod === 'mandiri'} label="Mandiri" onChange={() => setPaymentMethod('mandiri')} />
@@ -372,17 +372,17 @@ function FundNowPage() {
               <PaymentChip checked={paymentMethod === 'shopeepay'} label="ShopeePay" onChange={() => setPaymentMethod('shopeepay')} />
             </PaymentGroup>
             <PaymentGroup title="QRIS">
-              <PaymentChip wide checked={paymentMethod === 'qris'} label="QRIS (Semua Pembayaran)" onChange={() => setPaymentMethod('qris')} />
+              <PaymentChip wide checked={paymentMethod === 'qris'} label="QRIS (All Payments)" onChange={() => setPaymentMethod('qris')} />
             </PaymentGroup>
           </div>
 
           <div className="fund-now-summary">
             <div>
-              <span>Kontribusi</span>
+              <span>Contribution</span>
               <strong>{formatCurrency(Number(amount || 0))}</strong>
             </div>
             <div>
-              <span>Biaya Layanan (0.5%)</span>
+              <span>Service Fee (0.5%)</span>
               <strong>{formatCurrency(serviceFee)}</strong>
             </div>
             <div className="total">
@@ -394,12 +394,12 @@ function FundNowPage() {
             </button>
             <p>
               <span className="material-symbols-outlined">info</span>
-              Pembayaran akan dicatat dengan status pending untuk verifikasi.
+              Payment will be recorded with pending status for verification.
             </p>
           </div>
 
           <div className="fund-now-trust">
-            <span>DIPERCAYA OLEH</span>
+            <span>TRUSTED BY</span>
             <div>
               <span className="material-symbols-outlined">verified_user</span>
               <span className="material-symbols-outlined">security</span>
@@ -478,10 +478,10 @@ function PaymentSuccessModal({
           <div className="payment-success-icon error">
             <span className="material-symbols-outlined">error</span>
           </div>
-          <h2>Pembayaran Belum Terverifikasi</h2>
+          <h2>Payment Not Verified Yet</h2>
           <p>{error}</p>
           <div className="payment-success-actions single">
-            <button type="button" onClick={onClose}>Tutup</button>
+            <button type="button" onClick={onClose}>Close</button>
           </div>
         </section>
       </div>
@@ -495,20 +495,20 @@ function PaymentSuccessModal({
           <div className="payment-success-icon">
             <span className="material-symbols-outlined">check_circle</span>
           </div>
-          <h2>Pendanaan Tercatat</h2>
-          <p>{success || 'Pendanaan berhasil dicatat dan menunggu proses verifikasi akhir.'}</p>
+          <h2>Funding Recorded</h2>
+          <p>{success || 'Funding has been recorded and is waiting for final verification.'}</p>
         </header>
 
         <div className="payment-success-summary">
-          <PaymentSuccessRow label="Nama Kampanye" value={businessName} />
-          <PaymentSuccessRow label="Jumlah" value={formatCurrency(amount)} />
-          <PaymentSuccessRow label="Biaya Layanan" value={formatCurrency(serviceFee)} />
-          <PaymentSuccessRow label="Total Pendanaan" value={formatCurrency(total)} strong />
+          <PaymentSuccessRow label="Campaign Name" value={businessName} />
+          <PaymentSuccessRow label="Amount" value={formatCurrency(amount)} />
+          <PaymentSuccessRow label="Service Fee" value={formatCurrency(serviceFee)} />
+          <PaymentSuccessRow label="Total Funding" value={formatCurrency(total)} strong />
         </div>
 
         <div className="payment-success-actions">
-          <button type="button" onClick={onFundingHistory}>Lihat Pendanaan Saya</button>
-          <button type="button" onClick={onFundingList}>Kembali ke Pendanaan</button>
+          <button type="button" onClick={onFundingHistory}>View My Funding</button>
+          <button type="button" onClick={onFundingList}>Back to Funding</button>
         </div>
       </section>
     </div>

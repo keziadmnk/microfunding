@@ -14,6 +14,19 @@ const INVESTMENT_INTERESTS = [
   'Semua Sektor',
 ]
 
+const INVESTMENT_INTEREST_LABELS = {
+  'Kuliner & F&B': 'Culinary & F&B',
+  'Fashion & Tekstil': 'Fashion & Textile',
+  Agribisnis: 'Agribusiness',
+  Kerajinan: 'Crafts',
+  Teknologi: 'Technology',
+  Pendidikan: 'Education',
+  Kesehatan: 'Health',
+  Pariwisata: 'Tourism',
+  Ekspor: 'Export',
+  'Semua Sektor': 'All Sectors',
+}
+
 const EXPERTISE_AREAS = [
   'Investasi & Keuangan',
   'Marketing & Branding',
@@ -26,6 +39,19 @@ const EXPERTISE_AREAS = [
   'Supply Chain',
   'HR & Organisasi',
 ]
+
+const EXPERTISE_AREA_LABELS = {
+  'Investasi & Keuangan': 'Investment & Finance',
+  'Marketing & Branding': 'Marketing & Branding',
+  'Operasional Bisnis': 'Business Operations',
+  'Ekspor & Distribusi': 'Export & Distribution',
+  'Digital & Teknologi': 'Digital & Technology',
+  'Hukum & Regulasi': 'Legal & Regulation',
+  Networking: 'Networking',
+  'Mentoring Bisnis': 'Business Mentoring',
+  'Supply Chain': 'Supply Chain',
+  'HR & Organisasi': 'HR & Organization',
+}
 
 const initialFormData = {
   name: '',
@@ -90,7 +116,7 @@ function FunderProfileForm({ onCancel }) {
       },
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Gagal mengambil profil funder.')
+        if (!res.ok) throw new Error('Failed to fetch funder profile.')
         return res.json()
       })
       .then((data) => {
@@ -166,7 +192,7 @@ function FunderProfileForm({ onCancel }) {
     if (!file) return
 
     if (file.size > 2 * 1024 * 1024) {
-      setMessage({ text: 'Ukuran file gambar maksimal 2MB.', type: 'error' })
+      setMessage({ text: 'Maximum image file size is 2MB.', type: 'error' })
       return
     }
 
@@ -183,22 +209,22 @@ function FunderProfileForm({ onCancel }) {
     event.preventDefault()
 
     if (!isEditing) {
-      setMessage({ text: 'Tekan tombol Edit Profil terlebih dahulu untuk mengubah data.', type: 'error' })
+      setMessage({ text: 'Click the Edit Profile button first to update your data.', type: 'error' })
       return
     }
 
     if (!formData.name.trim()) {
-      setMessage({ text: 'Nama lengkap wajib diisi.', type: 'error' })
+      setMessage({ text: 'Full name is required.', type: 'error' })
       return
     }
 
     if (!findCityByLabel(formData.location)) {
-      setMessage({ text: 'Lokasi wajib dipilih dari daftar kota.', type: 'error' })
+      setMessage({ text: 'Location must be selected from the city list.', type: 'error' })
       return
     }
 
     if (formData.bio.length > 1000) {
-      setMessage({ text: 'Bio maksimal 1000 karakter.', type: 'error' })
+      setMessage({ text: 'Bio must be 1000 characters or fewer.', type: 'error' })
       return
     }
 
@@ -215,7 +241,7 @@ function FunderProfileForm({ onCancel }) {
     })
       .then(async (res) => {
         const data = await res.json()
-        if (!res.ok) throw new Error(data.message || 'Gagal menyimpan profil funder.')
+        if (!res.ok) throw new Error(data.message || 'Failed to save funder profile.')
         return data
       })
       .then((data) => {
@@ -224,7 +250,7 @@ function FunderProfileForm({ onCancel }) {
           profile_photo: data.profilePhotoUrl || formData.profile_photo,
         }
 
-        setMessage({ text: 'Profil funder berhasil diperbarui.', type: 'success' })
+        setMessage({ text: 'Funder profile updated successfully.', type: 'success' })
         if (data.profilePhotoUrl) {
           setPhotoPreview(`${apiBaseUrl}${data.profilePhotoUrl}`)
         }
@@ -258,7 +284,7 @@ function FunderProfileForm({ onCancel }) {
     return (
       <div className="funder-profile-loading">
         <span className="material-symbols-outlined funder-spinner">hourglass_empty</span>
-        <p>Memuat profil funder...</p>
+        <p>Loading funder profile...</p>
       </div>
     )
   }
@@ -269,7 +295,7 @@ function FunderProfileForm({ onCancel }) {
         <div className="funder-profile-toolbar">
           <button type="button" className="funder-profile-primary-btn" onClick={() => setIsEditing(true)}>
             <span className="material-symbols-outlined">edit</span>
-            Edit Profil
+            Edit Profile
           </button>
         </div>
       )}
@@ -287,13 +313,13 @@ function FunderProfileForm({ onCancel }) {
         <section className="funder-profile-card">
           <div className="funder-profile-card-header">
             <span className="material-symbols-outlined">account_circle</span>
-            <h3>Profil Dasar Funder</h3>
+            <h3>Basic Funder Profile</h3>
           </div>
 
           <div className="funder-photo-row">
             <div className="funder-photo-preview">
               {photoPreview ? (
-                <img src={photoPreview} alt="Foto profil funder" />
+                <img src={photoPreview} alt="Funder profile" />
               ) : (
                 <span>{initials}</span>
               )}
@@ -301,7 +327,7 @@ function FunderProfileForm({ onCancel }) {
             <div>
               <label className={`funder-file-btn${fieldsDisabled ? ' disabled' : ''}`} htmlFor="funder-photo-input">
                 <span className="material-symbols-outlined">upload_file</span>
-                Pilih Foto Profil
+                Choose Profile Photo
               </label>
               <input
                 id="funder-photo-input"
@@ -311,12 +337,12 @@ function FunderProfileForm({ onCancel }) {
                 disabled={fieldsDisabled}
                 hidden
               />
-              <p>Format: JPG, PNG, GIF. Maksimal 2MB</p>
+              <p>Format: JPG, PNG, GIF. Maximum 2MB.</p>
             </div>
           </div>
 
           <TextInput
-            label="Nama Lengkap"
+            label="Full Name"
             name="name"
             value={formData.name}
             onChange={handleInputChange}
@@ -334,12 +360,12 @@ function FunderProfileForm({ onCancel }) {
               disabled={saving}
             />
             <small className={formData.email_verified_at ? 'verified' : ''}>
-              {formData.email_verified_at ? 'Email terverifikasi' : 'Email belum terverifikasi'}
+              {formData.email_verified_at ? 'Email verified' : 'Email not verified yet'}
             </small>
           </div>
 
           <TextInput
-            label="No. Telepon"
+            label="Phone Number"
             name="phone"
             value={formData.phone}
             onChange={handleInputChange}
@@ -348,7 +374,7 @@ function FunderProfileForm({ onCancel }) {
           />
 
           <div className="funder-profile-field">
-            <label htmlFor="funder-location">Lokasi <span>*</span></label>
+            <label htmlFor="funder-location">Location <span>*</span></label>
             <select
               id="funder-location"
               name="location"
@@ -357,7 +383,7 @@ function FunderProfileForm({ onCancel }) {
               disabled={fieldsDisabled}
               required
             >
-              <option value="">Pilih kota lokasi funder</option>
+              <option value="">Select funder city location</option>
               {WORLD_CITY_OPTIONS.map((city) => (
                 <option key={city.label} value={city.label}>
                   {city.label}
@@ -367,7 +393,7 @@ function FunderProfileForm({ onCancel }) {
           </div>
 
           <div className="funder-profile-field">
-            <label htmlFor="funder-address">Alamat Detail</label>
+            <label htmlFor="funder-address">Detailed Address</label>
             <textarea
               id="funder-address"
               name="address"
@@ -375,12 +401,12 @@ function FunderProfileForm({ onCancel }) {
               onChange={handleInputChange}
               disabled={fieldsDisabled}
               rows="3"
-              placeholder="Contoh: 18 Raffles Place, lantai 12"
+              placeholder="Example: 18 Raffles Place, 12th floor"
             />
           </div>
 
           <div className="funder-profile-field">
-            <label htmlFor="funder-bio">Bio / Tentang Saya</label>
+            <label htmlFor="funder-bio">Bio / About Me</label>
             <textarea
               id="funder-bio"
               name="bio"
@@ -389,9 +415,9 @@ function FunderProfileForm({ onCancel }) {
               disabled={fieldsDisabled}
               maxLength="1000"
               rows="5"
-              placeholder="Investor dan entrepreneur diaspora Minangkabau yang fokus pada pengembangan UMKM lokal."
+              placeholder="Diaspora investor and entrepreneur focused on local MSME growth."
             />
-            <small>{formData.bio.length} / 1000 karakter</small>
+            <small>{formData.bio.length} / 1000 characters</small>
           </div>
         </section>
 
@@ -399,8 +425,8 @@ function FunderProfileForm({ onCancel }) {
           <div className="funder-profile-card-header">
             <span className="material-symbols-outlined">business_center</span>
             <div>
-              <h3>Profil Funder</h3>
-              <p>Digunakan AI untuk mencocokkan UMKM</p>
+              <h3>Funder Profile</h3>
+              <p>Used by AI to match MSMEs</p>
             </div>
           </div>
 
@@ -413,7 +439,7 @@ function FunderProfileForm({ onCancel }) {
               disabled={fieldsDisabled}
             />
             <CurrencyInput
-              label="Maksimum (Rp)"
+              label="Maximum (Rp)"
               name="funding_max"
               value={formData.funding_max}
               onChange={handleInputChange}
@@ -422,18 +448,20 @@ function FunderProfileForm({ onCancel }) {
           </div>
 
           <OptionGroup
-            title="Minat Investasi"
-            description="Pilih satu atau lebih sektor yang Anda minati"
+            title="Investment Interests"
+            description="Choose one or more sectors you are interested in"
             options={INVESTMENT_INTERESTS}
+            optionLabels={INVESTMENT_INTEREST_LABELS}
             values={formData.investment_interests}
             disabled={fieldsDisabled}
             onToggle={(value) => handleOptionToggle('investment_interests', value)}
           />
 
           <OptionGroup
-            title="Pengalaman / Keahlian"
-            description="Pilih bidang keahlian yang dapat Anda berikan kepada UMKM"
+            title="Experience / Expertise"
+            description="Choose expertise areas you can provide to MSMEs"
             options={EXPERTISE_AREAS}
+            optionLabels={EXPERTISE_AREA_LABELS}
             values={formData.expertise_areas}
             disabled={fieldsDisabled}
             onToggle={(value) => handleOptionToggle('expertise_areas', value)}
@@ -447,7 +475,7 @@ function FunderProfileForm({ onCancel }) {
             onClick={handleCancelClick}
             disabled={saving}
           >
-            {hasSavedProfile && isEditing ? 'Batal Edit' : 'Batal'}
+            {hasSavedProfile && isEditing ? 'Cancel Edit' : 'Cancel'}
           </button>
           <button
             type="submit"
@@ -457,12 +485,12 @@ function FunderProfileForm({ onCancel }) {
             {saving ? (
               <>
                 <span className="material-symbols-outlined funder-spinner-small">hourglass_empty</span>
-                Menyimpan...
+                Saving...
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined">save</span>
-                Simpan Perubahan
+                Save Changes
               </>
             )}
           </button>
@@ -515,7 +543,7 @@ function CurrencyInput({ label, name, value, onChange, disabled }) {
   )
 }
 
-function OptionGroup({ title, description, options, values, disabled, onToggle }) {
+function OptionGroup({ title, description, options, optionLabels = {}, values, disabled, onToggle }) {
   return (
     <div className="funder-option-section">
       <h4>{title}</h4>
@@ -529,7 +557,7 @@ function OptionGroup({ title, description, options, values, disabled, onToggle }
               onChange={() => onToggle(option)}
               disabled={disabled}
             />
-            <span>{option}</span>
+            <span>{optionLabels[option] || option}</span>
           </label>
         ))}
       </div>

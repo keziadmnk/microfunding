@@ -250,13 +250,13 @@
 
 .funder-avatar {
   justify-content: center;
-  width: 2.9rem;
-  height: 2.9rem;
-  border: 2px solid #fff;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 2px solid #cea761;
   border-radius: 999px;
   background: #122937;
   color: #fff;
-  box-shadow: 0 10px 24px rgba(18, 41, 55, 0.14);
+  box-shadow: none;
 }
 
 .funder-error {

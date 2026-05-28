@@ -71,18 +71,18 @@ function LandingPage() {
                 insights.
               </p>
               <div className="hero-actions">
-                <button type="button" className="solid-btn">
+                <Link to="/register?role=msme" className="solid-btn">
                   Join as MSME
                   <span className="material-symbols-outlined" aria-hidden="true">
                     trending_up
                   </span>
-                </button>
-                <button type="button" className="outline-btn">
+                </Link>
+                <Link to="/register" className="outline-btn">
                   Support as Diaspora
                   <span className="material-symbols-outlined" aria-hidden="true">
                     public
                   </span>
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -278,12 +278,12 @@ function LandingPage() {
                 homeland, MicroFun provides the bridge.
               </p>
               <div className="hero-actions centered-actions">
-                <button type="button" className="solid-btn light">
+                <Link to="/register?role=msme" className="solid-btn light">
                   Join as MSME
-                </button>
-                <button type="button" className="outline-btn light-outline">
+                </Link>
+                <Link to="/register" className="outline-btn light-outline">
                   Support as Diaspora
-                </button>
+                </Link>
               </div>
             </div>
           </div>

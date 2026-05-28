@@ -20,15 +20,15 @@ const roleDashboardMap = {
 }
 
 const insightPrompts = [
-  'Membantu UMKM berkembang',
-  'Meningkatkan penjualan UMKM',
-  'Membantu digitalisasi bisnis',
-  'Mendukung UMKM lokal',
+  'Help MSMEs grow',
+  'Increase MSME sales',
+  'Support business digitalization',
+  'Support local MSMEs',
 ]
 
 const supportPrompts = [
-  'Pendanaan modal',
-  'Mentoring bisnis',
+  'Working capital funding',
+  'Business mentoring',
   'Branding & marketing',
   'Networking',
 ]
@@ -84,7 +84,7 @@ function FunderDashboardPage() {
         },
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal memuat data UMKM.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to load MSME data.')
 
       setMsmeProfiles((payload.data || []).map((item, index) => normalizeMsmeProfile(item, index, apiBaseUrl)))
     } catch (err) {
@@ -109,7 +109,7 @@ function FunderDashboardPage() {
         },
       })
       const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Gagal memuat funding history.')
+      if (!response.ok) throw new Error(payload.message || 'Failed to load funding history.')
 
       setFundingHistory({
         pending: (payload.pending || []).map((item, index) => normalizeFundingHistoryItem(item, index, apiBaseUrl)),
@@ -232,7 +232,7 @@ function FunderDashboardPage() {
         }),
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.message || 'Gagal menjalankan rekomendasi AI.')
+      if (!response.ok) throw new Error(data.message || 'Failed to run AI recommendation.')
       setAiRecommendationResult(data)
     } catch (err) {
       setAiRecommendationError(err.message)
@@ -245,7 +245,7 @@ function FunderDashboardPage() {
     return (
       <main className="funder-loading">
         <span className="material-symbols-outlined funder-spinner">hourglass_empty</span>
-        <p>Memuat dashboard funder...</p>
+        <p>Loading funder dashboard...</p>
       </main>
     )
   }
@@ -330,18 +330,12 @@ function FunderDashboardPage() {
           </div>
 
           <div className="funder-topbar-actions">
-            <div className="funder-user-chip">
-              <div>
-                <strong>{displayName}</strong>
-                <span>Funder</span>
-              </div>
-              <div className="funder-avatar">
-                {profilePhotoUrl ? (
-                  <img src={profilePhotoUrl} alt={displayName} />
-                ) : (
-                  <span>{userInitials}</span>
-                )}
-              </div>
+            <div className="funder-avatar" aria-label={`${displayName} profile photo`}>
+              {profilePhotoUrl ? (
+                <img src={profilePhotoUrl} alt={displayName} />
+              ) : (
+                <span>{userInitials}</span>
+              )}
             </div>
           </div>
         </header>
@@ -374,20 +368,20 @@ function FunderDashboardPage() {
               </div>
             </div>
 
-            <h1>Rekomendasi UMKM dengan AI</h1>
-            <p>Isi target dan jenis bantuan Anda, AI akan mencarikan UMKM yang paling cocok.</p>
+            <h1>AI MSME Recommendations</h1>
+            <p>Enter your goals and support type, and AI will find the most suitable MSMEs.</p>
 
             <div className="funder-ai-grid">
               <div className="funder-ai-field">
                 <label htmlFor="funding-target">
                   <span className="material-symbols-outlined">target</span>
-                  Target / Harapan terhadap UMKM
+                  MSME Goals / Expectations
                 </label>
                 <textarea
                   id="funding-target"
                   value={fundingTarget}
                   onChange={(event) => setFundingTarget(event.target.value)}
-                  placeholder="Contoh: Membantu UMKM berkembang, mencari UMKM dengan growth tinggi..."
+                  placeholder="Example: Help MSMEs grow, find high-growth MSMEs..."
                 />
                 <div className="funder-prompt-row">
                   {insightPrompts.map((prompt) => (
@@ -401,13 +395,13 @@ function FunderDashboardPage() {
               <div className="funder-ai-field">
                 <label htmlFor="support-type">
                   <span className="material-symbols-outlined">handshake</span>
-                  Jenis Bantuan yang Ingin Diberikan
+                  Type of Support You Want to Provide
                 </label>
                 <textarea
                   id="support-type"
                   value={supportType}
                   onChange={(event) => setSupportType(event.target.value)}
-                  placeholder="Contoh: Pendanaan modal, mentoring bisnis, branding & marketing..."
+                  placeholder="Example: Working capital funding, business mentoring, branding & marketing..."
                 />
                 <div className="funder-prompt-row">
                   {supportPrompts.map((prompt) => (
@@ -428,7 +422,7 @@ function FunderDashboardPage() {
               <span className="material-symbols-outlined">
                 {aiRecommendationLoading ? 'hourglass_empty' : 'auto_awesome'}
               </span>
-              {aiRecommendationLoading ? 'Menganalisis...' : 'Rekomendasi AI'}
+              {aiRecommendationLoading ? 'Analyzing...' : 'AI Recommendation'}
             </button>
             {(aiRecommendationError || aiRecommendationResult) && (
               <FunderAiRecommendationPanel
@@ -445,9 +439,9 @@ function FunderDashboardPage() {
           <>
             <header className="funder-section-heading">
               <div>
-                <h2>Recommended MSMEs for You</h2>
+                <h2>All MSMEs</h2>
               </div>
-              <span>{filteredProfiles.length} peluang aktif</span>
+              <span>{filteredProfiles.length} active opportunities</span>
             </header>
 
             {msmeError && <p className="funder-error">{msmeError}</p>}
@@ -455,7 +449,7 @@ function FunderDashboardPage() {
             {msmeLoading ? (
               <div className="funder-data-state">
                 <span className="material-symbols-outlined funder-spinner-small">hourglass_empty</span>
-                <p>Memuat data UMKM dari database...</p>
+                <p>Loading MSME data from the database...</p>
               </div>
             ) : filteredProfiles.length > 0 ? (
               <div className="funder-profile-grid">
@@ -470,8 +464,8 @@ function FunderDashboardPage() {
             ) : (
               <div className="funder-data-state empty">
                 <span className="material-symbols-outlined">database</span>
-                <h3>Belum Ada Data UMKM</h3>
-                <p>Card rekomendasi akan muncul setelah UMKM melengkapi profil bisnisnya.</p>
+                <h3>No MSME Data Yet</h3>
+                <p>Recommendation cards will appear after MSMEs complete their business profiles.</p>
               </div>
             )}
           </>
@@ -480,11 +474,11 @@ function FunderDashboardPage() {
         ) : (
           <div className="funder-placeholder-card">
             <span className="material-symbols-outlined">construction</span>
-            <h3>Fitur Sedang Dikembangkan</h3>
-            <p>Halaman <strong>{activeTab}</strong> sedang dipersiapkan untuk menunjang aktivitas pendanaan Anda.</p>
+            <h3>Feature In Progress</h3>
+            <p>The <strong>{activeTab}</strong> page is being prepared to support your funding activity.</p>
             <button type="button" className="funder-ai-action" onClick={() => setActiveTab('Funding')}>
               <span className="material-symbols-outlined">dashboard</span>
-              Kembali ke Funding
+              Back to Funding
             </button>
           </div>
         )}
@@ -523,7 +517,7 @@ function MsmeCard({ profile, onFundNow, onViewInsight, showInsight = false }) {
             <h3>{profile.name}</h3>
             <span>{profile.category}</span>
           </div>
-          <button type="button" aria-label={`Simpan ${profile.name}`}>
+          <button type="button" aria-label={`Save ${profile.name}`}>
             <span className="material-symbols-outlined">bookmark</span>
           </button>
         </div>
@@ -551,7 +545,7 @@ function FundingHistoryView({ error, history, loading, onApproveRequest, onRefre
     return (
       <div className="funder-data-state">
         <span className="material-symbols-outlined funder-spinner-small">hourglass_empty</span>
-        <p>Memuat funding history...</p>
+        <p>Loading funding history...</p>
       </div>
     )
   }
@@ -578,8 +572,8 @@ function FundingHistoryView({ error, history, loading, onApproveRequest, onRefre
         ) : (
           <div className="funder-data-state empty compact">
             <span className="material-symbols-outlined">task_alt</span>
-            <h3>Tidak Ada Pending Request</h3>
-            <p>Pengajuan pendanaan baru akan muncul di sini setelah Anda melakukan pendanaan.</p>
+            <h3>No Pending Requests</h3>
+            <p>New funding requests will appear here after you start funding an MSME.</p>
           </div>
         )}
       </section>
@@ -634,8 +628,8 @@ function FundingHistoryView({ error, history, loading, onApproveRequest, onRefre
           ) : (
             <div className="funder-data-state empty compact">
               <span className="material-symbols-outlined">account_balance_wallet</span>
-              <h3>Belum Ada Riwayat Investasi</h3>
-              <p>Riwayat akan muncul setelah Anda melakukan pendanaan pada UMKM.</p>
+              <h3>No Investment History Yet</h3>
+              <p>Your history will appear after you fund an MSME.</p>
             </div>
           )}
         </div>
@@ -659,18 +653,18 @@ function FundingRequestCard({ item, onApprove }) {
 
       <div className="funding-request-detail-box">
         <div className="funding-request-amount">
-          <span>Jumlah Pendanaan (Rupiah)</span>
+          <span>Funding Amount (Rupiah)</span>
           <strong>{formatCurrency(item.amount)}</strong>
-          <small>Minimum: Rp 1.000.000 | Maksimum: Rp 100.000.000</small>
+          <small>Minimum: Rp 1,000,000 | Maximum: Rp 100,000,000</small>
         </div>
         <div className="funding-request-message">
-          <span>Deskripsi/Permohonan</span>
-          <p>{item.requestDescription || 'UMKM tidak menambahkan deskripsi permohonan.'}</p>
+          <span>Description / Request</span>
+          <p>{item.requestDescription || 'The MSME did not add a request description.'}</p>
         </div>
       </div>
 
       <ProgressSummary goal={formatCurrency(item.fundingTarget)} progress={item.progress} />
-      <p>{item.businessDescription || item.description || 'UMKM ini belum menambahkan deskripsi bisnis.'}</p>
+      <p>{item.businessDescription || item.description || 'This MSME has not added a business description yet.'}</p>
 
       <div className="funding-request-actions">
         <button type="button" onClick={() => onApprove(item)}>Approve</button>
@@ -764,7 +758,7 @@ function ProgressSummary({ goal, progress, inverted = false }) {
 function normalizeMsmeProfile(item, index, apiBaseUrl) {
   const target = Number(item.fundingTarget || 0)
   const progress = Number(item.progress || 0)
-  const category = item.category || 'Lainnya'
+  const category = item.category || 'Other'
 
   return {
     ...item,
@@ -775,7 +769,7 @@ function normalizeMsmeProfile(item, index, apiBaseUrl) {
     progress,
     match: null,
     image: getBusinessImage(item.logo, index, apiBaseUrl),
-    description: item.description || item.businessGoals || item.fundingPurpose || 'UMKM ini belum menambahkan deskripsi bisnis.',
+    description: item.description || item.businessGoals || item.fundingPurpose || 'This MSME has not added a business description yet.',
     initials: getInitials(item.name),
   }
 }
@@ -787,9 +781,9 @@ function normalizeAiRecommendation(item, index, apiProfiles) {
   return {
     ...dbProfile,
     id: item.id || dbProfile.id,
-    name: item.name || dbProfile.name || 'UMKM',
-    category: item.category || dbProfile.category || 'Lainnya',
-    industry: item.category || dbProfile.industry || dbProfile.category || 'Lainnya',
+    name: item.name || dbProfile.name || 'MSME',
+    category: item.category || dbProfile.category || 'Other',
+    industry: item.category || dbProfile.industry || dbProfile.category || 'Other',
     location: item.location || dbProfile.location || '-',
     fundingTarget: target,
     goal: formatCurrency(target),
@@ -797,7 +791,7 @@ function normalizeAiRecommendation(item, index, apiProfiles) {
     match: Number(item.matchScore || 0) || null,
     image: dbProfile.image || fallbackImages[index % fallbackImages.length],
     initials: getInitials(item.name || dbProfile.name),
-    description: item.reason || dbProfile.description || 'Rekomendasi AI untuk UMKM ini.',
+    description: item.reason || dbProfile.description || 'AI recommendation for this MSME.',
     reason: item.reason,
     supportFit: item.supportFit,
     nextStep: item.nextStep,
@@ -829,7 +823,7 @@ function getProfilePhotoUrl(photo) {
 }
 
 function getRegionFromLocation(location) {
-  if (!location) return 'Belum diisi'
+  if (!location) return 'Not filled'
 
   const normalized = String(location)
   const knownRegions = ['Java', 'Jawa', 'Sumatra', 'Bali', 'Sulawesi', 'Kalimantan', 'Papua', 'Jakarta']
@@ -846,7 +840,7 @@ function deriveRiskLevel(target) {
 
 function formatCurrency(value) {
   const number = Number(value || 0)
-  if (!number) return 'Belum diisi'
+  if (!number) return 'Not filled'
 
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -858,7 +852,7 @@ function formatCurrency(value) {
 function formatDate(value) {
   if (!value) return '-'
 
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -866,19 +860,19 @@ function formatDate(value) {
 }
 
 function getFunderPageTitle(activeTab, displayName) {
-  if (activeTab === 'Profile') return 'Pengaturan Profil Funder'
+  if (activeTab === 'Profile') return 'Funder Profile Settings'
   if (activeTab === 'Forum') return 'Forum'
   if (activeTab === 'Funding History') return 'Funding History'
   if (activeTab === 'AI Recommendation') return 'AI Recommendation'
-  return `Welcome back, ${displayName} (Funder)`
+  return `Welcome back, ${displayName}`
 }
 
 function getFunderPageSubtitle(activeTab) {
-  if (activeTab === 'Profile') return 'Kelola informasi profil, budget pendanaan, minat investasi, dan keahlian Anda.'
+  if (activeTab === 'Profile') return 'Manage your profile information, funding budget, investment interests, and expertise.'
   if (activeTab === 'Forum') return 'Share knowledge, discuss challenges, and build networks across MicroFun.'
   if (activeTab === 'Funding History') return ''
-  if (activeTab === 'AI Recommendation') return 'Gunakan AI untuk menemukan UMKM yang paling selaras dengan fokus pendanaan Anda.'
-  return 'Temukan UMKM potensial, jalankan rekomendasi AI, dan pantau peluang pendanaan.'
+  if (activeTab === 'AI Recommendation') return 'Use AI to find MSMEs that best align with your funding focus.'
+  return 'Find promising MSMEs, run AI recommendations, and track funding opportunities.'
 }
 
 function getInitials(name = '') {

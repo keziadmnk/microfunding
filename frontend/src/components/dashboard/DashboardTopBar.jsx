@@ -1,4 +1,4 @@
-function DashboardTopBar({ title, subtitle, avatarUrl }) {
+function DashboardTopBar({ title, subtitle, avatarUrl, avatarAlt = 'User profile' }) {
   return (
     <header className="dashboard-topbar">
       <div>
@@ -7,13 +7,7 @@ function DashboardTopBar({ title, subtitle, avatarUrl }) {
       </div>
 
       <div className="dashboard-topbar-actions">
-        <button type="button" className="notification-btn" aria-label="Notifications">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            notifications
-          </span>
-          <span className="notification-dot" />
-        </button>
-        <img alt="User profile" className="dashboard-avatar" src={avatarUrl} />
+        <img alt={avatarAlt} className="dashboard-avatar" src={avatarUrl} />
       </div>
     </header>
   )

@@ -47,16 +47,16 @@
   padding: 0.5rem 0.5rem 1rem;
 }
 
-.role-dash-brand h1 {
-  margin: 0;
-  color: #122937;
-  font-family: 'Manrope', sans-serif;
-  font-size: 1.45rem;
-  font-weight: 800;
+.role-dash-brand img {
+  display: block;
+  width: 8.8rem;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .role-dash-brand p {
-  margin: 0.2rem 0 0;
+  margin: 0.35rem 0 0;
   color: #925e25;
   font-size: 0.72rem;
   font-family: 'JetBrains Mono', monospace;

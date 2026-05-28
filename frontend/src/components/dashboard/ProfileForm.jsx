@@ -87,7 +87,7 @@ function ProfileForm({ onCancel }) {
       },
     })
       .then((res) => {
-        if (!res.ok) throw new Error('Gagal mengambil data profil.')
+        if (!res.ok) throw new Error('Failed to load profile data.')
         return res.json()
       })
       .then((data) => {
@@ -166,7 +166,7 @@ function ProfileForm({ onCancel }) {
 
     // Limit to 2MB
     if (file.size > 2 * 1024 * 1024) {
-      setMessage({ text: 'Ukuran file gambar maksimal 2MB.', type: 'error' })
+      setMessage({ text: 'Image file size must be 2MB or less.', type: 'error' })
       return
     }
 
@@ -183,28 +183,28 @@ function ProfileForm({ onCancel }) {
     e.preventDefault()
 
     if (!isEditing) {
-      setMessage({ text: 'Tekan tombol Edit Profil terlebih dahulu untuk mengubah data.', type: 'error' })
+      setMessage({ text: 'Click the Edit Profile button first to update your data.', type: 'error' })
       return
     }
 
     if (!formData.name.trim()) {
-      setMessage({ text: 'Nama UMKM wajib diisi.', type: 'error' })
+      setMessage({ text: 'MSME name is required.', type: 'error' })
       return
     }
     if (!formData.category) {
-      setMessage({ text: 'Sektor/Kategori wajib dipilih.', type: 'error' })
+      setMessage({ text: 'Sector/category is required.', type: 'error' })
       return
     }
     if (!findCityByLabel(formData.location)) {
-      setMessage({ text: 'Lokasi UMKM wajib dipilih dari daftar kota.', type: 'error' })
+      setMessage({ text: 'MSME location must be selected from the city list.', type: 'error' })
       return
     }
     if (!formData.description.trim()) {
-      setMessage({ text: 'Deskripsi UMKM wajib diisi.', type: 'error' })
+      setMessage({ text: 'MSME description is required.', type: 'error' })
       return
     }
     if (formData.description.length > 1000) {
-      setMessage({ text: 'Deskripsi UMKM maksimal 1000 karakter.', type: 'error' })
+      setMessage({ text: 'MSME description must be 1000 characters or fewer.', type: 'error' })
       return
     }
 
@@ -221,7 +221,7 @@ function ProfileForm({ onCancel }) {
     })
       .then(async (res) => {
         const data = await res.json()
-        if (!res.ok) throw new Error(data.message || 'Gagal menyimpan perubahan.')
+        if (!res.ok) throw new Error(data.message || 'Failed to save changes.')
         return data
       })
       .then((data) => {
@@ -230,7 +230,7 @@ function ProfileForm({ onCancel }) {
           logo: data.logoUrl || formData.logo,
         }
 
-        setMessage({ text: 'Profil UMKM berhasil diperbarui.', type: 'success' })
+        setMessage({ text: 'MSME profile has been updated.', type: 'success' })
         if (data.logoUrl) {
           setLogoPreview(`${apiBaseUrl}${data.logoUrl}`)
         }
@@ -270,7 +270,7 @@ function ProfileForm({ onCancel }) {
     return (
       <div className="profile-loading-spinner">
         <span className="material-symbols-outlined spinner-icon">hourglass_empty</span>
-        <p>Memuat profil UMKM Anda...</p>
+        <p>Loading your MSME profile...</p>
       </div>
     )
   }
@@ -285,7 +285,7 @@ function ProfileForm({ onCancel }) {
             onClick={handleEditClick}
           >
             <span className="material-symbols-outlined">edit</span>
-            Edit Profil
+            Edit Profile
           </button>
         </div>
       )}
@@ -305,16 +305,16 @@ function ProfileForm({ onCancel }) {
           <div className="profile-card">
             <div className="profile-card-header">
               <span className="material-symbols-outlined card-header-icon">storefront</span>
-              <h3>Profil Dasar UMKM</h3>
+              <h3>MSME Basic Profile</h3>
             </div>
 
             {/* Logo Upload */}
             <div className="profile-logo-uploader-section">
-              <label className="form-label">Logo UMKM</label>
+              <label className="form-label">MSME Logo</label>
               <div className="logo-upload-wrapper">
                 <div className="logo-preview-box">
                   {logoPreview ? (
-                    <img src={logoPreview} alt="Logo UMKM Preview" />
+                    <img src={logoPreview} alt="MSME logo preview" />
                   ) : (
                     <div className="logo-placeholder">
                       <span className="material-symbols-outlined">storefront</span>
@@ -327,7 +327,7 @@ function ProfileForm({ onCancel }) {
                     className={`file-select-btn${fieldsDisabled ? ' disabled' : ''}`}
                   >
                     <span className="material-symbols-outlined">upload_file</span>
-                    Pilih File Logo
+                    Choose Logo File
                   </label>
                   <input
                     type="file"
@@ -338,7 +338,7 @@ function ProfileForm({ onCancel }) {
                     style={{ display: 'none' }}
                   />
                   <p className="file-info-text">
-                    Format JPG, PNG, GIF. Maksimal ukuran file 2MB.
+                    JPG, PNG, GIF format. Maximum file size 2MB.
                   </p>
                 </div>
               </div>
@@ -347,7 +347,7 @@ function ProfileForm({ onCancel }) {
             {/* Nama UMKM */}
             <div className="form-group">
               <label htmlFor="name-input" className="form-label">
-                Nama UMKM <span className="required-star">*</span>
+                MSME Name <span className="required-star">*</span>
               </label>
               <input
                 type="text"
@@ -356,7 +356,7 @@ function ProfileForm({ onCancel }) {
                 value={formData.name}
                 onChange={handleInputChange}
                 className="form-control"
-                placeholder="Masukkan nama UMKM Anda"
+                placeholder="Enter your MSME name"
                 disabled={fieldsDisabled}
                 required
               />
@@ -365,7 +365,7 @@ function ProfileForm({ onCancel }) {
             {/* Email Akun */}
             <div className="form-group">
               <label htmlFor="email-input" className="form-label">
-                Email Akun <span className="required-star">*</span>
+                Account Email <span className="required-star">*</span>
               </label>
               <input
                 type="email"
@@ -373,7 +373,7 @@ function ProfileForm({ onCancel }) {
                 name="email"
                 value={formData.email}
                 className="form-control"
-                placeholder="Email akun login"
+                placeholder="Login account email"
                 readOnly
                 disabled={saving}
                 required
@@ -383,7 +383,7 @@ function ProfileForm({ onCancel }) {
             {/* Kategori / Sektor */}
             <div className="form-group">
               <label htmlFor="category-select" className="form-label">
-                Sektor / Kategori <span className="required-star">*</span>
+                Sector / Category <span className="required-star">*</span>
               </label>
               <select
                 id="category-select"
@@ -394,7 +394,7 @@ function ProfileForm({ onCancel }) {
                 disabled={fieldsDisabled}
                 required
               >
-                <option value="">Pilih Sektor / Kategori Usaha</option>
+                <option value="">Select business sector / category</option>
                 {CATEGORY_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -406,7 +406,7 @@ function ProfileForm({ onCancel }) {
             {formData.category === 'lainnya' && (
               <div className="form-group">
                 <label htmlFor="other-category-input" className="form-label">
-                  Tuliskan Kategori Lainnya
+                  Other Category
                 </label>
                 <input
                   type="text"
@@ -415,7 +415,7 @@ function ProfileForm({ onCancel }) {
                   value={formData.other_category}
                   onChange={handleInputChange}
                   className="form-control"
-                  placeholder="Sebutkan kategori usaha"
+                  placeholder="Enter business category"
                   disabled={fieldsDisabled}
                 />
               </div>
@@ -424,7 +424,7 @@ function ProfileForm({ onCancel }) {
             {/* Lokasi */}
             <div className="form-group">
               <label htmlFor="location-input" className="form-label">
-                Lokasi UMKM <span className="required-star">*</span>
+                MSME Location <span className="required-star">*</span>
               </label>
               <select
                 id="location-input"
@@ -435,7 +435,7 @@ function ProfileForm({ onCancel }) {
                 disabled={fieldsDisabled}
                 required
               >
-                <option value="">Pilih kota lokasi UMKM</option>
+                <option value="">Select MSME city location</option>
                 {WORLD_CITY_OPTIONS.map((city) => (
                   <option key={city.label} value={city.label}>
                     {city.label}
@@ -446,7 +446,7 @@ function ProfileForm({ onCancel }) {
 
             <div className="form-group">
               <label htmlFor="address-input" className="form-label">
-                Alamat Detail
+                Detailed Address
               </label>
               <textarea
                 id="address-input"
@@ -455,7 +455,7 @@ function ProfileForm({ onCancel }) {
                 onChange={handleInputChange}
                 className="form-control text-area-control"
                 rows="3"
-                placeholder="Contoh: Jl. Sudirman No. 10, Kecamatan Tanah Abang"
+                placeholder="Example: Jl. Sudirman No. 10, Tanah Abang District"
                 disabled={fieldsDisabled}
               />
             </div>
@@ -464,7 +464,7 @@ function ProfileForm({ onCancel }) {
             <div className="form-row-two-cols">
               <div className="form-group">
                 <label htmlFor="year-established-input" className="form-label">
-                  Tahun Mulai Beroperasi
+                  Year Started Operating
                 </label>
                 <input
                   type="number"
@@ -473,7 +473,7 @@ function ProfileForm({ onCancel }) {
                   value={formData.year_established}
                   onChange={handleInputChange}
                   className="form-control"
-                  placeholder="Contoh: 2019"
+                  placeholder="Example: 2019"
                   min="1900"
                   max={new Date().getFullYear()}
                   disabled={fieldsDisabled}
@@ -482,7 +482,7 @@ function ProfileForm({ onCancel }) {
 
               <div className="form-group">
                 <label htmlFor="employee-count-input" className="form-label">
-                  Jumlah Karyawan Saat Ini
+                  Current Employee Count
                 </label>
                 <input
                   type="number"
@@ -491,7 +491,7 @@ function ProfileForm({ onCancel }) {
                   value={formData.employee_count}
                   onChange={handleInputChange}
                   className="form-control"
-                  placeholder="Contoh: 5"
+                  placeholder="Example: 5"
                   min="0"
                   disabled={fieldsDisabled}
                 />
@@ -501,7 +501,7 @@ function ProfileForm({ onCancel }) {
             {/* Rata-rata Omzet */}
             <div className="form-group">
               <label htmlFor="monthly-revenue-select" className="form-label">
-                Rata-rata Omzet Bulanan
+                Average Monthly Revenue
               </label>
               <select
                 id="monthly-revenue-select"
@@ -511,7 +511,7 @@ function ProfileForm({ onCancel }) {
                 className="form-control"
                 disabled={fieldsDisabled}
               >
-                <option value="">Pilih Rentang Omzet</option>
+                <option value="">Select revenue range</option>
                 {REVENUE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -523,7 +523,7 @@ function ProfileForm({ onCancel }) {
             {/* Deskripsi UMKM */}
             <div className="form-group">
               <label htmlFor="description-textarea" className="form-label">
-                Deskripsi UMKM <span className="required-star">*</span>
+                MSME Description <span className="required-star">*</span>
               </label>
               <textarea
                 id="description-textarea"
@@ -532,43 +532,43 @@ function ProfileForm({ onCancel }) {
                 onChange={handleInputChange}
                 rows="5"
                 className="form-control text-area-control"
-                placeholder="Tuliskan deskripsi lengkap mengenai bidang usaha, produk unggulan, dan keunikan UMKM Anda..."
+                placeholder="Write a complete description of your business, flagship products, and MSME uniqueness..."
                 maxLength="1000"
                 disabled={fieldsDisabled}
                 required
               />
               <div className="textarea-footer">
                 <span className="info-span">
-                  Deskripsi yang lengkap meningkatkan kemungkinan mendapatkan pendanaan.
+                  A complete description improves your chance of receiving funding.
                 </span>
                 <span className="char-counter">
-                  {formData.description.length} / 1000 Karakter
+                  {formData.description.length} / 1000 Characters
                 </span>
               </div>
             </div>
 
             {/* Status (Admin Only) */}
             <div className="profile-status-section">
-              <label className="form-label">Status Verifikasi UMKM</label>
+              <label className="form-label">MSME Verification Status</label>
               <div className="status-badge-container">
                 {formData.verified === 1 ? (
                   <div className="status-badge badge-verified">
                     <span className="material-symbols-outlined">verified</span>
-                    <span>Terverifikasi</span>
+                    <span>Verified</span>
                   </div>
                 ) : formData.verified === 2 ? (
                   <div className="status-badge badge-rejected">
                     <span className="material-symbols-outlined">cancel</span>
-                    <span>Ditolak / Perlu Revisi</span>
+                    <span>Rejected / Needs Revision</span>
                   </div>
                 ) : (
                   <div className="status-badge badge-pending">
                     <span className="material-symbols-outlined">hourglass_top</span>
-                    <span>Menunggu Verifikasi</span>
+                    <span>Awaiting Verification</span>
                   </div>
                 )}
                 <span className="status-admin-note">
-                  Status verifikasi hanya dapat diubah oleh administrator setelah meninjau dokumen usaha Anda.
+                  Verification status can only be changed by an administrator after reviewing your business documents.
                 </span>
               </div>
             </div>
@@ -581,10 +581,10 @@ function ProfileForm({ onCancel }) {
           <div className="profile-card">
             <div className="profile-card-header">
               <span className="material-symbols-outlined card-header-icon">verified_user</span>
-              <h3>Legalitas & Dokumen Usaha</h3>
+              <h3>Business Legality & Documents</h3>
             </div>
             <p className="card-sub-info">
-              Centang semua dokumen legalitas yang sudah dimiliki oleh usaha Anda saat ini:
+              Check all legal documents currently owned by your business:
             </p>
             <div className="checkbox-grid">
               {LEGAL_DOCUMENTS_LIST.map((doc) => (
@@ -606,17 +606,17 @@ function ProfileForm({ onCancel }) {
           <div className={`profile-card profile-funding-card${fundingLocked ? ' profile-funding-locked' : ''}`}>
             <div className="profile-card-header">
               <span className="material-symbols-outlined card-header-icon">finance_mode</span>
-              <h3>Target Pendanaan (Rekomendasi AI)</h3>
+              <h3>Funding Target (AI Recommendation)</h3>
             </div>
 
             {fundingLocked ? (
               <div className="profile-funding-lock-banner">
                 <span className="material-symbols-outlined">lock</span>
                 <div>
-                  <h5>Fitur Terkunci</h5>
+                  <h5>Feature Locked</h5>
                   <p>
-                    Lengkapi profil UMKM Anda dan tunggu verifikasi dari admin sebelum mengisi target pendanaan.
-                    Setelah diverifikasi, Anda dapat mengatur target pendanaan dan terdaftar dalam rekomendasi AI Funder.
+                    Complete your MSME profile and wait for admin verification before filling in the funding target.
+                    After verification, you can set a funding target and be listed in AI Funder recommendations.
                   </p>
                 </div>
               </div>
@@ -625,10 +625,10 @@ function ProfileForm({ onCancel }) {
                 <div className="ai-matching-banner">
                   <span className="material-symbols-outlined banner-icon">psychology</span>
                   <div className="banner-copy">
-                    <h5>Digunakan oleh AI Discovery Engine</h5>
+                    <h5>Used by the AI Discovery Engine</h5>
                     <p>
-                      Isi bagian ini secara detail agar AI kami dapat mencocokkan UMKM Anda dengan funder
-                      internasional &amp; investor diaspora yang paling sesuai!
+                      Complete this section in detail so our AI can match your MSME with the most suitable
+                      international funders and diaspora investors.
                     </p>
                   </div>
                 </div>
@@ -636,7 +636,7 @@ function ProfileForm({ onCancel }) {
             {/* Target Dana */}
             <div className="form-group">
               <label htmlFor="funding-target-input" className="form-label">
-                Target Dana yang Dibutuhkan (Rp)
+                Required Funding Target (Rp)
               </label>
               <div className="currency-input-wrapper">
                 <span className="currency-prefix">Rp</span>
@@ -647,7 +647,7 @@ function ProfileForm({ onCancel }) {
                   value={formData.funding_target}
                   onChange={handleInputChange}
                   className="form-control prefix-control"
-                  placeholder="Contoh: 500000000 (untuk Rp 500 juta)"
+                  placeholder="Example: 500000000 (for Rp 500 million)"
                   min="0"
                   disabled={fieldsDisabled}
                 />
@@ -657,7 +657,7 @@ function ProfileForm({ onCancel }) {
             {/* Deskripsi Penggunaan Dana */}
             <div className="form-group">
               <label htmlFor="funding-purpose-textarea" className="form-label">
-                Rencana & Tujuan Penggunaan Dana
+                Fund Usage Plan & Purpose
               </label>
               <textarea
                 id="funding-purpose-textarea"
@@ -666,7 +666,7 @@ function ProfileForm({ onCancel }) {
                 onChange={handleInputChange}
                 rows="4"
                 className="form-control text-area-control"
-                placeholder="Jelaskan secara rinci rencana alokasi dana tersebut. Contoh: Pembelian mesin produksi otomatis, ekspansi gudang distribusi di 2 kota baru, serta peningkatan kapasitas digital marketing..."
+                placeholder="Explain the fund allocation plan in detail. Example: purchasing automated production machines, expanding distribution warehouses in 2 new cities, and improving digital marketing capacity..."
                 disabled={fieldsDisabled}
               />
             </div>
@@ -674,7 +674,7 @@ function ProfileForm({ onCancel }) {
             {/* Goal Bisnis */}
             <div className="form-group">
               <label htmlFor="business-goals-textarea" className="form-label">
-                Target & Harapan Bisnis (Goal Bisnis)
+                Business Goals & Expectations
               </label>
               <textarea
                 id="business-goals-textarea"
@@ -683,7 +683,7 @@ function ProfileForm({ onCancel }) {
                 onChange={handleInputChange}
                 rows="4"
                 className="form-control text-area-control"
-                placeholder="Contoh: Meningkatkan kapasitas produksi hingga 3 kali lipat, membuka 3 cabang outlet baru di kota besar, dan melakukan ekspor produk ke Malaysia dalam waktu 1 tahun setelah menerima pendanaan..."
+                placeholder="Example: increase production capacity by 3x, open 3 new outlets in major cities, and export products to Malaysia within 1 year after receiving funding..."
                 disabled={fieldsDisabled}
               />
             </div>
@@ -692,9 +692,9 @@ function ProfileForm({ onCancel }) {
                 <div className="ai-matching-info-banner">
                   <span className="material-symbols-outlined info-icon">info</span>
                   <p>
-                    <strong>Catatan:</strong> UMKM yang melengkapi bagian Target Pendanaan akan secara
-                    otomatis terdaftar dalam <strong>Halaman Rekomendasi AI Funder</strong>, daftar
-                    permintaan pendanaan terbuka, serta <strong>Discovery Engine Platform RantauHub</strong>.
+                    <strong>Note:</strong> MSMEs that complete the Funding Target section will be
+                    automatically listed on the <strong>AI Funder Recommendation Page</strong>, open
+                    funding request list, and <strong>RantauHub Platform Discovery Engine</strong>.
                   </p>
                 </div>
               </>
@@ -710,7 +710,7 @@ function ProfileForm({ onCancel }) {
             onClick={handleCancelClick}
             disabled={saving}
           >
-            {hasSavedProfile && isEditing ? 'Batal Edit' : 'Batal'}
+            {hasSavedProfile && isEditing ? 'Cancel Edit' : 'Cancel'}
           </button>
           <button
             type="submit"
@@ -720,12 +720,12 @@ function ProfileForm({ onCancel }) {
             {saving ? (
               <>
                 <span className="material-symbols-outlined btn-spinner-icon">hourglass_empty</span>
-                Menyimpan...
+                Saving...
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined">save</span>
-                Simpan Perubahan
+                Save Changes
               </>
             )}
           </button>
