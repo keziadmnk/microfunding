@@ -50,6 +50,40 @@ function App() {
             </RoleGuard>
           }
         />
+        <Route path="/dashboard/umkm/mentoring" element={<Navigate to="/dashboard/umkm/mentoring/find" replace />} />
+        <Route path="/dashboard/umkm/mentoring-sessions" element={<Navigate to="/dashboard/umkm/mentoring/find" replace />} />
+        <Route
+          path="/dashboard/umkm/mentoring/find"
+          element={
+            <RoleGuard allowedRoles={['umkm_owner']}>
+              <UmkmDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/umkm/mentoring/my"
+          element={
+            <RoleGuard allowedRoles={['umkm_owner']}>
+              <UmkmDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/umkm/mentoring/tasks"
+          element={
+            <RoleGuard allowedRoles={['umkm_owner']}>
+              <UmkmDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/umkm/mentoring/workspace/:mentoringId"
+          element={
+            <RoleGuard allowedRoles={['umkm_owner']}>
+              <UmkmDashboardPage />
+            </RoleGuard>
+          }
+        />
         <Route
           path="/dashboard/umkm/ai-matching/funder-request"
           element={
@@ -84,6 +118,38 @@ function App() {
         />
         <Route
           path="/dashboard/mentor"
+          element={
+            <RoleGuard allowedRoles={['mentor']}>
+              <MentorDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/mentor/mentees"
+          element={
+            <RoleGuard allowedRoles={['mentor']}>
+              <MentorDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/mentor/messages"
+          element={
+            <RoleGuard allowedRoles={['mentor']}>
+              <MentorDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/mentor/mentoring/tasks"
+          element={
+            <RoleGuard allowedRoles={['mentor']}>
+              <MentorDashboardPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="/dashboard/mentor/mentoring/workspace/:mentoringId"
           element={
             <RoleGuard allowedRoles={['mentor']}>
               <MentorDashboardPage />

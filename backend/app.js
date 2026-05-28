@@ -7,6 +7,8 @@ const profileRoutes = require("./routes/profileRoutes");
 const funderProfileRoutes = require("./routes/funderProfileRoutes");
 const fundingRoutes = require("./routes/fundingRoutes");
 const mentorRoutes = require("./routes/mentorRoutes");
+const mentorsRoutes = require("./routes/mentorsRoutes");
+const mentoringRoutes = require("./routes/mentoringRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const { testConnection } = require("./src/config/db");
 
@@ -24,6 +26,8 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/funder-profile", funderProfileRoutes);
 app.use("/api/funding", fundingRoutes);
 app.use("/api/mentor", mentorRoutes);
+app.use("/api/mentors", mentorsRoutes);
+app.use("/api/mentoring", mentoringRoutes);
 app.use("/api/ai", aiRoutes);
 
 app.get("/api/health", async (_req, res) => {
@@ -38,6 +42,15 @@ app.get("/api/health", async (_req, res) => {
 
 app.use((error, _req, res, _next) => {
 	console.error(error);
+	if (error.code === "LIMIT_FILE_SIZE") {
+		return res.status(400).json({ message: "Ukuran file maksimal 10MB." });
+	}
+	if (error.message === "Format file tidak didukung untuk pengumpulan task.") {
+		return res.status(400).json({ message: error.message });
+	}
+	if (error.message === "Format file materi tidak didukung.") {
+		return res.status(400).json({ message: error.message });
+	}
 	res.status(500).json({ message: "Internal server error" });
 });
 

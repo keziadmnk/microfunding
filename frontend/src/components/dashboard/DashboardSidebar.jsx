@@ -4,7 +4,7 @@ import './DashboardSidebar.css'
 const defaultNavItems = [
   { label: 'Dashboard', icon: 'dashboard' },
   { label: 'AI Business Advisor', icon: 'smart_toy' },
-  { label: 'Mentoring Sessions', icon: 'video_chat' },
+  { label: 'Mentoring', icon: 'video_chat' },
   { label: 'Impact Reports', icon: 'monitoring' },
   { label: 'Financials', icon: 'payments' },
   { label: 'Network', icon: 'group' },
@@ -26,7 +26,15 @@ function DashboardSidebar({
   }
 
   function isItemActive(item) {
+    if (activeTab === 'Workspace Mentoring' && item.label === 'Mentoring') return true
+    if (activeTab === 'Workspace Mentor' && item.label === 'Mentoring') return true
     return item.label === activeTab || item.children?.some((child) => child.label === activeTab)
+  }
+
+  function isChildActive(child) {
+    if (activeTab === 'Workspace Mentoring' && child.label === 'Mentoring Saya') return true
+    if (activeTab === 'Workspace Mentor' && child.label === 'Mentee Saya') return true
+    return child.label === activeTab
   }
 
   return (
@@ -65,7 +73,7 @@ function DashboardSidebar({
                       <a
                         key={child.label}
                         href="#"
-                        className={child.label === activeTab ? 'active' : ''}
+                        className={isChildActive(child) ? 'active' : ''}
                         onClick={(event) => {
                           event.preventDefault()
                           onTabChange(child.label)
