@@ -32,7 +32,7 @@ function LandingPage() {
         <div className="container nav-inner">
           <div className="nav-left">
             <a className="brand" href="#home">
-              MicroFun
+              <img className="brand-logo" src="/assets/microfun%20logo.png" alt="MicroFun" />
             </a>
             <nav className="desktop-nav" aria-label="Primary">
               <a className="active" href="#funding">

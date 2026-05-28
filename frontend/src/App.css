@@ -82,6 +82,13 @@
   color: var(--primary);
 }
 
+.brand-logo {
+  display: block;
+  width: 148px;
+  max-height: 46px;
+  object-fit: contain;
+}
+
 .desktop-nav a {
   text-decoration: none;
   color: var(--text-muted);
