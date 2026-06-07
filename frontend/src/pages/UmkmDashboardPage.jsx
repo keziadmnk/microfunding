@@ -434,7 +434,7 @@ function UmkmDashboardPage() {
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || 'Failed to run AI analysis.')
-      setAiMatchingResult(data)
+      setAiMatchingResult(enrichAiMatchingResult(data, availableFunders, mentors))
     } catch (err) {
       setAiMatchingError(err.message)
     } finally {
@@ -2741,7 +2741,13 @@ function RecommendationGroup({ actionLabel, title, icon, items, onRequest, onVie
           {items.map((item, index) => (
             <article key={`${title}-${item.id}-${item.name}`} className="ai-match-card">
               <div className="ai-match-card-cover">
-                <div className={`ai-match-avatar ${type}`}>{getInitials(item.name)}</div>
+                <div className={`ai-match-avatar ${type}`}>
+                  {item.photoUrl ? (
+                    <img src={item.photoUrl} alt={item.name || (type === 'funder' ? 'Funder profile' : 'Mentor profile')} />
+                  ) : (
+                    getInitials(item.name)
+                  )}
+                </div>
                 <span className="ai-match-score">
                   <span className="material-symbols-outlined">bolt</span>
                   {item.matchScore || 0}% Match
@@ -2826,6 +2832,55 @@ function normalizeFunderForUmkm(funder) {
     verified: Boolean(funder.verified),
     initials: getInitials(funder.name || funder.organization_name || 'Funder'),
   }
+}
+
+function enrichAiMatchingResult(result, funders = [], mentors = []) {
+  if (!result) return result
+
+  return {
+    ...result,
+    funders: (result.funders || []).map((item) => enrichAiMatchItem(item, funders, 'funder')),
+    mentors: (result.mentors || []).map((item) => enrichAiMatchItem(item, mentors, 'mentor')),
+  }
+}
+
+function enrichAiMatchItem(item, candidates = [], type) {
+  const match = candidates.find((candidate) => isAiMatchCandidate(item, candidate, type))
+
+  if (!match) return item
+
+  return {
+    ...item,
+    photoUrl: item.photoUrl || match.photoUrl || match.profilePhotoUrl || '',
+    initials: item.initials || match.initials || getInitials(item.name || match.name),
+  }
+}
+
+function isAiMatchCandidate(item, candidate, type) {
+  const itemId = Number(item?.id)
+  const candidateId = Number(candidate?.id)
+  if (itemId && candidateId && itemId === candidateId) return true
+
+  const itemName = normalizeMatchText(item?.name)
+  const candidateNames = [
+    candidate?.name,
+    candidate?.organization,
+    candidate?.organization_name,
+    candidate?.current_job,
+  ].map(normalizeMatchText).filter(Boolean)
+
+  if (itemName && candidateNames.includes(itemName)) return true
+
+  if (type === 'funder') {
+    const itemOrganization = normalizeMatchText(item?.organization)
+    return Boolean(itemOrganization && candidateNames.includes(itemOrganization))
+  }
+
+  return false
+}
+
+function normalizeMatchText(value) {
+  return String(value || '').trim().toLowerCase()
 }
 
 function normalizeFunderBio(bio, interests = []) {

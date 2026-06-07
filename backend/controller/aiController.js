@@ -268,7 +268,15 @@ function buildBusinessAdvisorPrompt(profile, question, history) {
 Jawab dalam Bahasa Indonesia yang praktis, jelas, dan langsung bisa dijalankan.
 Berikan saran bisnis yang realistis untuk UMKM, terutama pemasaran, operasional, harga, ekspansi, pendanaan, dan kesiapan bertemu funder/mentor.
 Jangan mengarang data yang tidak ada. Jika data profil belum lengkap, jelaskan data apa yang perlu dilengkapi.
-Format jawaban ringkas dengan langkah konkret. Jika cocok, gunakan 3-5 poin aksi.
+Format jawaban harus rapi dan mudah dibaca di chat:
+- Awali dengan 1 kalimat pembuka singkat.
+- Gunakan heading pendek untuk setiap bagian.
+- Gunakan daftar bernomor untuk strategi utama.
+- Gunakan bullet "-" untuk aksi, tujuan, dan catatan.
+- Pisahkan setiap bagian dengan baris baru.
+- Jangan menulis semua jawaban dalam satu paragraf panjang.
+- Jangan memakai simbol markdown berlebihan seperti ### atau ***.
+Berikan 3-5 langkah aksi konkret yang langsung bisa dijalankan.
 
 Konteks profil UMKM:
 - Pemilik: ${profile.owner_name || "-"}
@@ -381,6 +389,7 @@ async function callGeminiGenerateContent(prompt, options = {}) {
   const apiKey = getGeminiApiKey();
   const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   const endpoint = `${process.env.GEMINI_BASE_URL || GEMINI_GENERATE_CONTENT_URL}/${model}:generateContent`;
+  const thinkingConfig = getThinkingConfig(model);
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -399,9 +408,7 @@ async function callGeminiGenerateContent(prompt, options = {}) {
         temperature: options.temperature ?? 0.4,
         maxOutputTokens: options.maxOutputTokens || 900,
         ...(options.json ? { responseMimeType: "application/json" } : {}),
-        thinkingConfig: {
-          thinkingBudget: 0,
-        },
+        thinkingConfig,
       },
     }),
   });
@@ -443,6 +450,14 @@ function getProviderErrorMessage(payload, status) {
 
 function getGeminiApiKey() {
   return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+}
+
+function getThinkingConfig(model = "") {
+  if (String(model).startsWith("gemini-3")) {
+    return { thinkingLevel: "minimal" };
+  }
+
+  return { thinkingBudget: 0 };
 }
 
 function parseAiJson(text) {

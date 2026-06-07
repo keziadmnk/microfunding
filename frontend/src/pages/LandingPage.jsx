@@ -64,10 +64,10 @@ function LandingPage() {
                 </span>
                 <span>Connecting 10,000+ Diaspora Mentors</span>
               </div>
-              <h1>Empowering Indonesian MSMEs through AI and Global Diaspora</h1>
+              <h1>Empowering MSMEs through AI-Driven Smart Funding and Mentorship through Diaspora Collaboration</h1>
               <p>
                 Bridge the funding gap and scale your business with professional
-                mentorship from the global Indonesian network and cutting-edge AI
+                mentorship from the global network and cutting-edge AI
                 insights.
               </p>
               <div className="hero-actions">
@@ -89,8 +89,8 @@ function LandingPage() {
             <div className="hero-visual" data-reveal>
               <div className="photo-frame">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8mqONSDkBfg_mme-J6RzMkRxHD4QHbFJshqgQ4eAtYRJjFrKbGhshh0GvyngMLLcEZuOIcWEICDPXniSsJhWUNOsBWbfLQ2FuU4WC2mZ2XXOgrapSApGERr-iEdgHQFUabKFKxEr6sqhmcrI3zn43P2ctVeyc_JbJRzMyWZfrLXncJlwFPHWI5izxwe7ZUhhhIUT7I1NrUjASyS4O0LLZkPnnRPaUnmO5Ebp47mEalhoKy3mq9QXM4-SsYFB6tWogzFfKFbmNoV4"
-                  alt="Indonesian MSME owner smiling while working in a shop"
+                  src="https://images.unsplash.com/photo-1761516659497-8478e39d2b26?auto=format&fit=crop&q=80&w=1200"
+                  alt="Traditional Indonesian batik textile pattern representing cultural MSME products"
                 />
               </div>
               <article className="floating-stat" aria-label="Funding progress">

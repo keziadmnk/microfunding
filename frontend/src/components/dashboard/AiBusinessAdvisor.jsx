@@ -304,12 +304,73 @@ function ChatBubble({ message }) {
       </div>
       <div>
         <div className="ai-chat-text">
-          <p>{message.text}</p>
+          {isUser ? <p>{message.text}</p> : <FormattedAdvisorText text={message.text} />}
         </div>
         <span>{message.time}</span>
       </div>
     </div>
   )
+}
+
+function FormattedAdvisorText({ text }) {
+  const lines = normalizeAdvisorText(text).split('\n').map((line) => line.trim()).filter(Boolean)
+
+  if (lines.length === 0) return <p>-</p>
+
+  return lines.map((line, index) => {
+    const heading = line.match(/^#{2,6}\s*(.+)$/)
+    if (heading) {
+      return <h4 key={`${line}-${index}`}>{renderInlineAdvisorText(heading[1])}</h4>
+    }
+
+    const numberedHeading = line.match(/^(\d+\.)\s+(.+)$/)
+    if (numberedHeading) {
+      return (
+        <div key={`${line}-${index}`} className="ai-chat-numbered">
+          <strong>{numberedHeading[1]}</strong>
+          <p>{renderInlineAdvisorText(numberedHeading[2])}</p>
+        </div>
+      )
+    }
+
+    const bullet = line.match(/^[-*]\s+(.+)$/)
+    if (bullet) {
+      return (
+        <div key={`${line}-${index}`} className="ai-chat-bullet">
+          <span />
+          <p>{renderInlineAdvisorText(bullet[1])}</p>
+        </div>
+      )
+    }
+
+    return <p key={`${line}-${index}`}>{renderInlineAdvisorText(line)}</p>
+  })
+}
+
+function normalizeAdvisorText(text) {
+  return String(text || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\s*(#{2,6}\s*)/g, '\n$1')
+    .replace(/\s+(\d+\.\s+)/g, '\n$1')
+    .replace(/\s+[-*]\s+(?=\*\*|[A-ZÀ-ÖØ-Þ0-9])/g, '\n- ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function renderInlineAdvisorText(text) {
+  const parts = String(text || '').split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean)
+
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>
+    }
+
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={`${part}-${index}`}>{part.slice(1, -1)}</em>
+    }
+
+    return part
+  })
 }
 
 function formatCategory(category) {
